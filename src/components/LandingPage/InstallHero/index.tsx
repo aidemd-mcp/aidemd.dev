@@ -11,13 +11,13 @@ const InstallHero = () => {
       <div className="max-w-2xl mx-auto flex flex-col gap-10">
         <div className="flex flex-col gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-zinc-100">
-            AIDE collapses the specialist hire into the agent loop.
+            Describe what you want. AIDE cascades your intent into working code.
           </h1>
           <p className="text-base text-zinc-400 leading-relaxed">
-            A research agent studies your domain, persists findings to your
-            brain, and six specialized agents — spec-writer, researcher, domain
-            expert, architect, implementor, QA — draw from that brain across
-            every session. Works with Claude Code today.
+            Six specialized agents — spec-writer, researcher, domain expert,
+            architect, implementor, QA — turn what you know into what you ship.
+            Research persists to an Obsidian PKB every agent reads. Works with Claude
+            Code today.
           </p>
         </div>
 
@@ -30,16 +30,16 @@ const InstallHero = () => {
 
         <ol className="flex flex-col gap-6">
           {commandSequence.map((step) => (
-            <li key={step.step} className="flex gap-4 items-start">
-              <span className="flex-none w-7 h-7 rounded-full bg-zinc-800 text-zinc-300 text-sm font-mono font-semibold flex items-center justify-center mt-0.5">
-                {step.step}
-              </span>
-              <div className="flex flex-col gap-2 flex-1">
-                <p className="text-sm text-zinc-300">{step.instruction}</p>
-                {step.code && step.step !== 1 && (
-                  <CodeBlock code={step.code} />
-                )}
+            <li key={step.step} className="flex flex-col gap-2">
+              <div className="flex gap-4 items-start">
+                <span className="flex-none w-7 h-7 rounded-full bg-zinc-800 text-zinc-300 text-sm font-mono font-semibold flex items-center justify-center mt-0.5">
+                  {step.step}
+                </span>
+                <p className="text-sm text-zinc-300 flex-1">{step.instruction}</p>
               </div>
+              {step.code && step.step !== 1 && (
+                <CodeBlock code={step.code} />
+              )}
             </li>
           ))}
         </ol>

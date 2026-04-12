@@ -1,297 +1,250 @@
 ---
 intent: >
-  Fix eight visual inconsistencies found during a Playwright-based audit
-  at 1280px, 768px, and 375px — connector/step coordination, section
-  spacing rhythm, comparison card contrast, blockquote emphasis, footer
-  CTA weight, and CostStrip visual anchoring — without adding new beats,
-  new navigation, or marketing chrome.
+  Realign five landing page files with the updated root and LP specs: replace
+  the deprecated "collapses the specialist hire" hero headline with the
+  cascading-intent framing, rewrite CostStrip to drop the tax attorney
+  reference and ship only the universal anchor, replace the researcher's
+  regulated-domain annotation with operational domains, verify
+  HallucinationEvidence does not imply AIDE solves regulated domains, and
+  update meta descriptions in both layout.tsx and page.tsx to reflect the
+  new framing.
 ---
 
 ## Plan
 
-### Step 1: Normalize section spacing rhythm
+### Step 1: Replace hero headline and subhead in InstallHero
 
-Files:
-- `src/components/LandingPage/InstallHero/index.tsx`
-- `src/components/LandingPage/CostStrip/index.tsx`
-- `src/components/LandingPage/HowItWorks/index.tsx`
-- `src/components/LandingPage/VsRulesPacks/index.tsx`
-- `src/components/LandingPage/HallucinationEvidence/index.tsx`
-- `src/components/shared/InstallFooter/index.tsx`
+File: `src/components/LandingPage/InstallHero/index.tsx`
 
-- [x] Establish a two-tier spacing system: `py-20` for the hero (it earns
-      extra breathing room as the entry point), `py-16` for all five
-      content/mechanism sections (CostStrip, HowItWorks, VsRulesPacks,
-      HallucinationEvidence, InstallFooter). Change CostStrip from `py-14`
-      to `py-16` and InstallFooter from `py-10` to `py-16`. Leave
-      InstallHero at `py-20` and the three middle beats at `py-16`
-      (already correct).
+- [x] Replace the h1 text. The current headline is "AIDE collapses the
+      specialist hire into the agent loop." — this is explicitly listed in
+      the LP spec Bad Examples as a subtler failure mode. Replace it with
+      one of the two spec-approved variants. The LP spec Good Examples
+      section provides both verbatim:
+      - Variant A: "Describe what you want. AIDE cascades your intent into
+        working code."
+      - Variant B: "Tell your agents what to build, not how to build it."
+      The implementor picks one. Both are approved by the spec.
+- [x] Replace the subhead paragraph. The current subhead reads "A research
+      agent studies your domain, persists findings to your brain, and six
+      specialized agents..." — this leads with the research agent rather
+      than addressing both audiences. Replace with copy that names both
+      entry points (non-technical users who describe outcomes, and technical
+      builders who research unfamiliar domains) and mentions the six named
+      agents and the persistent brain. Use the spec Good Examples subhead
+      copy as the template (Variant A or B, matching whichever headline was
+      chosen). The subhead must end with "Works with Claude Code today."
 
-Spec trace: The spec mandates five beats in exact order with no
-decorative interstitials. Consistent vertical rhythm reinforces that
-these are peers in a single scroll path, not a grab-bag of unrelated
-sections. Playbook component architecture: spacing belongs to the page
-layout, but since these are self-contained sections with their own
-vertical padding, normalizing at the component level is acceptable when
-no orchestrator-level spacing wrapper exists.
+Spec trace: LP spec `outcomes.undesired` bullet 4 (copy that could be
+pasted onto any agent framework); LP spec Bad Examples paragraph 3
+(the "AIDE collapses the specialist hire" failure mode); LP spec
+Good Examples hero copy variants A and B; LP spec Strategy "Hero leads
+with cascading intent and accessibility."
 
 ---
 
-### Step 2: Add a visual anchor to CostStrip
+### Step 2: Rewrite CostStrip copy
 
 File: `src/components/LandingPage/CostStrip/index.tsx`
 
-- [x] Add a short label above the paragraph — a `<p>` element styled as
-      an uppercase monospace section label (matching the existing pattern
-      used in HowItWorks "brain — shared infrastructure" and VsRulesPacks
-      "Rules packs" / "AIDE" labels). Text: something like
-      "The specialist hire" or "What you replace" — a terse anchor that
-      tells the reader what category they are looking at. Keep it to 2-4
-      words. Do not add a full `<h2>` heading — the CostStrip is a
-      transitional beat, not a named section.
-- [x] Increase border contrast from `border-zinc-800` to `border-zinc-700`
-      on top and bottom borders so the strip reads as a distinct visual
-      unit against the `bg-zinc-950` page background.
+- [x] Remove the tax attorney reference entirely. The current copy opens
+      with "Tax attorneys charge $200-$1,000 per hour (Harness Wealth,
+      2025)." — this names a regulated-domain specialty, violating the
+      root spec `outcomes.undesired` bullet 1 and the LP spec Strategy
+      "Domain examples are operational, not regulated."
+- [x] Ship only the universal anchor figure. The LP spec Good Examples
+      provides the exact copy verbatim: "A six-month fractional specialist
+      engagement runs $30,000-$60,000 at the low end (Geisheker Group,
+      2026). AIDE captures the same domain knowledge for free via npx."
+      Use this copy as-is. The strong tags should wrap "$30,000-$60,000"
+      and the citation should be in a muted span, matching the existing
+      styling pattern.
+- [x] Change the section label from "What you replace" to a label that
+      reflects the new framing. The LP spec Strategy names this beat
+      "Cost-of-not-knowing strip" and the spec says it "anchors the
+      business case: domain knowledge has historically been expensive to
+      acquire." A label like "The cost of not knowing" or "What domain
+      knowledge costs" fits. The implementor picks the exact wording; the
+      constraint is that it must not reference replacing specialists or
+      hiring.
 
-Spec trace: The spec defines CostStrip as beat 2, "Specialist cost
-strip." It ships two figures with inline attribution and a terse
-conclusion. A label anchors the strip visually without adding a new
-beat or expanding its content. The border bump keeps it from looking
-orphaned. No heading hierarchy change — the spec does not give CostStrip
-a heading in the Good Examples section; the label is decorative/navigational.
+Spec trace: LP spec Good Examples "Cost-of-not-knowing strip copy (ship
+verbatim, cite inline)"; LP spec Strategy "Cost strip ships one anchor
+figure"; root spec `outcomes.undesired` bullet 1 (no regulated domains).
 
 ---
 
-### Step 3: Fix connector line / step alignment in HowItWorks
+### Step 3: Replace researcher annotation in HowItWorks
 
 File: `src/components/LandingPage/HowItWorks/index.tsx`
 
-- [x] Replace the fixed `h-12` connector line between pipeline steps with
-      a flex-based approach: make the connector line fill the remaining
-      vertical space of its parent rather than using a hardcoded height.
-      The parent `<div>` for each node already uses `flex flex-col
-      items-center`. Change the connector `<div>` from `w-px h-12` to
-      `w-px flex-1` (or `w-px grow`) so it stretches to match however
-      tall the adjacent text content is.
-- [x] Remove `pb-10` from the text container (the `<div>` at line 62) and
-      replace it with a consistent bottom margin or gap that coordinates
-      with the connector. The goal: the connector line always spans from
-      one step circle to the next regardless of annotation text length,
-      and no annotation text visually overflows past the connector on
-      any viewport width.
-- [x] Verify at 375px that long annotation text (e.g., the spec-writer
-      and researcher annotations are the longest) does not extend below
-      the connector line.
+- [x] Change the researcher node annotation. The current text is "Studies
+      the domain — legal, clinical, tax, compliance — and writes findings
+      to the brain." Replace the parenthetical domain list with operational
+      domains. The LP spec Strategy says: "The researcher annotation names
+      operational domains (internal tools, content production) not regulated
+      ones." Use examples like "internal tools, content production,
+      workflows" or similar operational-domain phrasing. The annotation
+      must still end with "writes findings to the brain" (or equivalent)
+      since that is the researcher's core action.
 
-Spec trace: The spec requires six named agents shown as vertical nodes
-with one-sentence annotations. The pipeline visualization must work at
-all three audit widths. Playbook responsive rule: use Tailwind responsive
-prefixes, not runtime calculation.
+Spec trace: LP spec Strategy "Domain examples are operational, not
+regulated — enforced locally"; root spec `outcomes.undesired` bullet 1;
+LP spec Bad Examples paragraph 3 (researcher listing "legal, clinical,
+tax, compliance").
 
 ---
 
-### Step 4: Increase contrast on VsRulesPacks comparison cards
-
-File: `src/components/LandingPage/VsRulesPacks/index.tsx`
-
-- [x] Widen the visual gap between the "Rules packs" card and the "AIDE"
-      card. Current difference is subtle (`border-zinc-800 bg-zinc-900/30`
-      vs `border-zinc-700 bg-zinc-900/50`). Change the AIDE card to use
-      a more visible treatment — raise the border to `border-zinc-600` and
-      the background to `bg-zinc-900/70` (or a similarly distinct step up).
-      The Rules packs card should feel muted/recessed; the AIDE card should
-      feel elevated/highlighted.
-- [x] Fix the `—` and `+` marker contrast. Change the `—` markers from
-      `text-zinc-600` to `text-zinc-500` and the `+` markers from
-      `text-zinc-500` to `text-zinc-400` (or `text-emerald-500` /
-      `text-emerald-400` for a subtle positive signal — implementor
-      judgment call, but the color must be readable against its
-      background). The markers are semantic — they communicate "bad" vs
-      "good" — and must be legible without squinting.
-
-Spec trace: Strategy beat 4 requires a dedicated section naming rules
-packs as the nearest-neighbor category and describing specific mechanical
-differences. The comparison only works if the two sides are visually
-distinguishable. The spec's Bad Examples section warns against patterns
-that look acceptable in isolation but fail their communicative purpose.
-
----
-
-### Step 5: Improve mobile stacked comparison cards
-
-File: `src/components/LandingPage/VsRulesPacks/index.tsx`
-
-- [x] When the grid collapses to single column at `<sm`, add explicit
-      visual hierarchy to distinguish the two stacked cards. Options
-      (implementor picks one or combines):
-      - Add a small horizontal rule or "vs" divider element between the
-        two cards when stacked (visible only below `sm:` breakpoint, hidden
-        at `sm:` and above via `sm:hidden`).
-      - Give the AIDE card a left accent border (`border-l-2` or
-        `border-l-3` with a brighter color like `border-zinc-500`) that
-        appears only at mobile, reinforcing "this is the one to pay
-        attention to."
-      - Optionally dim the Rules packs card further on mobile (e.g.,
-        `opacity-80` below `sm:`) so the AIDE card pops by contrast.
-- [x] Verify at 375px that the stacked cards communicate "this is bad /
-      this is good" without needing side-by-side contrast.
-
-Spec trace: Same as Step 4. The comparison must survive the mobile
-single-column collapse. Playbook responsive render functions pattern:
-when layouts diverge structurally between breakpoints, consider separate
-render paths. Here the divergence is mild (visual treatment, not DOM
-restructuring), so Tailwind responsive prefixes suffice.
-
----
-
-### Step 6: Strengthen the blockquote in HallucinationEvidence
+### Step 4: Verify HallucinationEvidence framing
 
 File: `src/components/LandingPage/HallucinationEvidence/index.tsx`
 
-- [x] Increase the blockquote left border from `border-l-2 border-zinc-700`
-      to `border-l-2 border-zinc-500` (or `border-l-3 border-zinc-500`)
-      so the quote is visually distinct from body text against the dark
-      background. The quote is a key persuasion element per the spec —
-      it cites peer-reviewed evidence against other tools' approach and
-      must stand out.
-- [x] Optionally add a subtle background tint to the blockquote container
-      (e.g., `bg-zinc-900/30 rounded-r-lg p-5` wrapping the quote and
-      its footer) to give it more visual weight. This is an implementor
-      judgment call — the goal is emphasis without looking like marketing
-      chrome.
+- [x] Read the framing paragraph below the blockquote (lines 24-29). The
+      current text says: "This finding applies to systems that use flat
+      instruction files — rules packs that sit in the context window with
+      no verification layer. When an agent has no structured intent spec
+      to check its output against, it cannot detect when it has drifted.
+      The research documents the failure mode, not AIDE's track record."
+      Verify this paragraph does NOT imply AIDE solves regulated domains.
+      The LP spec says the hallucination callout is "cited as evidence
+      against other tools' approach, never as evidence of AIDE's own track
+      record" and "reinforcing why AIDE targets operational domains, not
+      regulated ones." The current copy appears compliant — it explicitly
+      says "the research documents the failure mode, not AIDE's track
+      record" and frames the issue as a rules-packs limitation. If the
+      implementor confirms no regulated-domain implication, mark this step
+      done with no changes. If any implication is found, adjust the
+      framing to reinforce operational-domain targeting.
 
-Spec trace: Strategy beat 5 requires the Stanford HAI citation
-"attributed verbatim" as evidence. The spec's persuasion structure places
-this as the final piece of evidence before the closing CTA. The
-blockquote must earn visual attention commensurate with its role.
-
----
-
-### Step 7: Give the footer install CTA visual weight
-
-File: `src/components/shared/InstallFooter/index.tsx`
-
-- [x] Wrap the `npx aidemd-mcp init` text in a styled code block or
-      bordered container that matches the visual treatment of the hero's
-      install command. Currently it is plain monospace text (`<code>`
-      inside a `<p>`) which reads as an afterthought rather than a CTA.
-      Options (implementor picks):
-      - Wrap in a small bordered container (`rounded border
-        border-zinc-700 bg-zinc-900/50 px-3 py-2 font-mono`) matching
-        the design language of the HowItWorks brain card.
-      - Use the same `CodeBlock` component the hero uses (import from
-        `@/components/shared/CodeBlock`), but smaller / more compact if
-        it supports a size variant.
-- [x] Keep the "See full install instructions" link and the "Read the
-      canonical spec" link exactly as they are. Only the command display
-      changes.
-
-Spec trace: The spec says the final install block is "identical to the
-hero's install block" — it is the "safety-net CTA for visitors who
-scrolled past the first one." The current implementation does not match
-the hero's visual treatment. Full parity with the hero's CodeBlock is
-ideal; a styled container is the minimum.
+Spec trace: LP spec Strategy "Hallucination evidence" paragraph; root
+spec Strategy "Domain examples are operational, not regulated."
 
 ---
 
-### Step 8: Evaluate and reject — brand mark above the fold (Finding 8)
+### Step 5: Update meta description in root layout
 
-No file changes.
+File: `src/app/layout.tsx`
 
-- [x] Acknowledge finding 8 (no brand/logo mark above the fold on mobile)
-      and explicitly decline it. The spec states: "No persistent top
-      navigation bar. The landing has no header that offers the visitor a
-      way off the conversion path." And: undesired outcomes include "stock-
-      icon feature grids" and anything that "reads as marketing-site
-      chrome." A brand mark / wordmark above the hero is a header element
-      that precedes the install command, pushing the install block below
-      the fold on mobile — directly contradicting the spec's requirement
-      that "a visitor reaches the install command before any scrolling."
-      The h1 headline IS the identity anchor.
+- [x] Replace the `description` field in the exported `metadata` constant.
+      The current value is: "The canonical methodology for agentic
+      engineering. Install aidemd-mcp and give your AI agents byte-faithful,
+      timestamped context." — this references "byte-faithful" and
+      "timestamped context," both listed in the LP spec `outcomes.undesired`
+      bullet 7 as deprecated concepts that must not appear in meta copy.
+      Replace with a description that conveys cascading intent, the
+      two-audience accessibility story (describe what you want / research
+      what you need), and the six-agent pipeline. Keep it under 160
+      characters for SEO. The implementor writes the exact copy; the LP
+      spec Meta description direction provides the constraints.
 
-Spec trace: `outcomes.undesired` bullet 1 (no persistent top nav);
-`outcomes.desired` bullet 1 (install command before scrolling); Strategy
-"No persistent top navigation" paragraph.
+Spec trace: LP spec `outcomes.undesired` bullet 7 (meta descriptions
+must not reference "byte-faithful," "timestamped context," "collapses
+the specialist hire"); LP spec Good Examples "Meta description direction."
 
 ---
 
-### Step 9: Visual verification
+### Step 6: Update meta description and og:description in page.tsx
 
-- [x] Run the dev server and screenshot at 1280px, 768px, and 375px.
-      Verify all seven changes (Steps 1-7) render correctly.
-- [x] Confirm the five-beat structure is intact: InstallHero, CostStrip,
-      HowItWorks, VsRulesPacks, HallucinationEvidence, then InstallFooter.
-      No new components were added, no beats were reordered.
-- [x] Confirm no persistent top navigation was introduced.
-- [x] Confirm the HowItWorks connector lines track annotation height at
-      all three widths.
-- [x] Confirm the VsRulesPacks cards are visually distinguishable at both
-      desktop (side-by-side) and mobile (stacked).
+File: `src/app/page.tsx`
+
+- [x] Review the `description` and `openGraph.description` fields. The
+      current value is: "Six specialized agents — spec-writer, researcher,
+      domain expert, architect, implementor, QA — share a persistent brain
+      across every session. Self-serve install via npx." This is already
+      closer to the new framing — it names the six agents and the brain.
+      However, it does not mention cascading intent or the two-audience
+      accessibility angle. Update both the `description` and
+      `openGraph.description` to lead with cascading intent (intent in,
+      working code out) and mention the six agents and persistent brain.
+      Keep the self-serve install mention. Both fields should use the same
+      string. Keep under 160 characters.
+
+Spec trace: LP spec Good Examples "Meta description direction"; LP spec
+Strategy "Hero leads with cascading intent and accessibility."
+
+---
+
+### Step 7: Verify no other files reference deprecated framing
+
+- [x] Search the `src/` directory for any remaining references to:
+      - "collapses the specialist hire"
+      - "byte-faithful"
+      - "timestamped context"
+      - "legal, clinical, tax, compliance" (the old domain list)
+      - "tax attorney" or "tax attorneys"
+      If any are found in files other than `.aide` specs (specs are
+      already updated and must not be modified), add them as additional
+      changes in this step. If none are found, mark done.
+
+Spec trace: root spec `outcomes.undesired` bullet 1; LP spec
+`outcomes.undesired` bullet 7.
+
+---
+
+### Step 8: Visual verification
+
+- [x] Run the dev server and verify at desktop (1280px), tablet (768px),
+      and mobile (375px) that:
+      - The hero shows the new headline and subhead
+      - The CostStrip shows only the universal anchor figure with no tax
+        attorney reference
+      - The HowItWorks researcher annotation names operational domains
+      - The HallucinationEvidence section does not imply AIDE solves
+        regulated domains
+      - The page title and meta description in the document head reflect
+        the updated copy
+- [x] Confirm the five-beat structure is intact and no new beats, navigation,
+      or chrome were introduced.
+
+Spec trace: LP spec `outcomes.desired` bullets 1-4; LP spec
+`outcomes.undesired` bullets 1-3.
 
 ## Decisions
 
-### D1: Two-tier spacing (py-20 hero / py-16 everything else) over uniform
+### D1: Copy changes only — no structural or styling changes
 
-The hero earns extra vertical breathing room because it is the entry
-point and contains the most content (headline, subhead, JSON code block,
-three-step sequence, troubleshooting callout). Making all sections py-20
-would waste vertical space on shorter sections like CostStrip and
-HallucinationEvidence. Making all sections py-16 would cramp the hero.
-Two tiers create a clear hierarchy: hero is the arrival, everything else
-is the scroll path.
+This plan touches only text content and meta tags. No component structure,
+no CSS, no new files, no deleted files. The previous plan.aide addressed
+visual/styling issues and those changes are already shipped. This plan is
+scoped strictly to the framing realignment the updated specs require.
+Mixing structural changes with copy changes would make the diff harder to
+review and risks introducing regressions in the visual fixes already
+landed.
 
-### D2: CostStrip gets a label, not a heading
+### D2: HallucinationEvidence is verify-only, not rewrite
 
-The spec's Good Examples section shows the CostStrip as a paragraph with
-inline figures — no heading. Adding a full `<h2>` would elevate it to
-the same heading hierarchy as "How it works" and "Not a rules pack,"
-which it does not deserve — it is a transitional beat, not a named
-section. An uppercase monospace label (matching the existing pattern in
-HowItWorks and VsRulesPacks) anchors it visually without inflating its
-heading rank.
+The current HallucinationEvidence framing paragraph already says "the
+research documents the failure mode, not AIDE's track record" — this
+appears compliant with the spec. The plan includes a verification step
+rather than a mandatory rewrite because the spec does not provide
+replacement copy for this section and the existing copy may already be
+correct. If the implementor finds a problem during verification, they
+adjust; otherwise, no change.
 
-### D3: Flex-based connector over calculated height
+### D3: Layout.tsx description is a separate step from page.tsx
 
-The HowItWorks connector lines currently use a fixed `h-12` which breaks
-when annotation text wraps to different heights across breakpoints. A
-flex-grow approach lets the connector fill available space dynamically.
-This is pure CSS, no JS, and follows the playbook rule of using Tailwind
-over runtime calculation. Alternative considered: setting min-height on
-all steps — rejected because it wastes space on short annotations and
-doesn't adapt to font-size changes.
+The root layout (`layout.tsx`) sets the site-wide default metadata. The
+page-level metadata in `page.tsx` overrides it for the landing page.
+Both need updating but for different reasons: layout.tsx has the
+"byte-faithful" and "timestamped context" terms that are explicitly
+forbidden; page.tsx is closer to correct but missing the cascading-intent
+lead. Separating them as distinct steps ensures neither is skipped and
+the implementor can verify each independently.
 
-### D4: Comparison card contrast via border + background, not color accents
+### D4: Implementor picks between hero Variant A and Variant B
 
-The spec demands "engineering-credible aesthetic" and the bad examples
-warn against marketing chrome. Using a green/red color scheme for the
-comparison cards would read as a marketing technique. Instead, contrast
-comes from the zinc scale: the Rules packs card stays muted (lower
-border, lower background opacity) while the AIDE card steps up in both.
-The `+` markers may use a subtle emerald tone at implementor discretion,
-but the cards themselves stay within the zinc palette.
+The LP spec provides two approved hero copy variants and says "the
+implementor picks between them at build time." This plan does not
+pre-select because both are spec-approved and the choice is aesthetic,
+not architectural. The implementor should pick the one that reads better
+with the chosen subhead copy. The constraint is that they must pick one
+of the two — no third option, no hybrid, no rewrite.
 
-### D5: Finding 8 (brand mark) rejected per spec
+### D5: CostStrip label wording is implementor's call within constraints
 
-Adding a brand mark above the fold on mobile pushes the install command
-further down, directly violating the spec's first desired outcome. The
-spec explicitly forbids a header and warns against any element that
-creates an off-ramp before the install block. The h1 headline serves as
-the identity anchor. If brand recognition becomes a concern, it belongs
-in the meta tags (og:image, favicon), not in the DOM above the hero.
-
-### D6: Footer CTA — CodeBlock reuse preferred over custom container
-
-The spec says the final install block should be "identical to the hero's
-install block." Reusing the existing `CodeBlock` component from
-`@/components/shared/CodeBlock` is the most faithful implementation.
-If CodeBlock is too large/verbose for the footer context, the implementor
-may use a styled container that visually matches — but CodeBlock reuse
-is the first choice per the spec's "identical" language.
-
-### D7: No new files created
-
-All changes are modifications to existing component files. No new
-helpers, no new shared components, no new folders. The visual fixes
-are styling adjustments within existing component boundaries. This
-follows the progressive disclosure principle: the folder structure
-should not change when the visual treatment changes.
+The spec names this beat "Cost-of-not-knowing strip" but does not
+prescribe the exact label text. The previous plan used "What you replace"
+which is now outdated (it implies replacing a specialist). The implementor
+picks a label that communicates "domain knowledge is expensive" without
+referencing hiring or specialists. "The cost of not knowing" is a
+suggestion, not a mandate.

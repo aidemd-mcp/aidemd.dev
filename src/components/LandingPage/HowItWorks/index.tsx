@@ -13,7 +13,7 @@ const nodes: PipelineNode[] = [
   {
     step: 2,
     label: "researcher",
-    annotation: "Studies the domain — legal, clinical, tax, compliance — and writes findings to the brain.",
+    annotation: "Studies the domain — internal tools, content production, workflows — and writes findings to the brain.",
   },
   {
     step: 3,
@@ -69,7 +69,7 @@ const HowItWorks = () => {
 
         <div className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 flex flex-col gap-3">
           <p className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
-            brain — shared infrastructure
+            brain (Obsidian PKB) — shared infrastructure
           </p>
           <p className="text-sm text-zinc-500">
             Persistent Obsidian vault shared across every agent and every session. Not a pipeline stage — a knowledge layer the pipeline reads and writes.
@@ -89,6 +89,14 @@ const HowItWorks = () => {
               <span className="text-zinc-400">architect</span>
               {" "}reads coding playbook from{" "}
               <span className="text-zinc-400">brain</span>
+            </li>
+            <li>
+              <span className="text-zinc-400">YOU</span>
+              {" "}writes conventions into{" "}
+              <span className="text-zinc-400">playbook</span>
+            </li>
+            <li className="italic text-zinc-500">
+              the agent learns over time
             </li>
           </ul>
         </div>

@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AIDE — Autonomous Intent-Driven Engineering",
   description:
-    "The canonical methodology for agentic engineering. Install aidemd-mcp and give your AI agents byte-faithful, timestamped context.",
+    "Describe what you want. AIDE cascades your intent through six specialized agents and a persistent brain into working code. Self-serve via npx.",
 };
 
 const organizationSchema = {

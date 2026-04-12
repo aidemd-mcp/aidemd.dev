@@ -22,11 +22,12 @@ const HallucinationEvidence = () => {
         </blockquote>
 
         <p className="text-sm text-zinc-500 leading-relaxed">
-          This finding applies to systems that use flat instruction files —
-          rules packs that sit in the context window with no verification layer.
-          When an agent has no structured intent spec to check its output
-          against, it cannot detect when it has drifted. The research documents
-          the failure mode, not AIDE&apos;s track record.
+          This is purpose-built legal AI — systems designed from the ground up
+          for a single domain — and they still hallucinate one in six times.
+          AIDE&apos;s answer is persistent, auditable research a human can verify
+          before agents ship code, targeting operational domains where iteration
+          is cheap, not regulated domains where errors are irreversible. The
+          research documents the failure mode, not AIDE&apos;s track record.
         </p>
       </div>
     </section>

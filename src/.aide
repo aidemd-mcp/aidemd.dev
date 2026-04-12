@@ -2,22 +2,23 @@
 scope: src/
 intent: >
   aidemd.dev is the public face and canonical record of the AIDE methodology.
-  It does two jobs at once: it converts a first-time visitor — a skeptical
-  engineer or engineering lead — into an installed user of the aidemd-mcp
-  server in a single visit, and it serves as the byte-faithful, timestamped,
-  archivable record of the canonical methodology itself, the version a
-  patent examiner, the Wayback Machine, or a Fediverse post can point to
-  as the undisputed original. A visitor leaves either with AIDE installed
-  in their Claude Code setup, or having read the canonical spec from the
-  source that establishes priority for it — often both.
+  It does two jobs at once: it converts a first-time visitor — whether a
+  technical builder working outside their domain expertise or a non-technical
+  user who knows what they want built — into an installed user of the
+  aidemd-mcp server in a single visit, and it serves as the byte-faithful,
+  timestamped, archivable record of the canonical methodology itself, the
+  version a patent examiner, the Wayback Machine, or a Fediverse post can
+  point to as the undisputed original. A visitor leaves either with AIDE
+  installed in their Claude Code setup, or having read the canonical spec
+  from the source that establishes priority for it — often both.
 outcomes:
   desired:
-    - A first-time visitor understands the AI Domain Expert mechanism, trusts the site is serious, and pastes the aidemd-mcp MCP config into their Claude Code .mcp.json within a single visit; no second page load is required beyond optionally visiting docs after install.
+    - A first-time visitor understands that AIDE lets anyone build software by capturing intent — what you want and why — and cascading it through structured layers into working code; they trust the site is serious, and paste the aidemd-mcp MCP config into their Claude Code .mcp.json within a single visit; no second page load is required beyond optionally visiting docs after install.
     - Every canonical doc page rendered on the site is byte-faithful to its source file in the `.aide/` hub that ships with `aide_init` on disk; a reader who diffs the rendered content against the source finds zero semantic differences.
     - Every published canonical doc page carries a visible publication date, source-file commit SHA, and stable citation URL; every publish triggers a Wayback Machine Save Page Now and an RSS/Atom feed entry before the publish is considered complete.
     - v1 install is Claude Code only, and the landing says so without hedging or implying additional framework support.
   undesired:
-    - Any implication that teams have built legal, medical, tax, compliance, or other domain-critical products "with AIDE." Nobody has. The mechanism is what AIDE enables; claimed user outcomes are not. No case studies, no testimonials, no "Trusted by" logo strip, no founder quotes, no "built with AIDE" badges. The landing and docs talk about the class of problem AIDE addresses, never about completed user work.
+    - Any implication that AIDE is suitable for high-stakes regulated domains — legal, medical, tax, compliance — where mistakes have irreversible consequences. AIDE works best where iteration is cheap and stakes are operational: internal tools, content production, workflows. Positioning AIDE against domains where the stakes argument works against it undermines credibility with the exact audience we're trying to reach. No case studies, no testimonials, no "Trusted by" logo strip, no founder quotes, no "built with AIDE" badges. The landing and docs talk about cascading intent and accessibility, never about completed user work.
     - Scope creep into blog, changelog, playground, hosted try-it, search, newsletter, pricing page, waitlist, contact form, Discord, team page, about page, or any engagement surface. v1 is landing + docs only. Each extra surface dilutes the single conversion path, multiplies maintenance cost, and creates an empty niche that invites its own scope creep. The folder structure must not reserve slots for surfaces this list forbids.
     - Marketing hedges — "helps you," "empowers teams to," "unlock the power of," "AI-native," "next-gen," "transform your workflow" — that survive draft review because they sound like something. Engineers skim past them; the copy budget has zero to spare.
     - Any gate between the visitor and the install command: email capture, waitlist, "request demo," "talk to sales," sign-in wall, "join the beta." AIDE's structural opening versus Harvey / Hippocratic AI / Decagon / Sierra is self-serve install with no demo gate; any gate on the landing forfeits that advantage.
@@ -39,26 +40,35 @@ only in a git repo is invisible to the people making framework decisions;
 a methodology that lives only in a marketing site is unquotable and
 unarchivable. aidemd.dev has to do both at once.
 
-The audience is engineers and engineering leads evaluating how to get
-real work out of agent systems. They have already seen dozens of
-agent-framework landing pages and have learned to detect the shape of
-generic AI marketing within three seconds. The site must earn engineering
-credibility in the first fold through copy density and concrete claims,
-not through visual polish. The stakes of getting it wrong are total: a
-generic landing produces no installs, no priority record, and no
-thought leadership, and the methodology loses the window where it can
-stake its claim in the category.
+The audience is two groups with the same need. **Technical builders
+working outside their domain expertise** — they know how to code but
+don't know content production workflows, or internal-tool UX patterns
+for a domain they've never built for. They research it,
+capture it in the brain, and AIDE cascades that knowledge into working
+code through layered specs. **Non-technical users with domain knowledge
+or a clear outcome** — they describe what they want, AIDE captures
+intent as a spec, and agents turn it into working software. Both groups
+have seen dozens of agent-framework landing pages and have learned to
+detect the shape of generic AI marketing within three seconds. The site
+must earn credibility in the first fold through copy density and
+concrete claims, not through visual polish. The stakes of getting it
+wrong are total: a generic landing produces no installs, no priority
+record, and no thought leadership, and the methodology loses the window
+where it can stake its claim in the category.
 
-The lead value proposition is the **AI Domain Expert** framing, anchored
-verbatim in `.aide/aide-spec.md` line 5: "AIDE is also an AI Domain
-Expert — a research agent that lifts the domain-expertise burden off
-an engineering team. Building a legal processing app traditionally
-requires hiring a legal expert. Building a medical triage tool
-traditionally requires a clinician. Building a tax system traditionally
-requires an accountant. AIDE collapses that role into the agent loop."
-The landing leads with this mechanism as the business outcome; the
-methodology framing ("intent is the contract, code is ephemeral") is
-the *how*, not the headline.
+The lead value proposition is **cascading intent** — layers of intent
+flowing from spec to code, organized by strict domain boundaries,
+executable by anyone who can describe what they want or research what
+they need. The AI Domain Expert mechanism (aide-spec.md line 5) is real
+and valuable, but the *lead* is access: AIDE lets anyone build software
+by capturing intent in a format agents can execute. The methodology
+framing ("intent is the contract, code is ephemeral") is the structural
+backbone, not a secondary "how" — it IS the differentiator. The domain
+expert capability is one powerful consequence of that structure, not the
+headline. Specialists are not replaced; they are repositioned as the
+people who put knowledge into the brain in the first place — or they
+were never needed because the domain is researchable and the stakes are
+operational.
 
 The competitive anchor is **rules packs** (CLAUDE.md, AGENTS.md,
 .cursorrules) — the nearest-neighbor category and the one a skeptical
@@ -98,13 +108,19 @@ shadcn both validated the pattern. AIDE has no UI screenshot to show,
 so collapsing visual and primary CTA into the same code block is
 on-pattern rather than a compromise.
 
-**Domain-claim rule: mechanism yes, usage no.** The landing names the
-class of domain problems AIDE's mechanism addresses (legal, medical,
-tax, compliance) and cites Stanford HAI's 1-in-6 hallucination finding
-(Dahl et al., 2024) as evidence *against other tools' approach* —
-purpose-built legal AI (Lexis+ AI, Ask Practical Law AI) still
-hallucinates on over one in six queries. Never as evidence of AIDE's
-own track record. No completed user outcomes are claimed because none
+**Domain examples are operational, not regulated.** The landing names
+the class of domain problems where AIDE shines — internal tools,
+content production, workflow automation — domains
+where iteration is cheap, knowledge is researchable, and mistakes mean
+"we send a bad email" not "we misdiagnose someone." High-risk regulated
+domains (legal, medical, tax, compliance) are not named as AIDE use
+cases because we would never trust the methodology for those stakes,
+and claiming otherwise undermines credibility with anyone technical
+enough to think it through. The Stanford HAI hallucination finding
+(Dahl et al., 2024) is still cited as evidence that even purpose-built
+domain AI gets it wrong — reinforcing why AIDE targets operational
+domains where the cost of iteration is low, not domains where errors
+are irreversible. No completed user outcomes are claimed because none
 exist.
 
 **Competitive anchor is rules packs, not multi-agent frameworks.** Rules
@@ -167,26 +183,29 @@ and install content say so without hedging.
 ## Good examples
 
 A visitor opens aidemd.dev at 2:14pm on a weekday afternoon. The fold
-shows one sentence — either "AIDE collapses the specialist hire into
-the agent loop" or "Give your agents a domain expert that stays with
-the project" — a single subhead line naming the research-to-brain
-mechanism, and the install code block they will paste into their
-`.mcp.json`, with a copy button. Beneath it, a short three-step sequence:
-paste this, restart Claude Code, run `aide_init` from the tool palette.
-They scroll once, see a concrete cost strip ("tax attorneys $200–$1,000/hr
-[Harness Wealth, 2025]; six-month fractional specialist engagement
-$30K–$60K"), then a "how it works" block showing the
-research → brain → intent → downstream-agent pipeline, then a "vs rules
-packs" section naming the persistence gap, then a Stanford HAI
-hallucination callout cited as "Dahl et al., Stanford HAI, 2024," then
-a final install block identical to the hero. Total reading time about
-sixty seconds; install completable in under two minutes. Later that
-week they cite aide-spec.md in a Slack thread; the link resolves to
-`/docs/aide-spec` with a header showing "Published 2026-04-11 · Source
-commit a1b2c3d · Archived: web.archive.org/web/2026…/aidemd.dev/docs/aide-spec".
-Nobody on the team asks "is this the real spec?" because the header
-answers it. A week after that, a patent-priority question is resolved
-in under a minute by pointing at the Wayback snapshot.
+shows one sentence — "Describe what you want. AIDE cascades your intent
+into working code." or "Tell your agents what to build, not how to
+build it." — a single subhead naming the two entry points (describe
+outcomes if non-technical; research and capture if technical in an
+unfamiliar domain), and the install code block they will paste into
+their `.mcp.json`, with a copy button. Beneath it, a short three-step
+sequence: paste this, restart Claude Code, run `aide_init` from the
+tool palette. They scroll once, see a concrete cost strip anchored to
+operational domains ("a fractional marketing strategist runs $30K–$60K
+for six months; AIDE is free via npx"), then a "how it works" block
+showing the six-agent pipeline with the brain as shared infrastructure,
+then a "vs rules packs" section naming the persistence gap, then a
+Stanford HAI hallucination callout cited as "Dahl et al., Stanford HAI,
+2024" (reinforcing why AIDE targets operational domains, not regulated
+ones), then a final install block identical to the hero. Total reading
+time about sixty seconds; install completable in under two minutes.
+Later that week they cite aide-spec.md in a Slack thread; the link
+resolves to `/docs/aide-spec` with a header showing "Published
+2026-04-11 · Source commit a1b2c3d · Archived:
+web.archive.org/web/2026…/aidemd.dev/docs/aide-spec". Nobody on the
+team asks "is this the real spec?" because the header answers it. A
+week after that, a patent-priority question is resolved in under a
+minute by pointing at the Wayback snapshot.
 
 ## Bad examples
 
