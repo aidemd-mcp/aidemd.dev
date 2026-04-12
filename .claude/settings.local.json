@@ -4,7 +4,12 @@
       "Bash(rtk ls:*)",
       "Bash(rtk tsc:*)",
       "Bash(npx vitest:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "mcp__aide__aide_discover",
+      "mcp__aide__aide_read",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_resize"
     ]
   }
 }

@@ -1,7 +1,10 @@
 const CostStrip = () => {
   return (
-    <section className="w-full py-14 px-4 border-t border-b border-zinc-800">
+    <section className="w-full py-16 px-4 border-t border-b border-zinc-700">
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
+        <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
+          What you replace
+        </p>
         <p className="text-base text-zinc-300 leading-relaxed">
           Tax attorneys charge{" "}
           <strong className="text-zinc-100">$200–$1,000 per hour</strong>

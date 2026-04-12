@@ -1,213 +1,297 @@
 ---
 intent: >
-  Update the four out-of-alignment files — HowItWorks, InstallHero,
-  VsRulesPacks, and page.tsx — so the landing page matches the updated
-  .aide spec's six-agent pipeline, AI Domain Expert framing, brain-as-
-  shared-infrastructure model, and corrected meta descriptions.
+  Fix eight visual inconsistencies found during a Playwright-based audit
+  at 1280px, 768px, and 375px — connector/step coordination, section
+  spacing rhythm, comparison card contrast, blockquote emphasis, footer
+  CTA weight, and CostStrip visual anchoring — without adding new beats,
+  new navigation, or marketing chrome.
 ---
 
 ## Plan
 
-### Step 1: Update page.tsx meta descriptions
+### Step 1: Normalize section spacing rhythm
 
-File: `src/app/page.tsx`
+Files:
+- `src/components/LandingPage/InstallHero/index.tsx`
+- `src/components/LandingPage/CostStrip/index.tsx`
+- `src/components/LandingPage/HowItWorks/index.tsx`
+- `src/components/LandingPage/VsRulesPacks/index.tsx`
+- `src/components/LandingPage/HallucinationEvidence/index.tsx`
+- `src/components/shared/InstallFooter/index.tsx`
 
-- [x] Replace the `description` field in the `metadata` export. The current
-      value references "byte-faithful, timestamped, archivable context" which
-      the spec's `outcomes.undesired` explicitly forbids. Write new copy that:
-      - Names the six-agent pipeline (spec-writer, researcher, domain expert,
-        architect, implementor, QA)
-      - Names the brain as cross-session knowledge
-      - Names the self-serve install (npx / MCP config)
-      - Uses no marketing hedges, no multi-framework claims
-      - Is concise enough for a meta description (under 160 chars ideal)
-- [x] Apply the identical replacement to `openGraph.description`.
-- [x] Leave `title` and `openGraph.title` unchanged — they are fine.
+- [x] Establish a two-tier spacing system: `py-20` for the hero (it earns
+      extra breathing room as the entry point), `py-16` for all five
+      content/mechanism sections (CostStrip, HowItWorks, VsRulesPacks,
+      HallucinationEvidence, InstallFooter). Change CostStrip from `py-14`
+      to `py-16` and InstallFooter from `py-10` to `py-16`. Leave
+      InstallHero at `py-20` and the three middle beats at `py-16`
+      (already correct).
 
-Spec trace: `outcomes.undesired` final bullet; Good Examples "Meta description
-direction" paragraph.
-
----
-
-### Step 2: Update InstallHero headline and subhead
-
-File: `src/components/LandingPage/InstallHero/index.tsx`
-
-- [x] Replace the `<h1>` content. The current "Ship intent, not instructions."
-      is methodology framing. The spec says the hero leads with the business
-      outcome — "collapses the specialist hire" or "domain expert that stays
-      with the project" — and the methodology framing belongs in beat 3. Pick
-      one of the two Good Example variants (C' or D) as the headline. C' is
-      recommended because it is more concrete and verb-first.
-
-- [x] Replace the `<p>` subhead. Current text says "your project's brain" and
-      lists "planner, architect, implementor, QA" (4 roles, wrong names). Fix:
-      - Change "your project's brain" to "your brain"
-      - Name all six agents: spec-writer, researcher, domain expert, architect,
-        implementor, QA
-      - Match the tone and structure of the chosen Good Example variant
-
-- [x] Do NOT touch: the CodeBlock, the commandSequence list, the
-      TroubleshootingCallout, or any layout/styling.
-
-Spec trace: Strategy "Hero carries the AI Domain Expert framing" paragraph;
-Good Examples Variant C' and Variant D.
+Spec trace: The spec mandates five beats in exact order with no
+decorative interstitials. Consistent vertical rhythm reinforces that
+these are peers in a single scroll path, not a grab-bag of unrelated
+sections. Playbook component architecture: spacing belongs to the page
+layout, but since these are self-contained sections with their own
+vertical padding, normalizing at the component level is acceptable when
+no orchestrator-level spacing wrapper exists.
 
 ---
 
-### Step 3: Update HowItWorks to show six named agents plus brain-as-infrastructure
+### Step 2: Add a visual anchor to CostStrip
+
+File: `src/components/LandingPage/CostStrip/index.tsx`
+
+- [x] Add a short label above the paragraph — a `<p>` element styled as
+      an uppercase monospace section label (matching the existing pattern
+      used in HowItWorks "brain — shared infrastructure" and VsRulesPacks
+      "Rules packs" / "AIDE" labels). Text: something like
+      "The specialist hire" or "What you replace" — a terse anchor that
+      tells the reader what category they are looking at. Keep it to 2-4
+      words. Do not add a full `<h2>` heading — the CostStrip is a
+      transitional beat, not a named section.
+- [x] Increase border contrast from `border-zinc-800` to `border-zinc-700`
+      on top and bottom borders so the strip reads as a distinct visual
+      unit against the `bg-zinc-950` page background.
+
+Spec trace: The spec defines CostStrip as beat 2, "Specialist cost
+strip." It ships two figures with inline attribution and a terse
+conclusion. A label anchors the strip visually without adding a new
+beat or expanding its content. The border bump keeps it from looking
+orphaned. No heading hierarchy change — the spec does not give CostStrip
+a heading in the Good Examples section; the label is decorative/navigational.
+
+---
+
+### Step 3: Fix connector line / step alignment in HowItWorks
 
 File: `src/components/LandingPage/HowItWorks/index.tsx`
 
-This is the largest change. The current 4-node numbered pipeline
-(Research Agent -> Brain -> Intent Spec -> Downstream Agents) must become a
-6-node pipeline with the brain shown as shared infrastructure beside it,
-not as a pipeline stage.
+- [x] Replace the fixed `h-12` connector line between pipeline steps with
+      a flex-based approach: make the connector line fill the remaining
+      vertical space of its parent rather than using a hardcoded height.
+      The parent `<div>` for each node already uses `flex flex-col
+      items-center`. Change the connector `<div>` from `w-px h-12` to
+      `w-px flex-1` (or `w-px grow`) so it stretches to match however
+      tall the adjacent text content is.
+- [x] Remove `pb-10` from the text container (the `<div>` at line 62) and
+      replace it with a consistent bottom margin or gap that coordinates
+      with the connector. The goal: the connector line always spans from
+      one step circle to the next regardless of annotation text length,
+      and no annotation text visually overflows past the connector on
+      any viewport width.
+- [x] Verify at 375px that long annotation text (e.g., the spec-writer
+      and researcher annotations are the longest) does not extend below
+      the connector line.
 
-- [x] Replace the `nodes` array with six entries, each containing:
-      1. `spec-writer` — writes intent specs from research and requirements
-      2. `researcher` — studies the domain and writes findings to the brain
-      3. `domain expert` — reads the brain and answers domain questions in context
-      4. `architect` — reads the brain (coding playbook) and plans implementation
-      5. `implementor` — executes the plan, writes code
-      6. `QA` — validates output against intent, produces todo for fix loop
-
-      Each node gets a one-sentence annotation per the spec. Keep annotations
-      concrete and mechanism-focused, not hedgy.
-
-- [x] Add a visual element representing the brain as shared infrastructure.
-      This is NOT a seventh pipeline node — it sits beside the pipeline
-      (visually offset or in a sidebar-style callout adjacent to the vertical
-      node list). Show which agents interact with it:
-      - researcher writes to it
-      - domain expert reads from it
-      - architect reads the coding playbook from it
-
-      Implementation approach: add a small aside/callout element beside or
-      below the pipeline nodes. Use the existing design language (zinc palette,
-      rounded borders, mono font for labels). Do not introduce a two-column
-      grid — the spec requires single-column vertical layout. The brain
-      element should be visually distinct (e.g., a bordered card with a
-      different background shade) but still within the single-column flow.
-      Position it after the 6 nodes or float it alongside using a subtle
-      visual connector.
-
-- [x] Add mechanism annotations for:
-      - Fix loop: QA produces todo, implementor fixes one item per session in
-        clean context, QA re-validates. Show as a small annotation or
-        visual indicator connecting QA back to implementor.
-      - Resume-mid-pipeline: orchestrator detects state from file existence
-        and picks up where the last session left off. Show as a one-line
-        annotation on the pipeline overall.
-
-      These are supporting mechanisms. The spec says "not hidden" but also
-      "not every new mechanism needs LP copy." Keep them as brief annotations,
-      not full paragraphs.
-
-- [x] Update the section subtitle. Current: "Intent is the contract. Code is
-      ephemeral." This is fine — the spec says the methodology framing lives
-      in beat 3, which is exactly where this is.
-
-- [x] Remove the numbered-circle rendering for the brain (it should not have
-      a step number). The six agents get numbers 1-6; the brain is
-      infrastructure, not a step.
-
-Spec trace: Strategy beat 3 full paragraph; Bad Examples "four generic nodes"
-failure mode; Strategy "Not every new mechanism needs LP copy."
+Spec trace: The spec requires six named agents shown as vertical nodes
+with one-sentence annotations. The pipeline visualization must work at
+all three audit widths. Playbook responsive rule: use Tailwind responsive
+prefixes, not runtime calculation.
 
 ---
 
-### Step 4: Update VsRulesPacks with new differentiators
+### Step 4: Increase contrast on VsRulesPacks comparison cards
 
 File: `src/components/LandingPage/VsRulesPacks/index.tsx`
 
-- [x] Keep the existing two-column comparison layout (Rules packs vs AIDE).
-- [x] Keep the Rules packs column as-is — its five bullets are still accurate.
-- [x] Replace the AIDE column's five bullets. The spec provides new ammunition.
-      Ship these differentiators (selected for the 60-second reading budget):
+- [x] Widen the visual gap between the "Rules packs" card and the "AIDE"
+      card. Current difference is subtle (`border-zinc-800 bg-zinc-900/30`
+      vs `border-zinc-700 bg-zinc-900/50`). Change the AIDE card to use
+      a more visible treatment — raise the border to `border-zinc-600` and
+      the background to `bg-zinc-900/70` (or a similarly distinct step up).
+      The Rules packs card should feel muted/recessed; the AIDE card should
+      feel elevated/highlighted.
+- [x] Fix the `—` and `+` marker contrast. Change the `—` markers from
+      `text-zinc-600` to `text-zinc-500` and the `+` markers from
+      `text-zinc-500` to `text-zinc-400` (or `text-emerald-500` /
+      `text-emerald-400` for a subtle positive signal — implementor
+      judgment call, but the color must be readable against its
+      background). The markers are semantic — they communicate "bad" vs
+      "good" — and must be legible without squinting.
 
-      1. **Cascaded intent specs** (keep, reword slightly) — specs derived from
-         research that cascade through the pipeline
-      2. **Cross-project brain** (keep, reword) — domain knowledge persists in
-         an Obsidian vault filed by domain, not trapped in a chat window. Rules
-         packs have no knowledge layer.
-      3. **Auto-learning** (new) — when the fix loop closes, retro findings
-         promote to the brain. Rules packs cannot learn from their own failures.
-      4. **QA checks output against intent** (keep, already present)
-      5. **Coding playbook** (new) — the architect navigates a structured
-         convention hierarchy via a dedicated skill. Rules packs are flat
-         unstructured text.
-
-      Excluded from LP (available ammunition not shipped):
-      - Upgrade command — spec categorizes it as supporting, not headline.
-        Better suited for docs or beat 3 annotations if space allows.
-      - Misalignment tags — too inside-baseball for a 60-second read.
-
-- [x] Update the summary paragraph below the comparison grid. Current text
-      mentions "lumps" vs "cascades" which is still directionally correct but
-      should now also reference auto-learning or the fix loop to strengthen
-      the differentiator.
-
-Spec trace: Strategy beat 4 full paragraph; Strategy "Not every new mechanism
-needs LP copy" — architect picks what fits.
+Spec trace: Strategy beat 4 requires a dedicated section naming rules
+packs as the nearest-neighbor category and describing specific mechanical
+differences. The comparison only works if the two sides are visually
+distinguishable. The spec's Bad Examples section warns against patterns
+that look acceptable in isolation but fail their communicative purpose.
 
 ---
 
-### Step 5: Verify no regressions
+### Step 5: Improve mobile stacked comparison cards
 
-- [x] Visually confirm the five-beat structure is intact: InstallHero,
-      CostStrip, HowItWorks, VsRulesPacks, HallucinationEvidence, then
-      InstallFooter. No new components, no reordering.
+File: `src/components/LandingPage/VsRulesPacks/index.tsx`
+
+- [x] When the grid collapses to single column at `<sm`, add explicit
+      visual hierarchy to distinguish the two stacked cards. Options
+      (implementor picks one or combines):
+      - Add a small horizontal rule or "vs" divider element between the
+        two cards when stacked (visible only below `sm:` breakpoint, hidden
+        at `sm:` and above via `sm:hidden`).
+      - Give the AIDE card a left accent border (`border-l-2` or
+        `border-l-3` with a brighter color like `border-zinc-500`) that
+        appears only at mobile, reinforcing "this is the one to pay
+        attention to."
+      - Optionally dim the Rules packs card further on mobile (e.g.,
+        `opacity-80` below `sm:`) so the AIDE card pops by contrast.
+- [x] Verify at 375px that the stacked cards communicate "this is bad /
+      this is good" without needing side-by-side contrast.
+
+Spec trace: Same as Step 4. The comparison must survive the mobile
+single-column collapse. Playbook responsive render functions pattern:
+when layouts diverge structurally between breakpoints, consider separate
+render paths. Here the divergence is mild (visual treatment, not DOM
+restructuring), so Tailwind responsive prefixes suffice.
+
+---
+
+### Step 6: Strengthen the blockquote in HallucinationEvidence
+
+File: `src/components/LandingPage/HallucinationEvidence/index.tsx`
+
+- [x] Increase the blockquote left border from `border-l-2 border-zinc-700`
+      to `border-l-2 border-zinc-500` (or `border-l-3 border-zinc-500`)
+      so the quote is visually distinct from body text against the dark
+      background. The quote is a key persuasion element per the spec —
+      it cites peer-reviewed evidence against other tools' approach and
+      must stand out.
+- [x] Optionally add a subtle background tint to the blockquote container
+      (e.g., `bg-zinc-900/30 rounded-r-lg p-5` wrapping the quote and
+      its footer) to give it more visual weight. This is an implementor
+      judgment call — the goal is emphasis without looking like marketing
+      chrome.
+
+Spec trace: Strategy beat 5 requires the Stanford HAI citation
+"attributed verbatim" as evidence. The spec's persuasion structure places
+this as the final piece of evidence before the closing CTA. The
+blockquote must earn visual attention commensurate with its role.
+
+---
+
+### Step 7: Give the footer install CTA visual weight
+
+File: `src/components/shared/InstallFooter/index.tsx`
+
+- [x] Wrap the `npx aidemd-mcp init` text in a styled code block or
+      bordered container that matches the visual treatment of the hero's
+      install command. Currently it is plain monospace text (`<code>`
+      inside a `<p>`) which reads as an afterthought rather than a CTA.
+      Options (implementor picks):
+      - Wrap in a small bordered container (`rounded border
+        border-zinc-700 bg-zinc-900/50 px-3 py-2 font-mono`) matching
+        the design language of the HowItWorks brain card.
+      - Use the same `CodeBlock` component the hero uses (import from
+        `@/components/shared/CodeBlock`), but smaller / more compact if
+        it supports a size variant.
+- [x] Keep the "See full install instructions" link and the "Read the
+      canonical spec" link exactly as they are. Only the command display
+      changes.
+
+Spec trace: The spec says the final install block is "identical to the
+hero's install block" — it is the "safety-net CTA for visitors who
+scrolled past the first one." The current implementation does not match
+the hero's visual treatment. Full parity with the hero's CodeBlock is
+ideal; a styled container is the minimum.
+
+---
+
+### Step 8: Evaluate and reject — brand mark above the fold (Finding 8)
+
+No file changes.
+
+- [x] Acknowledge finding 8 (no brand/logo mark above the fold on mobile)
+      and explicitly decline it. The spec states: "No persistent top
+      navigation bar. The landing has no header that offers the visitor a
+      way off the conversion path." And: undesired outcomes include "stock-
+      icon feature grids" and anything that "reads as marketing-site
+      chrome." A brand mark / wordmark above the hero is a header element
+      that precedes the install command, pushing the install block below
+      the fold on mobile — directly contradicting the spec's requirement
+      that "a visitor reaches the install command before any scrolling."
+      The h1 headline IS the identity anchor.
+
+Spec trace: `outcomes.undesired` bullet 1 (no persistent top nav);
+`outcomes.desired` bullet 1 (install command before scrolling); Strategy
+"No persistent top navigation" paragraph.
+
+---
+
+### Step 9: Visual verification
+
+- [x] Run the dev server and screenshot at 1280px, 768px, and 375px.
+      Verify all seven changes (Steps 1-7) render correctly.
+- [x] Confirm the five-beat structure is intact: InstallHero, CostStrip,
+      HowItWorks, VsRulesPacks, HallucinationEvidence, then InstallFooter.
+      No new components were added, no beats were reordered.
 - [x] Confirm no persistent top navigation was introduced.
-- [x] Confirm CostStrip and HallucinationEvidence are unchanged.
-- [x] Confirm InstallFooter is unchanged (it does not contain meta descriptions
-      and its "See full install instructions" / "Read the canonical spec"
-      links are still correct).
-- [x] Run the dev server and confirm the page renders without errors.
+- [x] Confirm the HowItWorks connector lines track annotation height at
+      all three widths.
+- [x] Confirm the VsRulesPacks cards are visually distinguishable at both
+      desktop (side-by-side) and mobile (stacked).
 
 ## Decisions
 
-### D1: Hero variant — C' over D
+### D1: Two-tier spacing (py-20 hero / py-16 everything else) over uniform
 
-C' ("AIDE collapses the specialist hire into the agent loop") is more concrete
-and verb-first than D ("Give your agents a domain expert that stays with the
-project"). C' also directly names the mechanism (collapse + agent loop) while
-D is slightly more abstract ("stays with the project"). The spec allows
-implementor choice; this plan recommends C' but the implementor may switch to D
-if they disagree.
+The hero earns extra vertical breathing room because it is the entry
+point and contains the most content (headline, subhead, JSON code block,
+three-step sequence, troubleshooting callout). Making all sections py-20
+would waste vertical space on shorter sections like CostStrip and
+HallucinationEvidence. Making all sections py-16 would cramp the hero.
+Two tiers create a clear hierarchy: hero is the arrival, everything else
+is the scroll path.
 
-### D2: Brain visualization — inline callout, not sidebar
+### D2: CostStrip gets a label, not a heading
 
-The spec requires single-column vertical layout. A true two-column layout
-(pipeline left, brain right) would violate this. Instead, the brain should be
-rendered as a visually distinct callout card within the single-column flow,
-positioned after or alongside the pipeline nodes. The callout should use
-connector annotations (e.g., "researcher writes / domain expert reads /
-architect reads playbook") rather than actual drawn lines, keeping the
-implementation in pure Tailwind without SVG or canvas.
+The spec's Good Examples section shows the CostStrip as a paragraph with
+inline figures — no heading. Adding a full `<h2>` would elevate it to
+the same heading hierarchy as "How it works" and "Not a rules pack,"
+which it does not deserve — it is a transitional beat, not a named
+section. An uppercase monospace label (matching the existing pattern in
+HowItWorks and VsRulesPacks) anchors it visually without inflating its
+heading rank.
 
-### D3: VsRulesPacks ammunition selection — headline features first
+### D3: Flex-based connector over calculated height
 
-The spec's ammunition-budget note is explicit: "six agents, Obsidian brain, and
-auto-learning are the headline features. Misalignment tags, resume-mid-pipeline,
-and upgrade are supporting mechanisms." The five bullets ship all three headline
-features (agents via cascaded specs, brain as cross-project knowledge,
-auto-learning) plus QA-checks-against-intent and coding playbook. Upgrade command
-and misalignment tags are excluded as supporting — they belong in docs or beat 3
-annotations, not headline LP copy.
+The HowItWorks connector lines currently use a fixed `h-12` which breaks
+when annotation text wraps to different heights across breakpoints. A
+flex-grow approach lets the connector fill available space dynamically.
+This is pure CSS, no JS, and follows the playbook rule of using Tailwind
+over runtime calculation. Alternative considered: setting min-height on
+all steps — rejected because it wastes space on short annotations and
+doesn't adapt to font-size changes.
 
-### D4: Fix loop and resume-mid-pipeline — annotations, not beats
+### D4: Comparison card contrast via border + background, not color accents
 
-The spec says these mechanisms should be "visible as mechanism annotations, not
-hidden." But it also says "not every new mechanism needs LP copy." These land as
-brief annotations within the HowItWorks section — a one-liner on the QA node
-for the fix loop, and a one-liner at the pipeline level for resume. They do not
-get their own visual blocks or expand the section significantly.
+The spec demands "engineering-credible aesthetic" and the bad examples
+warn against marketing chrome. Using a green/red color scheme for the
+comparison cards would read as a marketing technique. Instead, contrast
+comes from the zinc scale: the Rules packs card stays muted (lower
+border, lower background opacity) while the AIDE card steps up in both.
+The `+` markers may use a subtle emerald tone at implementor discretion,
+but the cards themselves stay within the zinc palette.
 
-### D5: Headline change is in scope
+### D5: Finding 8 (brand mark) rejected per spec
 
-The delegation called out the subhead specifically, but the headline "Ship
-intent, not instructions" is methodology framing that the spec explicitly says
-belongs in beat 3, not the hero. The spec says "the hero leads with the business
-outcome." Changing the headline is required for spec compliance even though the
-delegation didn't name it explicitly. The spec is the contract.
+Adding a brand mark above the fold on mobile pushes the install command
+further down, directly violating the spec's first desired outcome. The
+spec explicitly forbids a header and warns against any element that
+creates an off-ramp before the install block. The h1 headline serves as
+the identity anchor. If brand recognition becomes a concern, it belongs
+in the meta tags (og:image, favicon), not in the DOM above the hero.
+
+### D6: Footer CTA — CodeBlock reuse preferred over custom container
+
+The spec says the final install block should be "identical to the hero's
+install block." Reusing the existing `CodeBlock` component from
+`@/components/shared/CodeBlock` is the most faithful implementation.
+If CodeBlock is too large/verbose for the footer context, the implementor
+may use a styled container that visually matches — but CodeBlock reuse
+is the first choice per the spec's "identical" language.
+
+### D7: No new files created
+
+All changes are modifications to existing component files. No new
+helpers, no new shared components, no new folders. The visual fixes
+are styling adjustments within existing component boundaries. This
+follows the progressive disclosure principle: the folder structure
+should not change when the visual treatment changes.

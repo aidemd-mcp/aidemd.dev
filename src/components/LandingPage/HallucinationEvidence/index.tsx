@@ -11,7 +11,7 @@ const HallucinationEvidence = () => {
           </p>
         </div>
 
-        <blockquote className="border-l-2 border-zinc-700 pl-5">
+        <blockquote className="border-l-2 border-zinc-500 bg-zinc-900/30 rounded-r-lg pl-5 pr-4 py-4">
           <p className="text-base text-zinc-300 leading-relaxed italic">
             &ldquo;Purpose-built legal AI still hallucinates on over one in six
             queries.&rdquo;

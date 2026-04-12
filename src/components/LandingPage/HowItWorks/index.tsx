@@ -50,16 +50,16 @@ const HowItWorks = () => {
 
         <div className="flex flex-col gap-0">
           {nodes.map((node, index) => (
-            <div key={node.label} className="flex gap-4 items-start">
+            <div key={node.label} className="flex gap-4">
               <div className="flex flex-col items-center">
                 <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-none">
                   <span className="text-xs font-mono text-zinc-400">{node.step}</span>
                 </div>
                 {index < nodes.length - 1 && (
-                  <div className="w-px h-12 bg-zinc-800 mt-1" />
+                  <div className="w-px flex-1 bg-zinc-800 mt-1" />
                 )}
               </div>
-              <div className="flex flex-col gap-0.5 pb-10">
+              <div className="flex flex-col gap-0.5 pb-8">
                 <span className="text-sm font-semibold font-mono text-zinc-200">{node.label}</span>
                 <span className="text-sm text-zinc-500">{node.annotation}</span>
               </div>
