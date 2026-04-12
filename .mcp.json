@@ -1,16 +1,12 @@
 {
   "mcpServers": {
     "aide": {
-      "command": "npx",
-      "args": [
-        "@aidemd-mcp/server"
-      ]
+      "command": "node",
+      "args": ["D:/Code/Me/aidemd-mcp/dist/index.js"]
     },
     "playwright": {
       "command": "npx",
-      "args": [
-        "@playwright/mcp@latest"
-      ]
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }
