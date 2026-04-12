@@ -6,7 +6,7 @@ const buildInstallConfig = (): InstallConfig => ({
     mcpServers: {
       aide: {
         command: "npx",
-        args: ["aidemd-mcp"],
+        args: ["@aidemd-mcp/server"],
       },
     },
   },
@@ -19,7 +19,7 @@ const buildInstallConfig = (): InstallConfig => ({
           mcpServers: {
             aide: {
               command: "npx",
-              args: ["aidemd-mcp"],
+              args: ["@aidemd-mcp/server"],
             },
           },
         },

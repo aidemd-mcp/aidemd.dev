@@ -50,7 +50,7 @@ that block.
 is a module-level constant of type `InstallConfig`, which in v1 is a
 discriminated union with exactly one variant: `{ framework: "claude",
 mcpConfig: { mcpServers: { aide: { command: "npx", args:
-["aidemd-mcp"] } } }, commandSequence: [...] }`. The union shape
+["@aidemd-mcp/server"] } } }, commandSequence: [...] }`. The union shape
 means adding Cursor, Windsurf, or Copilot later is a type addition,
 not a rewrite — but v1 ships one variant.
 
@@ -134,7 +134,7 @@ naming paste / restart / `aide_init`.
   "mcpServers": {
     "aide": {
       "command": "npx",
-      "args": ["aidemd-mcp"]
+      "args": ["@aidemd-mcp/server"]
     }
   }
 }
