@@ -1,0 +1,41 @@
+{
+  "index": {
+    "publishedAt": "2026-04-12T00:13:27-07:00",
+    "sourceCommit": "ccba506",
+    "previousCommit": "c32e887"
+  },
+  "aide-spec": {
+    "publishedAt": "2026-04-11T20:06:53-07:00",
+    "sourceCommit": "c32e887",
+    "previousCommit": "2d6ecdd"
+  },
+  "aide-template": {
+    "publishedAt": "2026-04-11T08:18:27-07:00",
+    "sourceCommit": "2d6ecdd",
+    "previousCommit": "50d939c"
+  },
+  "progressive-disclosure": {
+    "publishedAt": "2026-04-12T00:13:27-07:00",
+    "sourceCommit": "ccba506",
+    "previousCommit": "2d6ecdd"
+  },
+  "agent-readable-code": {
+    "publishedAt": "2026-04-12T00:13:27-07:00",
+    "sourceCommit": "ccba506",
+    "previousCommit": "2d6ecdd"
+  },
+  "automated-qa": {
+    "publishedAt": "2026-04-11T20:06:53-07:00",
+    "sourceCommit": "c32e887",
+    "previousCommit": "2d6ecdd"
+  },
+  "plan-aide": {
+    "publishedAt": "2026-04-12T00:13:27-07:00",
+    "sourceCommit": "ccba506",
+    "previousCommit": "c32e887"
+  },
+  "todo-aide": {
+    "publishedAt": "2026-04-11T20:06:53-07:00",
+    "sourceCommit": "c32e887"
+  }
+}

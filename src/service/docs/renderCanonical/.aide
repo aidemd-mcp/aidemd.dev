@@ -2,27 +2,35 @@
 scope: src/service/docs/renderCanonical/
 intent: >
   Transform each canonical `.aide/*.md` source file into a rendered HTML
-  page without introducing a single byte of content drift, and emit the
-  citation metadata every canonical doc page must display — publication
-  date, source-commit SHA, stable versioned URL, previous-version link.
-  This submodule is the byte-faithfulness enforcement layer the docs
-  surface's entire value proposition rests on; if this module drifts,
-  the patent-priority and trust-the-docs claims both collapse.
+  page without introducing a single byte of content drift, and emit
+  citation metadata — publication date, source-commit SHA, stable
+  versioned URL, previous-version link — sourced from
+  `.aide/docs/versions.json`, a file shipped by the MCP server during
+  `aide_upgrade` containing upstream canonical repo commit history.
+  The local repo is a display layer that renders synced copies; the
+  canonical repo is the authority for version history and citation dates. This submodule is the byte-faithfulness enforcement
+  layer the docs surface's entire value proposition rests on; if this
+  module drifts, the patent-priority and trust-the-docs claims both
+  collapse.
 outcomes:
   desired:
     - A byte-level comparison between `.aide/<name>.md` (source text) and the content region of the rendered page (extracted text, ignoring HTML wrapping) returns zero semantic differences.
-    - Every rendered page receives a citation metadata object containing publication date, last-commit SHA for that specific source file, stable versioned URL, and a previous-version URL if the source file has a prior committed version.
+    - Every rendered page receives a citation metadata object where the publication date, last-commit SHA, stable versioned URL, and previous-version URL are derived from `.aide/docs/versions.json` — a file shipped by the MCP server during `aide_upgrade` containing upstream canonical repo commit history. Not from local git history, which only tracks sync operations.
+    - The errata "newer version available" link only appears when the reader is viewing an explicitly versioned URL (`?v=`); it never appears on the current/latest page solely because prior commits exist in the upstream history.
+    - The build fails loudly if `versions.json` is missing or lacks an entry for the slug being rendered — this means `aide_upgrade` was not run or the doc is untracked upstream.
     - The build fails loudly if a canonical source file contains markdown syntax the renderer's fixed plugin set does not handle — no silent fallback to raw text, no partial render.
-    - The pipeline is a pure function of the git tree: the same repo state always produces the same rendered output, including the same citation metadata values.
+    - The pipeline is a pure function of the git tree plus the upstream commit history: the same repo state and upstream state always produce the same rendered output, including the same citation metadata values.
     - A post-render diff check hashes the source file's text content, hashes the rendered page's content-region text, and fails the build if they diverge.
   undesired:
     - Any transformation that rewrites content: "modernize tone," "fix typos," "add callouts," "inject related links," "soften the agent-facing language for humans." If the source has a typo, the output has the typo.
     - MDX, JSX-in-markdown, or any plugin middleware that allows components to be embedded inside canonical content. The renderer is strict markdown-to-HTML only — a fixed plugin set (gfm tables, code fences, frontmatter extraction) and nothing else.
     - Silent fallback on unrecognized syntax. If a new markdown extension appears in the source and the renderer's plugin set does not know it, the build errors with the source file name and the line number of the offending construct. Silent fallback ships partially-broken canonical docs.
+    - Local git history used as the source for citation dates or version URLs. Local commits track sync operations (when files were copied from upstream), not document revisions — using them produces misleading publication dates that undermine the priority-date claim.
+    - A network call required at build time for citation metadata. The `versions.json` file is a local artifact shipped by the MCP; the build must work fully offline.
     - Hidden or stripped agent-facing callouts in the source (HTML comments, warning blocks, "for agents:" prefixes). The renderer preserves them; the docs surface displays them.
     - Stripped frontmatter. The frontmatter is part of the canonical record and surfaces into the rendered page's header metadata; it is not discarded.
     - Runtime reads. The pipeline runs at build time only. A runtime fetch of canonical source is a tampering vector and a latency cost and is forbidden.
-    - Hand-authored publication dates in frontmatter used as the page's Published-on field. Git commit history is authoritative for dates; any manually-maintained date in frontmatter is ignored for display purposes (or surfaced as a separate "Source frontmatter" field, never as the citation date).
+    - Hand-authored publication dates in frontmatter used as the page's Published-on field. The upstream canonical repo's git history is authoritative for dates; any manually-maintained date in frontmatter is ignored for display purposes (or surfaced as a separate "Source frontmatter" field, never as the citation date).
 ---
 
 ## Context
@@ -43,15 +51,56 @@ same text the source contains*. The docs surface talks about
 presentation and navigation; this submodule talks about the
 transformation itself and nothing else.
 
+The local `.aide/docs/` files are synced copies pulled from the
+canonical `aidemd-mcp/server` repository on GitHub via `aide:upgrade`.
+Local git history therefore only records *when files were synced*, not
+*when documents were authored or revised*. The upstream canonical repo
+is the sole authority for document version history, publication dates,
+and commit SHAs — the local repo is a display layer that renders
+content it does not own.
+
 ## Strategy
 
-**Build-time filesystem read, no network.** The pipeline reads
-canonical `.md` files directly from the repo's `.aide/` folder via
-`node:fs` at build time, inside Next.js's static generation step.
-Git-coupled, deterministic, cacheable. No HTTP fetch, no database,
-no CMS, no Git LFS pointer, no submodule trickery — the `.aide/`
-folder is a sibling of `src/` in the same repo and is read as
-ordinary files.
+**Build-time filesystem read for content and metadata.**
+The pipeline reads canonical `.md` files directly from the repo's
+`.aide/` folder via `node:fs` at build time, inside Next.js's static
+generation step. Citation metadata (publication date, commit SHA,
+version history) is read from `.aide/docs/versions.json` — also a
+local filesystem read — at the same build step. Both reads are
+ordinary file I/O: no network calls, no external dependencies. The
+build is fully deterministic and works offline.
+
+**`versions.json` is the source of truth for version info.**
+`versions.json` is a local artifact shipped into `.aide/docs/` by
+`aide_upgrade`. It is generated by the MCP server from the upstream
+canonical repository's git history (`aidemd-mcp/server`) — the MCP
+queries the upstream repo at upgrade time and bakes the commit history
+into the file so the build never needs to reach out at build time.
+The file is an array of per-document version records. Each record has
+the shape:
+
+```json
+{
+  "slug": "aide-spec",
+  "sha": "a1b2c3d",
+  "date": "2026-04-11",
+  "previous": { "sha": "e4f5a6b", "date": "2026-03-28" }
+}
+```
+
+`slug` is the doc's filename without extension. `sha` and `date` are
+from the most recent upstream commit that touched the file. `previous`,
+if present, is the prior commit — used to compute the previous-version
+URL. Hand-authored frontmatter dates are either ignored entirely or
+surfaced as a separate "Source frontmatter date" field — never as the
+display date for citation purposes, because they drift from actual
+history and drift kills the priority claim.
+
+If `versions.json` is missing, or contains no entry for the slug being
+rendered, the build fails loudly with the slug name and the reason.
+There is no fallback: a missing entry means `aide_upgrade` was not run
+or the doc is untracked upstream, and both are build-blocking errors
+that must be resolved before the site ships.
 
 **Strict markdown-to-HTML with a fixed plugin set.** The renderer
 accepts GFM tables, fenced code blocks, inline code, headings, lists,
@@ -69,18 +118,6 @@ revision required), or removes it from the canonical source. Silent
 fallback to raw text is specifically forbidden — it ships partially-
 broken canonical docs and nobody notices until a reader files a bug.
 
-**Git metadata is the source of truth for version info.** The
-publication date, commit SHA, and previous-version URL come from the
-git history of the specific source file — not from frontmatter, not
-from file system mtime, not from hand-maintained tables. The commit
-SHA is the last commit that touched that specific source file; the
-publication date is that commit's author timestamp; the previous
-version is resolved by walking back through the file's git history.
-Hand-authored frontmatter dates, if present, are either ignored
-entirely or surfaced as a separate "Source frontmatter date" field —
-never as the display date for citation purposes, because they drift
-from actual history and drift kills the priority claim.
-
 **Post-render diff check as the forcing function.** After rendering,
 the pipeline extracts the plain-text content of the rendered page's
 content region (stripping HTML tags and normalizing whitespace), hashes
@@ -90,12 +127,14 @@ explained by the fixed plugin set's allowed transformations, the build
 fails. This is what makes rewrite failures impossible to ship by
 accident — the diff check is cheap and absolute.
 
-**Previous-version URLs are computed, not hand-maintained.** When a
-canonical doc is updated, the prior versioned URL is computed from the
-git history during the build — not tracked in a separate table, not
-hand-entered in frontmatter. A reviewer who merges an edit does not
-have to remember to update a "previous version" pointer because the
-build does it automatically.
+**Previous-version URLs are computed from `versions.json` entries, not
+hand-maintained.** When a canonical doc has a `previous` entry in
+`versions.json`, the prior versioned URL is computed from that entry's
+`sha` and `date` fields — not tracked in a separate table, not
+hand-entered in frontmatter, not derived from local git history. A
+reviewer who merges an edit does not have to remember to update a
+"previous version" pointer because the build computes it automatically
+from the `versions.json` record that `aide_upgrade` produced.
 
 **Frontmatter is preserved and surfaced, not stripped and discarded.**
 If the canonical source has YAML frontmatter, the renderer parses it,
@@ -123,11 +162,14 @@ the em dash and the capitalization.
 
 The rendered page's citation metadata contains:
 
-- Publication date: 2026-04-11 (the author timestamp of the commit
-  `a1b2c3d` that last touched `.aide/aide-spec.md`)
-- Source commit SHA: `a1b2c3d`
+- Publication date: 2026-04-11 (the author timestamp of the most
+  recent commit in the upstream `aidemd-mcp/server` repo that touched
+  `.aide/docs/aide-spec.md`, retrieved via the GitHub Commits API)
+- Source commit SHA: `a1b2c3d` (from the upstream repo, not the local
+  sync commit)
 - Stable versioned URL: `aidemd.dev/docs/aide-spec@v20260411`
-- Previous-version URL: `aidemd.dev/docs/aide-spec@v20260328`
+- Previous-version URL: `aidemd.dev/docs/aide-spec@v20260328` (derived
+  from the second commit in the upstream API response)
 
 A contributor submits a PR that adds a custom directive `:::note` to
 the canonical source. The renderer doesn't know that directive; the
@@ -169,6 +211,16 @@ was freshly cloned on the build machine, so every page shows the same
 date regardless of actual git history. Every citation URL is valid
 but every publication date is wrong, and the priority-date argument
 loses its anchor silently.
+
+The build uses local git history instead of the upstream GitHub API
+to derive citation dates. The local repo's last commit touching
+`.aide/docs/aide-spec.md` is the `aide:upgrade` sync from yesterday,
+so the page displays "Published: 2026-04-11" — but the document was
+actually authored upstream on 2026-03-15 and hasn't changed since.
+Every synced doc's publication date resets to the sync date, making
+it impossible to establish when the document was originally published
+or last revised. The priority-date claim is destroyed because the
+dates track operational syncs, not intellectual authorship.
 
 The renderer injects a "Generated by AIDE renderer v0.1.0" footer at
 the bottom of every rendered page. The content region no longer

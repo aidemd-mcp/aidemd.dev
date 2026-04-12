@@ -32,6 +32,17 @@ describe("diffCheck", () => {
     );
   });
 
+  it("word-order rewrite is caught (reordered sentence fails the check)", () => {
+    // Source has words in one order; the "rendered" HTML silently reorders them.
+    // A sorted-bag normalization would miss this — an order-preserving normalization must catch it.
+    const body = "The quick brown fox jumps over the lazy dog.\n";
+    const reorderedHtml = "<p>The lazy dog jumps over the quick brown fox.</p>";
+
+    expect(() => diffCheck("test-slug", body, reorderedHtml)).toThrow(
+      /byte-faithfulness check failed/,
+    );
+  });
+
   it("HTML wrapping alone does not cause failure (adding tags around unchanged text passes)", async () => {
     const { unified } = await import("unified");
     const remarkParse = (await import("remark-parse")).default;

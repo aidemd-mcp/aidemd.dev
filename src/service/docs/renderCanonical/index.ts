@@ -26,7 +26,7 @@ export default async function renderCanonical({
 }: RenderCanonicalInput): Promise<CanonicalDoc> {
   const rawSource = await readSource(slug);
   const { frontmatter, body } = parseFrontmatter(rawSource);
-  const contentHtml = await renderMarkdown(body);
+  const contentHtml = await renderMarkdown(body, `.aide/docs/${slug}.md`);
   const citationMeta = extractCitationMeta(slug);
 
   diffCheck(slug, body, contentHtml);

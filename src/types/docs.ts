@@ -2,7 +2,6 @@ export type CitationMeta = {
   publishedAt: string;
   sourceCommit: string;
   versionedUrl: string;
-  previousVersionUrl?: string;
   waybackUrl?: string;
 };
 

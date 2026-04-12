@@ -53,10 +53,12 @@ function extractTextFromMarkdown(md: string): string {
 }
 
 /**
- * Normalizes text to a bag of words for comparison.
- * Lowercases, strips all non-alphanumeric characters, splits on whitespace,
- * sorts, and joins. This makes comparison resilient to formatting differences
- * while still catching content additions, removals, or rewrites.
+ * Normalizes text to a sequence of words for comparison.
+ * Lowercases and strips all non-alphanumeric characters, then splits on
+ * whitespace and joins — preserving word order. This makes comparison
+ * resilient to HTML formatting differences (tag wrapping, entity encoding,
+ * whitespace changes) while still catching content additions, removals,
+ * reorderings, and rewrites.
  */
 function normalizeToWords(text: string): string {
   return text
@@ -64,7 +66,6 @@ function normalizeToWords(text: string): string {
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter((w) => w.length > 0)
-    .sort()
     .join(" ");
 }
 
@@ -79,10 +80,11 @@ function sha256(input: string): string {
  * Post-render byte-faithfulness check.
  *
  * Extracts plain text from both the markdown source body and the rendered HTML,
- * normalizes both to sorted word bags, and compares hashes. This catches content
- * rewrites introduced by the renderer (added words, removed words, changed words)
- * while tolerating the formatting differences inherent in markdown-to-HTML
- * conversion (tag wrapping, entity encoding, whitespace changes).
+ * normalizes both to order-preserving word sequences, and compares hashes. This
+ * catches content rewrites introduced by the renderer (added words, removed
+ * words, reordered words, changed words) while tolerating the formatting
+ * differences inherent in markdown-to-HTML conversion (tag wrapping, entity
+ * encoding, whitespace changes).
  */
 export default function diffCheck(
   slug: string,

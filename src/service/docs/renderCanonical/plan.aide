@@ -1,0 +1,91 @@
+---
+intent: >
+  Rewrite extractCitationMeta to read `.aide/docs/versions.json` (shipped
+  by the MCP during aide_upgrade) instead of local git history, fix the
+  errata display logic in DocHeader, and update all affected tests.
+---
+
+## Plan
+
+- [x] **Step 1 — Define a `VersionEntry` type inline in `extractCitationMeta/index.ts`.**
+  A narrow type matching the shape of each entry in `versions.json`:
+  `{ publishedAt: string; sourceCommit: string; previousCommit?: string }`.
+  Private type — not exported, not added to `src/types/docs.ts`.
+  The JSON shape is an implementation detail of this helper.
+
+- [x] **Step 2 — Rewrite `extractCitationMeta` to read `versions.json`.**
+  Remove the `execSync` import (`node:child_process`) and `node:path` import.
+  Add `node:fs` and `node:path` for reading the JSON file. The function stays
+  synchronous (no async needed — it's a local file read).
+  Implementation:
+    - Read `.aide/docs/versions.json` via `JSON.parse(readFileSync(...))`.
+    - Look up the entry by slug key.
+    - If `versions.json` is missing or the slug has no entry, throw with a
+      descriptive error: `extractCitationMeta: no version entry for "${slug}" in versions.json — run aide_upgrade`.
+    - Extract `publishedAt` from the entry.
+    - Extract `sourceCommit` from the entry.
+    - Compute `versionedUrl` as `/docs/${slug}?v=${sourceCommit}`.
+    - If `previousCommit` exists, compute `previousVersionUrl` as
+      `/docs/${slug}?v=${previousCommit}`.
+    - Return the `CitationMeta` object.
+  Update JSDoc to reflect versions.json source.
+
+- [x] **Step 3 — Fix the errata display logic in `DocHeader/index.tsx`.**
+  The spec says: "The errata 'newer version available' link only appears
+  when the reader is viewing an explicitly versioned URL (`?v=`)."
+  Currently, DocHeader shows the errata link whenever `previousVersionUrl`
+  exists — which is true for any doc with prior commits upstream.
+  Fix: add an optional `isVersionedView` boolean prop to `DocHeaderProps`.
+  The errata `<div>` renders only when both `previousVersionUrl` exists
+  AND `isVersionedView` is true. Default to `false`. For now, always pass
+  `false` from `src/components/DocsPage/index.tsx` — the versioned-URL
+  feature is not yet built. When it is, the page will read `searchParams.v`
+  and pass `isVersionedView={true}`.
+
+- [x] **Step 4 — Update orchestrator tests in `index.test.ts`.**
+  The mock for `extractCitationMeta` uses `mockReturnValue` which is
+  correct (function stays sync). Verify fixture data aligns with the
+  new `versions.json` shape. No signature change needed in the orchestrator
+  since it already calls `extractCitationMeta(slug)` synchronously.
+
+- [x] **Step 5 — Create `extractCitationMeta/index.test.ts` with dedicated tests.**
+  Co-located test file. Mock `node:fs` readFileSync. Test cases:
+
+  1. **Happy path — entry with previousCommit.** Mock versions.json with
+     two-commit entry. Assert `publishedAt`, `sourceCommit`, `versionedUrl`,
+     and `previousVersionUrl` are all correctly derived.
+
+  2. **Happy path — entry without previousCommit.** Mock versions.json with
+     single-commit entry. Assert `previousVersionUrl` is `undefined`.
+
+  3. **Throw when slug missing from versions.json.** Mock versions.json
+     without the requested slug. Assert throws with "no version entry".
+
+  4. **Throw when versions.json missing.** Mock readFileSync to throw
+     ENOENT. Assert throws with descriptive error mentioning aide_upgrade.
+
+- [x] **Step 6 — Run tests and type-check.**
+  Execute `vitest run` scoped to `renderCanonical` to verify all tests pass.
+  Execute `tsc --noEmit` to verify no type errors. Fix any failures.
+
+## Decisions
+
+**1. Function stays synchronous.**
+Reading a local JSON file is a sync operation (`readFileSync`). No need
+to make it async — the orchestrator calls it synchronously today and
+`versions.json` is a small file. This avoids changing the orchestrator
+signature or test mocking patterns.
+
+**2. Fail loudly on missing versions.json or slug.**
+The spec says the build must fail if versions.json is missing — this means
+`aide_upgrade` wasn't run. No fallback to local git. This is a hard
+requirement, not a graceful degradation scenario.
+
+**3. Errata fix in DocHeader, not extractCitationMeta.**
+Same reasoning as before: the helper produces version metadata; the
+decision to show/hide errata is presentation logic gated on query params.
+
+**4. `isVersionedView` defaults to `false`.**
+DocHeader is a server component. The prop must come from the page.
+Defaulting to `false` hides errata on all pages until versioned-URL
+feature is built.

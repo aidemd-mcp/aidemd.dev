@@ -1,0 +1,38 @@
+# todo spec
+
+---
+intent: >
+  Re-align the renderCanonical implementation against two violated desired
+  outcomes: (1) the build must fail loudly on unrecognized markdown syntax
+  rather than silently falling back to plain text, and (2) the diff check's
+  sorted-word-bag normalization misses word-order rewrites, weakening the
+  byte-faithfulness guarantee the spec promises.
+misalignment:
+  - implementation-drift
+  - strategy-gap
+---
+
+## Issues
+
+- [x] **`src/service/docs/renderCanonical/renderMarkdown/index.ts` — silent fallback on unknown syntax**
+  The JSDoc comment explicitly states "anything outside this set is treated as plain text by the unified pipeline." This is the undesired outcome the spec names by name. The renderer has no detection step that identifies constructs outside the fixed plugin set and errors with the source file name and line number. Unknown constructs such as `:::note` or `::: warning` render silently as paragraph text and the build passes.
+  `Traces to:` desired outcome 5 ("The build fails loudly if a canonical source file contains markdown syntax the renderer's fixed plugin set does not handle") and undesired outcome 3 ("Silent fallback on unrecognized syntax... the build errors with the source file name and the line number of the offending construct.")
+  `Misalignment:` implementation-drift — the plan has no step for adding an unknown-construct detection pass; the omission propagated from plan to implementation without either stage noticing the gap.
+
+- [x] **`src/service/docs/renderCanonical/diffCheck/index.ts` lines 61–68 — sorted word-bag normalization misses word-order rewrites**
+  `normalizeToWords` lowercases, strips punctuation, sorts all words, and hashes the sorted bag. A renderer that silently reorders words within a sentence produces an identical hash and passes the check. The spec says the diff check "fails the build if they diverge" in a way that catches rewrites; a sorted bag catches additions and removals but not transpositions or reorderings within a sentence.
+  `Traces to:` desired outcome 7 ("A post-render diff check hashes the source file's text content, hashes the rendered page's content-region text, and fails the build if they diverge") and undesired outcome 1 ("Any transformation that rewrites content... If the source has a typo, the output has the typo.")
+  `Misalignment:` implementation-drift — the normalization strategy was a local implementation choice not specified in the plan; choosing to sort loses ordering information that the spec's byte-faithfulness guarantee implicitly requires.
+
+- [x] **`src/service/docs/renderCanonical/.aide` strategy section — describes GitHub API approach superseded by versions.json**
+  The strategy section still describes the GitHub Commits API, ISR revalidation (`next: { revalidate: 3600 }`), graceful degradation when the API is unavailable, and unauthenticated rate limits. The actual implementation reads a local `versions.json` artifact. The `plan.aide` makes the strategy change explicit, but the parent `.aide` strategy text was never updated. A future implementor reading the strategy gets contradictory instructions: strategy says GitHub API, outcomes and code say `versions.json`.
+  `Traces to:` desired outcome 2 ("citation metadata sourced from `.aide/docs/versions.json`") — the outcomes block is correct, but the strategy text directly contradicts the implementation.
+  `Misalignment:` strategy-gap — the plan changed the strategy but did not update the parent spec's strategy section, leaving the spec internally inconsistent.
+
+## Retro
+
+**Issue 1 (silent fallback):** The plan's steps focused on the `extractCitationMeta` rewrite and the errata fix. No plan step audited `renderMarkdown` for spec compliance on unknown-syntax handling. A plan review that walked every desired outcome against all existing helpers — not only the ones being changed — would have surfaced that desired outcome 5 was never mechanically satisfied. The strategy section describes the failure mode precisely but neither the plan nor the implementation enforces it.
+
+**Issue 2 (word-bag normalization):** The plan deferred the diffCheck normalization detail to the implementor with no normalization spec. The spec phrase "hashes the source file's text content" implies sequence-preserving comparison, not a bag-of-words. A plan step that specified the normalization strategy explicitly would have blocked the weaker implementation at review.
+
+**Issue 3 (stale strategy text):** Strategy changes recorded in `plan.aide` should include a corresponding update to the parent intent spec. Without that discipline, the spec drifts from its own implementation within the same PR and contradicts itself at the strategy level while the outcomes level stays correct.

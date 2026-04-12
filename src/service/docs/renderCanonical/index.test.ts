@@ -33,7 +33,6 @@ const CITATION_META_FIXTURE = {
   publishedAt: "2026-01-01T00:00:00.000Z",
   sourceCommit: "abc1234",
   versionedUrl: "/docs/test-slug?v=abc1234",
-  previousVersionUrl: "/docs/test-slug?v=def5678",
 };
 
 beforeEach(() => {

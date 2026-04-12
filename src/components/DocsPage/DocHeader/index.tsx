@@ -1,5 +1,4 @@
 import type { CitationMeta } from "@/types/docs";
-import Link from "next/link";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
@@ -10,13 +9,7 @@ type DocHeaderProps = {
 };
 
 const DocHeader = ({ citationMeta }: DocHeaderProps) => {
-  const {
-    publishedAt,
-    sourceCommit,
-    versionedUrl,
-    previousVersionUrl,
-    waybackUrl,
-  } = citationMeta;
+  const { publishedAt, sourceCommit, versionedUrl, waybackUrl } = citationMeta;
 
   const citeUrl = `${SITE_URL}${versionedUrl}`;
 
@@ -59,20 +52,6 @@ const DocHeader = ({ citationMeta }: DocHeaderProps) => {
               >
                 {waybackUrl}
               </a>
-            </dd>
-          </div>
-        )}
-
-        {previousVersionUrl && (
-          <div className="flex gap-3">
-            <dt className="text-zinc-500 flex-none">Errata</dt>
-            <dd>
-              <Link
-                href={previousVersionUrl}
-                className="text-amber-400 hover:text-amber-300 transition-colors underline underline-offset-2"
-              >
-                A newer version of this document exists
-              </Link>
             </dd>
           </div>
         )}
