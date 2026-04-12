@@ -1,0 +1,178 @@
+---
+scope: src/service/docs/renderCanonical/
+intent: >
+  Transform each canonical `.aide/*.md` source file into a rendered HTML
+  page without introducing a single byte of content drift, and emit the
+  citation metadata every canonical doc page must display — publication
+  date, source-commit SHA, stable versioned URL, previous-version link.
+  This submodule is the byte-faithfulness enforcement layer the docs
+  surface's entire value proposition rests on; if this module drifts,
+  the patent-priority and trust-the-docs claims both collapse.
+outcomes:
+  desired:
+    - A byte-level comparison between `.aide/<name>.md` (source text) and the content region of the rendered page (extracted text, ignoring HTML wrapping) returns zero semantic differences.
+    - Every rendered page receives a citation metadata object containing publication date, last-commit SHA for that specific source file, stable versioned URL, and a previous-version URL if the source file has a prior committed version.
+    - The build fails loudly if a canonical source file contains markdown syntax the renderer's fixed plugin set does not handle — no silent fallback to raw text, no partial render.
+    - The pipeline is a pure function of the git tree: the same repo state always produces the same rendered output, including the same citation metadata values.
+    - A post-render diff check hashes the source file's text content, hashes the rendered page's content-region text, and fails the build if they diverge.
+  undesired:
+    - Any transformation that rewrites content: "modernize tone," "fix typos," "add callouts," "inject related links," "soften the agent-facing language for humans." If the source has a typo, the output has the typo.
+    - MDX, JSX-in-markdown, or any plugin middleware that allows components to be embedded inside canonical content. The renderer is strict markdown-to-HTML only — a fixed plugin set (gfm tables, code fences, frontmatter extraction) and nothing else.
+    - Silent fallback on unrecognized syntax. If a new markdown extension appears in the source and the renderer's plugin set does not know it, the build errors with the source file name and the line number of the offending construct. Silent fallback ships partially-broken canonical docs.
+    - Hidden or stripped agent-facing callouts in the source (HTML comments, warning blocks, "for agents:" prefixes). The renderer preserves them; the docs surface displays them.
+    - Stripped frontmatter. The frontmatter is part of the canonical record and surfaces into the rendered page's header metadata; it is not discarded.
+    - Runtime reads. The pipeline runs at build time only. A runtime fetch of canonical source is a tampering vector and a latency cost and is forbidden.
+    - Hand-authored publication dates in frontmatter used as the page's Published-on field. Git commit history is authoritative for dates; any manually-maintained date in frontmatter is ignored for display purposes (or surfaced as a separate "Source frontmatter" field, never as the citation date).
+---
+
+## Context
+
+This submodule is *why* the docs surface can claim "source of record"
+status. Every upstream decision — the build-time read, the strict
+renderer, the diff check, the git-authoritative metadata — exists to
+make the byte-faithfulness invariant structurally enforced rather than
+socially maintained. A reviewer cannot accidentally introduce a rewrite
+because the diff check blocks the build; an implementor cannot
+accidentally inject a component because the plugin set doesn't allow
+it; a contributor cannot silently paper over a typo because the
+renderer fails on unknown syntax and the diff check catches rewrites.
+
+The submodule narrows its parent (the docs surface) to the specific
+mechanical guarantee the surface depends on: *rendering produces the
+same text the source contains*. The docs surface talks about
+presentation and navigation; this submodule talks about the
+transformation itself and nothing else.
+
+## Strategy
+
+**Build-time filesystem read, no network.** The pipeline reads
+canonical `.md` files directly from the repo's `.aide/` folder via
+`node:fs` at build time, inside Next.js's static generation step.
+Git-coupled, deterministic, cacheable. No HTTP fetch, no database,
+no CMS, no Git LFS pointer, no submodule trickery — the `.aide/`
+folder is a sibling of `src/` in the same repo and is read as
+ordinary files.
+
+**Strict markdown-to-HTML with a fixed plugin set.** The renderer
+accepts GFM tables, fenced code blocks, inline code, headings, lists,
+links, images, emphasis, strikethrough, and frontmatter extraction.
+That is the entire set. No custom directives, no component injection,
+no "smart link" rewrites, no image optimization that re-encodes bytes,
+no link validation that rewrites relative URLs. If a new construct is
+needed, it requires a spec revision to this file.
+
+**Fail loudly on the unknown.** If the parser encounters a construct
+outside the fixed plugin set, the build errors with the source file
+name, the line number, and the offending token. The implementor sees
+the failure immediately, adds the construct to the plugin set (spec
+revision required), or removes it from the canonical source. Silent
+fallback to raw text is specifically forbidden — it ships partially-
+broken canonical docs and nobody notices until a reader files a bug.
+
+**Git metadata is the source of truth for version info.** The
+publication date, commit SHA, and previous-version URL come from the
+git history of the specific source file — not from frontmatter, not
+from file system mtime, not from hand-maintained tables. The commit
+SHA is the last commit that touched that specific source file; the
+publication date is that commit's author timestamp; the previous
+version is resolved by walking back through the file's git history.
+Hand-authored frontmatter dates, if present, are either ignored
+entirely or surfaced as a separate "Source frontmatter date" field —
+never as the display date for citation purposes, because they drift
+from actual history and drift kills the priority claim.
+
+**Post-render diff check as the forcing function.** After rendering,
+the pipeline extracts the plain-text content of the rendered page's
+content region (stripping HTML tags and normalizing whitespace), hashes
+it, and compares against a hash of the source file's text content
+(also normalized). If the two hashes diverge in a way that cannot be
+explained by the fixed plugin set's allowed transformations, the build
+fails. This is what makes rewrite failures impossible to ship by
+accident — the diff check is cheap and absolute.
+
+**Previous-version URLs are computed, not hand-maintained.** When a
+canonical doc is updated, the prior versioned URL is computed from the
+git history during the build — not tracked in a separate table, not
+hand-entered in frontmatter. A reviewer who merges an edit does not
+have to remember to update a "previous version" pointer because the
+build does it automatically.
+
+**Frontmatter is preserved and surfaced, not stripped and discarded.**
+If the canonical source has YAML frontmatter, the renderer parses it,
+passes it through as metadata attached to the rendered page, and the
+docs surface's DocHeader component displays the relevant fields. No
+frontmatter field is silently dropped because "it looks internal";
+the canonical record includes frontmatter by design.
+
+**The renderer never adds content.** No "Table of Contents" injection,
+no "Related articles" section, no "Published by" footer, no "Generated
+on" stamp, no breadcrumb. The surface may add these chrome elements
+around the rendered content, but this module's output is strictly
+the source transformed — nothing prepended, nothing appended, nothing
+interleaved.
+
+## Good examples
+
+A canonical source file `.aide/aide-spec.md` contains the paragraph:
+"AIDE is also an AI Domain Expert — a research agent that lifts the
+domain-expertise burden off an engineering team." The rendered page at
+`/docs/aide-spec` contains the same sentence in its content region,
+wrapped in a `<p>` element. A reader copies the sentence from the web
+and from `cat .aide/aide-spec.md`; both strings match exactly, including
+the em dash and the capitalization.
+
+The rendered page's citation metadata contains:
+
+- Publication date: 2026-04-11 (the author timestamp of the commit
+  `a1b2c3d` that last touched `.aide/aide-spec.md`)
+- Source commit SHA: `a1b2c3d`
+- Stable versioned URL: `aidemd.dev/docs/aide-spec@v20260411`
+- Previous-version URL: `aidemd.dev/docs/aide-spec@v20260328`
+
+A contributor submits a PR that adds a custom directive `:::note` to
+the canonical source. The renderer doesn't know that directive; the
+build fails with `renderCanonical: unknown construct ':::note' at
+.aide/aide-spec.md:142`. The PR is rejected or the construct is
+removed; the site does not ship a page with a silently-broken block.
+
+A different contributor submits a PR that silently edits a paragraph
+in the canonical source to "improve the tone." The source file hash
+changes; the rendered page's content hash changes; the diff check
+passes because both changed in sync. This is the intended behavior —
+the diff check catches rewrites *introduced by the renderer*, not
+edits to the canonical source itself. Edits to the canonical source
+are controlled by the PR review process, not by this service.
+
+## Bad examples
+
+The pipeline strips an HTML comment `<!-- for agents: this file is a
+scaffold -->` "because humans find it confusing." The web version now
+differs from the installed `.aide/aide-spec.md`, and a reader who
+notices the discrepancy files a priority-claim-breaking bug.
+
+A typo in the canonical source — "byte-faithul" — is silently
+corrected to "byte-faithful" by a spell-check plugin in the renderer.
+The build passes because nothing fails; the web says "byte-faithful"
+and the installed methodology still says "byte-faithul" and the two
+now disagree.
+
+An unknown markdown extension (say, `::: warning` directive) appears
+in a source file. The renderer doesn't know the directive and falls
+back to rendering it as raw text, so the rendered page shows
+`::: warning` literally as a paragraph. The build passes, the page
+ships, and the reader sees a broken block with no indication that the
+renderer failed.
+
+The rendered page's DocHeader displays "Last updated: 2 weeks ago"
+computed from file system mtime. The mtime was reset when the repo
+was freshly cloned on the build machine, so every page shows the same
+date regardless of actual git history. Every citation URL is valid
+but every publication date is wrong, and the priority-date argument
+loses its anchor silently.
+
+The renderer injects a "Generated by AIDE renderer v0.1.0" footer at
+the bottom of every rendered page. The content region no longer
+matches the source file exactly, the diff check fails, and the
+implementor "fixes" it by excluding the footer from the hash
+comparison — which is the wrong fix. The correct fix is to remove
+the footer entirely; the renderer never adds content.

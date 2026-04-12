@@ -1,0 +1,197 @@
+---
+scope: src/service/install/buildInstallConfig/
+intent: >
+  Generate the exact MCP config JSON block and the `aide_init` command
+  string the landing page's install block renders, targeting Claude Code
+  only in v1. The content must be correct for Claude Code's `.mcp.json`
+  shape, accompanied by the three-step paste-restart-`aide_init`
+  sequence, surfaced with a troubleshooting callout for the known
+  friction modes, and updated only when the `aidemd-mcp` interface
+  itself changes. This submodule owns the literal text that lands on
+  the visitor's screen and flows into their `.mcp.json`; any ambiguity
+  here kills conversion.
+outcomes:
+  desired:
+    - The JSON block rendered on the landing is valid JSON, directly pasteable into a `.mcp.json` file, and uses the exact `mcpServers.aide.command` + `mcpServers.aide.args` shape Claude Code's MCP loader expects.
+    - The command sequence shown to the visitor is complete and explicit: (1) paste the config into `.mcp.json`, (2) restart Claude Code so the new MCP server is loaded, (3) call `aide_init` from the tool palette. No step is elided or collapsed.
+    - A visitor who follows the steps exactly, with `npx` available on PATH, reaches a working AIDE installation in under two minutes without needing external documentation.
+    - Content updates only when `aidemd-mcp` publishes a breaking change to its MCP config shape or its `aide_init` tool interface. No drift between what the landing says and what the MCP server expects.
+    - The install content is a typed constant (discriminated union keyed by host framework) so v1's Claude Code variant is the only shipped case but multi-host expansion is a type change, not a rewrite.
+  undesired:
+    - Multi-framework tab mechanics in v1. The install block is a single code block and a single command sequence, not a tabbed interface. Tabs imply multi-framework support the v1 scope does not claim.
+    - Version pinning in the snippet (`npx aidemd-mcp@0.2.0`). The snippet resolves to the latest published package; version pinning rots the moment the next version ships and nobody updates it.
+    - Hidden prerequisites. If the flow assumes Node 18+, that is stated visibly in the troubleshooting callout. If it assumes `npx` on PATH, that is stated. "It just works" is not a spec outcome; "it works and visitors know exactly why it might not" is.
+    - Elided restart step. Claude Code must be restarted after `.mcp.json` changes so it picks up the new MCP server; omitting the restart from the displayed sequence makes `aide_init` invisible from the tool palette and the install silently fails with no visible error.
+    - Copy that implies `aide_init` is the "install" step and the JSON paste is optional. Both matter, and the order matters: the paste wires the MCP server, the restart loads it, the `aide_init` call bootstraps the methodology into the project.
+    - Runtime fetch of the install content. The config is a build-time constant; the landing server-renders the HTML.
+    - Hardcoded dollar figures, hero copy, or landing-level decisions in this module. The install-content module owns the install block's literal config and commands only. Hero copy lives in the landing spec's Good Examples; cost-strip numbers live in the landing spec's Good Examples. Cross-contamination violates scope.
+    - Auto-detect marketing in v1 copy. `aide_init` does auto-detect the framework (reading the source: the `framework` input is an optional discriminated union), but v1 ships Claude Code only. Bragging about auto-detection promises multi-framework support v1 does not deliver.
+---
+
+## Context
+
+The install block is the landing's single CTA and literally the hero's
+visual. Any ambiguity in its content — a typo in the JSON, a missing
+comma, a wrong key name, a skipped step — kills conversion and the
+visitor assumes AIDE is broken rather than that the documentation is
+wrong. This submodule exists so that the literal text visitors copy
+and paste is generated from a typed contract, not hand-authored in
+JSX, so drift between "what the landing says" and "what the MCP
+server expects" is structurally impossible.
+
+The parent context (from the landing spec) is that the install block
+IS the hero visual and is the single conversion path. This submodule
+narrows to the specific correctness guarantee for the text inside
+that block.
+
+## Strategy
+
+**Static typed fixture, built at compile time.** The install content
+is a module-level constant of type `InstallConfig`, which in v1 is a
+discriminated union with exactly one variant: `{ framework: "claude",
+mcpConfig: { mcpServers: { aide: { command: "npx", args:
+["aidemd-mcp"] } } }, commandSequence: [...] }`. The union shape
+means adding Cursor, Windsurf, or Copilot later is a type addition,
+not a rewrite — but v1 ships one variant.
+
+**JSON is serialized from the typed object, never hand-typed.** The
+code block rendered in the install UI comes from `JSON.stringify` on
+the typed `mcpConfig` field with two-space indent. This guarantees
+valid JSON, guarantees consistent formatting, and makes it impossible
+to ship a trailing-comma syntax error.
+
+**Command sequence is explicit and three-step.** The exported
+`commandSequence` array contains three entries: (1) "Paste this into
+your project's `.mcp.json`" with the JSON block, (2) "Restart Claude
+Code so it loads the new MCP server" with no code, (3) "Call
+`aide_init` from the tool palette" with the command name as inline
+code. The landing renders each step with its number and its content.
+The restart step is not collapsed, not skipped, and not described as
+optional — Claude Code's `.mcp.json` reload behavior requires the
+restart and the spec names it explicitly.
+
+**Friction modes are surfaced, not hidden.** A troubleshooting callout
+lives beside the install block and names the known friction modes:
+`npx` not on PATH (install Node or restart terminal), Node version
+too old (18+ required), shell initialization issue under nvm or
+Homebrew (PATH not inherited into Claude Code's shell), quit-vs-close
+distinction on macOS (use Cmd+Q, not red-dot). Each mode has a
+one-line symptom and a one-line fix. Per the architect's decision,
+the troubleshooting content is static JSX inside the landing's
+`TroubleshootingCallout/` component rather than generated here — this
+module owns the install config and sequence; the callout's prose lives
+adjacent in the landing's component tree. This spec names the callout
+as a required sibling so the landing cannot ship the install block
+alone.
+
+**No version pinning.** The snippet uses `npx aidemd-mcp` (bare), not
+`npx aidemd-mcp@X.Y.Z`. `npx` resolves to the latest published
+version on every invocation; pinning creates a rot vector where the
+landing shows an old version forever. When a breaking change lands in
+`aidemd-mcp`, this module's fixture updates (and the landing
+rebuilds), which is the one allowed trigger for updating this file.
+
+**Precondition: `aidemd-mcp` is published to npm at launch.** The
+`npx aidemd-mcp` resolution requires the package to exist on the
+public npm registry. At the time of writing this spec, the package is
+not yet published (`npm view aidemd-mcp` returns 404); this is a
+pre-launch coordination gate, not a code fix, and is surfaced here
+so the implementor does not ship the site expecting the install to
+work before publishing happens. If this changes, this paragraph
+stays as historical context but stops being a precondition.
+
+**Claude Code only. No auto-detect bragging.** v1 ships one framework
+variant. The copy says "works with Claude Code" once, plainly, and
+does not promise "also works with..." anything. The fact that
+`aide_init` internally auto-detects the host is an implementation
+detail of the MCP server, not a selling point of the landing — bragging
+about it would imply multi-framework support that has not been tested.
+When the other frameworks are tested and the landing expands to
+multi-host, this spec gets a revision and the discriminated union
+grows.
+
+**Content updates only on interface changes.** The only reason to
+touch this file is that `aidemd-mcp` has changed its MCP config shape
+or its `aide_init` interface. Drift between what visitors paste and
+what the server expects is the failure mode this submodule prevents;
+the typed static fixture is the discipline. Any other change — a new
+hero variant, a different troubleshooting line, a rewording of the
+restart step — does not belong here.
+
+## Good examples
+
+**The typed fixture (structure, not code):**
+
+An `InstallConfig` value whose `framework` is `"claude"`, whose
+`mcpConfig` is the two-line `mcpServers.aide` object pointing at
+`npx aidemd-mcp`, and whose `commandSequence` is a three-step array
+naming paste / restart / `aide_init`.
+
+**What the landing renders, verbatim:**
+
+```json
+{
+  "mcpServers": {
+    "aide": {
+      "command": "npx",
+      "args": ["aidemd-mcp"]
+    }
+  }
+}
+```
+
+Below the code block, three numbered steps:
+
+1. Paste this into your project's `.mcp.json`.
+2. Restart Claude Code so it loads the new MCP server.
+3. Call `aide_init` from the tool palette.
+
+Beside the block, a troubleshooting callout reading:
+
+> **Install not appearing?** `npx` not on PATH: install Node or restart
+> terminal. Node too old: upgrade to 18+. `aide_init` not in the tool
+> palette: make sure you fully quit Claude Code (Cmd+Q on macOS), then
+> reopen. nvm/Homebrew path issue: start Claude Code from a shell
+> where `which npx` resolves.
+
+A visitor with Node 20 and a project already open in Claude Code
+copies the JSON, pastes it into `.mcp.json`, Cmd+Q's Claude Code,
+reopens, sees `aide_init` in the tool palette, calls it, and sees
+`.aide/` appear in their project with the canonical hub inside. Total
+elapsed time: about ninety seconds.
+
+## Bad examples
+
+The install block renders a tabbed interface with four tabs — Claude
+Code / Cursor / Windsurf / Copilot — three of which show the same
+`npx aidemd-mcp` config with a different key name and none of which
+have been tested with AIDE end-to-end. A visitor on Cursor pastes
+the Cursor snippet and nothing happens; they close the tab and don't
+come back.
+
+The JSON block is a string literal in JSX with a hand-typed trailing
+comma that isn't valid JSON. Visitors paste it into `.mcp.json` and
+Claude Code fails to parse the config file entirely, breaking their
+existing MCP servers. A bug report lands three days later.
+
+The sequence omits the restart step. Visitors paste the config, open
+the tool palette, don't see `aide_init`, assume it's broken, and
+close the tab. A bug report reads "install instructions don't work."
+The fix is one line of copy, but the conversion has already been
+lost.
+
+The snippet pins `npx aidemd-mcp@0.2.0`. When 0.3 ships with a
+bug-fix, visitors still get the buggy version; when 1.0 ships with a
+breaking change, visitors silently get the old version and their
+install works differently from what the docs describe.
+
+The troubleshooting callout says "if it doesn't work, try again" with
+no specific diagnoses. A visitor on nvm with an old default Node
+version hits the Node-too-old failure, reads the useless callout,
+gives up.
+
+A contributor adds auto-detect marketing copy: "AIDE automatically
+detects Claude Code, Cursor, Windsurf, and Copilot!" — which is
+technically true of `aide_init`'s implementation but implies v1 has
+been tested on all four, which it hasn't. The spec's
+`outcomes.undesired` catches this on review.

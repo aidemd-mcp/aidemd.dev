@@ -1,0 +1,204 @@
+---
+scope: src/service/docs/archive/
+intent: >
+  On every canonical doc publish, guarantee that (a) a Wayback Machine
+  Save Page Now snapshot exists and its URL is committed back to the
+  build manifest so the next build can render it in the page header,
+  and (b) an RSS/Atom feed entry has been written naming the change
+  and linking to both the live and archived URLs. This makes every
+  version of every canonical doc citable from outside aidemd.dev
+  itself, which is the forcing function behind the site's claim to
+  be a durable canonical record. ActivityPub / Fediverse fan-out is
+  deferred to v1.1.
+outcomes:
+  desired:
+    - Every canonical doc publish triggers a Wayback Save Page Now call; the resulting archive URL is stored in `build-manifest.json` committed back to the repo, and the next build reads the manifest and renders the archive URL in the page header.
+    - Every publish writes an RSS/Atom feed entry with a fixed template: "aidemd.dev docs: <file> updated. Source commit <sha>. Live: <url>. Archived: <wayback-url>."
+    - Archive failures block the publish. Three retries on Wayback errors with exponential backoff; if retries exhaust, the publish aborts and the build reports the failure explicitly.
+    - The RSS feed file at `/public/feed.xml` validates against the Atom or RSS 2.0 specification (required elements present, valid dates, stable GUIDs tied to versioned URLs).
+    - The previous-version snapshot remains citable after a new version publishes; the manifest is append-only for published versions, and the feed entries are append-only.
+  undesired:
+    - Client-side archive logic. Wayback Save Page Now submission runs server-side at build time, never from a browser, and is never triggered by a page view. A page-view trigger is a spoofable tampering vector.
+    - Marketing copy in feed entries. The RSS entries are legal artifacts, not a growth channel. No "Check out the new docs update!" prose, no "🚀" prefixes, no author bylines, no excerpts. The template is exact and unchanging.
+    - Cron-based archival. Archiving runs coupled to the publish event, not on a schedule. A cron window means there exists a time when the live version is unarchived, which is exactly the evidentiary gap that breaks the priority claim.
+    - Silent failure. Rate-limit errors must not be swallowed or logged-and-continued. They block the publish, the build reports them, and a human decides whether to retry, delay the publish, or flag a larger problem.
+    - ActivityPub / Fediverse publishing in v1. The pattern is implementable but has no production precedent for canonical-docs sites (per research/aidemd-dev/canonical-record-publishing gaps). v1 ships RSS + Wayback only; ActivityPub moves to v1.1 with its own spec revision that names the outbox, signing keys, and recipient audience explicitly.
+    - Wayback auth tokens or future Fediverse keys committed to the repo or exposed to client code. Secrets live in the build environment only.
+    - In-place mutation of previously-published manifest entries or feed entries. Published versions are append-only; corrections are new entries with a link back to the corrected version.
+---
+
+## Context
+
+Durable priority-date claims depend on third-party, timestamped,
+tamper-resistant records existing for every live version of the
+canonical source. Wayback Machine (run by the Internet Archive) and
+RSS/Atom feeds (picked up by aggregators, consumed by feed readers,
+archived by search engines) are the two such channels accessible to
+a small team without legal infrastructure. If either channel is
+missing for a specific version, that version's priority is weakened;
+if archiving is decoupled from publishing (for example, via a cron
+job), there exists a documented window where the live version is
+unarchived and the argument "this page existed in this form on this
+date" becomes rebuttable.
+
+This submodule exists to make the publish step *atomic* with the
+archive step: a publish is not complete until its snapshot has been
+captured and its feed entry has been written. Everything else here
+is downstream of that atomicity requirement.
+
+This submodule narrows the parent (docs surface) to the specific
+mechanical guarantee that every published version is durable outside
+our own server. The docs surface talks about the site's role as a
+record; this submodule talks about how that role survives the site
+going down, being acquired, or being mutated.
+
+## Strategy
+
+**Archive runs as a publish step, not a background job.** The publish
+sequence is: renderCanonical → post-render diff check → Wayback save
+page now → RSS entry append → manifest commit → deploy. Each step
+blocks the next on failure. If Wayback fails and retries exhaust,
+the deploy does not run. If the feed file cannot be written, the
+manifest is not committed. The publish is a transaction.
+
+**Wayback submission uses the Save Page Now API.** On publish, the
+service POSTs the new versioned URL to Wayback's save-page-now
+endpoint, polls for completion, and records the resulting archive
+URL. The archive URL is stored in `build-manifest.json` keyed by the
+versioned URL, and the manifest is committed back to the repo as
+part of the publish. The next build reads the manifest and renders
+the archive URL in each page's DocHeader. This closes the loop:
+every live page displays its own Wayback archive link.
+
+**Retry with exponential backoff, then fail.** Three retries on
+transient Wayback errors (rate limits, 5xx responses, timeouts),
+with exponential backoff (e.g., 1s → 4s → 16s). On the fourth
+failure, the publish aborts and the build reports "Wayback save
+failed for <url> after 3 retries; publish blocked." No silent
+degradation; the implementor must either retry manually or
+investigate the root cause.
+
+**RSS/Atom feed is written to `/public/feed.xml` at build time.**
+The feed file is a templated write from the same `build-manifest.json`
+that holds the Wayback archive URLs. Every entry contains: title (the
+source file name), pub date (the publish commit timestamp), GUID (the
+stable versioned URL, which is immutable and unique), live URL,
+archive URL, and a one-line description following the fixed template.
+The feed uses either Atom 1.0 or RSS 2.0 (implementor picks; both
+are acceptable as long as the choice is consistent).
+
+**Feed entry template is fixed and unchanging.** "aidemd.dev docs:
+<file> updated. Source commit <sha>. Live: <url>. Archived:
+<wayback-url>." No variation, no seasonal copy, no emoji, no author
+name, no excerpt. The fixed template is the forcing function that
+keeps the feed from drifting into marketing content — any proposal
+to add a field to the entry requires a spec revision here.
+
+**Append-only manifests and feeds.** When a new canonical version is
+published, its entry is added to `build-manifest.json` and to
+`feed.xml`; prior entries are never mutated, even to update URLs or
+fix typos in descriptions. If a published snapshot needs a
+correction, a new entry is appended linking back to the corrected
+version. This mirrors the RFC/arXiv discipline: published artifacts
+are frozen.
+
+**Secrets live in the build environment.** Wayback auth (if required)
+is read from environment variables injected into the build runner —
+never committed to the repo, never passed to client code, never
+logged. Future Fediverse signing keys will follow the same pattern.
+
+**ActivityPub is a v1.1 spec revision, not a shortcut.** The
+`publishActivityPub/` helper folder is reserved in the architect's
+folder structure but is not implemented in v1. When v1.1 lands, it
+gets its own outcome in a spec revision and its own helper submodule;
+the v1 spec explicitly names its absence so the implementor does not
+accidentally ship a half-built Fediverse publisher. v1 does not
+import `activitypub-express`, does not scaffold an actor, does not
+generate a signing key, does not create an outbox route.
+
+**Quarterly re-verification is a v1.1 concern, not v1.** The
+docs-surface spec names quarterly byte-faithfulness re-verification as
+a tripwire; the mechanism for running that verification (comparing
+live rendered pages against canonical sources months after publish)
+is a separate audit service that does not live in this submodule and
+is out of scope for v1. v1 ships publish-time archival; re-verification
+is v1.1.
+
+## Good examples
+
+A canonical doc is updated at 14:03 UTC. The build runs; renderCanonical
+produces the new HTML with a new content hash. The diff check passes.
+The archive step calls Wayback Save Page Now at 14:03:47, polls for
+the snapshot, and receives
+`https://web.archive.org/web/20260411140352/aidemd.dev/docs/aide-spec`.
+The `build-manifest.json` is updated with a new entry:
+
+```json
+{
+  "aide-spec@v20260411": {
+    "live": "https://aidemd.dev/docs/aide-spec@v20260411",
+    "sourceCommit": "a1b2c3d",
+    "publishedAt": "2026-04-11T14:03:00Z",
+    "wayback": "https://web.archive.org/web/20260411140352/aidemd.dev/docs/aide-spec"
+  }
+}
+```
+
+The RSS feed at `/public/feed.xml` gets a new entry:
+
+```xml
+<entry>
+  <title>aide-spec.md</title>
+  <id>https://aidemd.dev/docs/aide-spec@v20260411</id>
+  <published>2026-04-11T14:03:00Z</published>
+  <link href="https://aidemd.dev/docs/aide-spec@v20260411"/>
+  <summary>aidemd.dev docs: aide-spec.md updated. Source commit a1b2c3d.
+  Live: https://aidemd.dev/docs/aide-spec@v20260411.
+  Archived: https://web.archive.org/web/20260411140352/aidemd.dev/docs/aide-spec.</summary>
+</entry>
+```
+
+The manifest is committed back to the repo as part of the publish. The
+deploy runs. The page header at `/docs/aide-spec@v20260411` now displays
+the archive URL alongside the publication date and commit SHA. Six
+months later, a priority-date question is resolved in thirty seconds
+by fetching the Wayback snapshot and pointing at the RSS entry
+timestamp.
+
+## Bad examples
+
+Wayback submission is a client-side fetch that runs on every page
+view, using an API key exposed in the browser bundle. Rate-limit errors
+are swallowed with a `console.warn`, and the archive URL is never
+stored; the docs pages display "Archived: pending…" indefinitely.
+
+An RSS entry reads "🚀 Major update to AIDE docs — we've totally
+refreshed the aide-spec! Check it out →" — indistinguishable from a
+marketing feed, with no source commit and no Wayback URL. The feed's
+legal-artifact value is gone.
+
+The archive step fails due to a transient rate limit. The build logs
+a warning "wayback failed, continuing anyway" and proceeds with the
+deploy. An hour later, the docs are live but unarchived, and nobody
+notices until a reader files a bug two weeks later — by which time
+the "this page existed in this form on this date" argument has a
+documented gap.
+
+A cron job archives once every 24 hours, sweeping for any live pages
+that were not yet archived. The cron window creates a documented
+24-hour gap for every new publish — exactly the evidentiary gap the
+spec says is forbidden.
+
+A published manifest entry for `aide-spec@v20260328` is silently
+mutated during a later build to update its `wayback` field to a new
+snapshot URL after the old one broke. The entry is no longer a frozen
+record; anyone who cited the old archive URL now links to a broken
+page with no indication of what happened.
+
+The v1 implementor scaffolds `publishActivityPub/` with a
+"placeholder implementation" that generates a keypair, creates an
+outbox route, and emits a dummy activity on every publish — none of
+which is tested against a real Fediverse instance. The scaffold ships
+and a security researcher finds the unprotected outbox three weeks
+later. ActivityPub is explicitly out of v1; scaffolding it "for the
+future" violates this spec.

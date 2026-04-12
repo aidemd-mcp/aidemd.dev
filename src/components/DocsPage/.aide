@@ -1,0 +1,167 @@
+---
+scope: src/components/DocsPage/
+intent: >
+  The docs surface composes the byte-faithful, timestamped, archivable
+  canonical record of the AIDE methodology — the single web address
+  where a reader, a patent examiner, the Wayback Machine, or a Fediverse
+  post can point to for a specific version of a specific canonical doc.
+  Its value depends entirely on the web version being demonstrably
+  identical to the canonical source shipping with `aide_init` on disk.
+  This surface's job is not to explain or teach AIDE in friendlier
+  language than the canonical source — it is to render the canonical
+  source, untouched, with citation metadata visible on every page.
+outcomes:
+  desired:
+    - Every canonical doc page is byte-faithful to its source markdown file in the `.aide/` hub; a reader who diffs the rendered content region against the source finds zero semantic differences (markdown-to-HTML wrapping excepted).
+    - Every canonical doc page carries a visible citation block in its header with publication date, source-file commit SHA, stable versioned URL, and Wayback archive URL.
+    - Reading order on the docs section mirrors the canonical hub's progressive disclosure — `/docs` renders the `.aide/index.md` hub, and slug routes render individual canonical docs in the same order the hub lists them.
+    - Every canonical doc page ends with a small install footer returning the reader to the landing's install path (Stripe docs-as-sales-channel pattern).
+  undesired:
+    - A CMS, dashboard, or any non-git edit surface for canonical doc content. Every contribution is a pull request against the canonical source and a rebuild. A dashboard-driven edit path creates drift and defeats the source-of-record claim.
+    - Full-text or fuzzy search in v1. A search index that returns results in non-canonical order breaks the hub-crawl mental model; a title-only filter is acceptable if cheap, but full-text is specifically out of v1 scope.
+    - Content rewrites for tone, typos, or "modernization." If the canonical source has a typo, the rendered page shows the typo until a PR is merged upstream. The docs surface is a renderer, not an author.
+    - Plugin middleware that injects call-to-action boxes, "was this helpful?" widgets, related-articles footers, or comment sections into the rendered content body. These break byte-faithfulness and make the web version unquotable. The install footer is the one allowed exception because it sits outside the content region and serves the root spec's conversion outcome.
+    - Hidden or stripped agent-facing callouts from canonical source files ("for agents: this file is a scaffold, not a reference"). Every human visitor sees exactly what every agent reader sees — the callouts stay.
+    - In-place edits to published canonical doc pages. When a canonical doc is updated, the old version stays at its versioned URL and a separate linked errata note records the change. Quietly overwriting a published page breaks every citation that already exists.
+    - A v1 quarterly byte-faithfulness re-verification audit is deferred to v1.1; this spec names the tripwire but does not deliver the audit. v1 ships build-time byte-faithfulness, enforced by the canonical-rendering service.
+---
+
+## Context
+
+This surface's entire value proposition — patent priority, thought
+leadership, quotable-in-Slack trustworthiness — rests on one invariant:
+the web version and the shipped `.aide/` folder are literally the same
+bytes. If that invariant is falsifiable, the priority claim and the
+trust-the-docs claim both collapse together. Every decision on this
+surface serves that invariant directly or is out of scope.
+
+This surface is a composition layer. The real byte-faithfulness
+enforcement lives in the canonical-rendering service
+(`src/service/docs/renderCanonical/`) and the archival guarantees live
+in the archive service (`src/service/docs/archive/`); this spec owns
+the *visible shape* of the docs section — what a visitor sees, how
+pages are navigated, where the citation metadata appears, and how the
+section links back to the install path.
+
+## Strategy
+
+**Docs content is rendered from the git-tracked `.aide/` folder at
+build time.** No CMS, no remote fetch, no middleware. The docs section
+reads from the same folder `aide_init` installs on disk; the build is
+a pure function of the git tree. Runtime reads are explicitly forbidden
+(see root spec `outcomes.undesired`).
+
+**Hub-first navigation mirrors the methodology's progressive disclosure.**
+`/docs` renders the `.aide/index.md` hub as its landing, listing every
+canonical doc in the same order the hub file lists them. Slug routes
+(`/docs/aide-spec`, `/docs/progressive-disclosure`, etc.) render
+individual canonical docs. There is no alternate reading order, no
+"tutorials" section, no "getting started" path that is nowhere in the
+canonical source, no "featured docs" block. The UI mirrors the hub
+structure the agent sees.
+
+**Citation block is visible, not hidden behind a click.** Every
+canonical doc page header displays the publication date, source-file
+commit SHA, stable versioned URL, and Wayback archive URL in a
+DocHeader block above the content region. Cite-ability is the default,
+not an opt-in. Readers can copy a versioned URL without clicking into
+a menu.
+
+**Errata are linked separate notes, never in-place edits.** When a
+canonical doc is corrected, the prior version remains at its versioned
+URL and a new errata note is linked from the old page's header. This
+is the RFC/arXiv pattern — priority-date claims depend on frozen
+published artifacts, and any mechanism that silently mutates a published
+page breaks every existing citation. The implementor must not ship an
+"Edit this page" button or any flow that mutates published content.
+
+**Every canonical doc ends with an install footer.** A small
+InstallFooter component below the content region returns the reader to
+the landing's install path — this is the Stripe docs-as-sales-channel
+pattern, and it is the one allowed exception to "nothing injected into
+content." It sits below the content region, not inside it, so it
+cannot be mistaken for part of the canonical source. The footer's
+content is generated from the same typed install fixture the landing
+uses (see install-content service spec) so it stays in sync with the
+hero.
+
+**No fuzzy search, no full-text search in v1.** Fuzzy search returning
+results in non-canonical order breaks the hub-crawl mental model the
+methodology teaches. A title-only filter is acceptable if the
+implementor can add it cheaply; full-text search is specifically out
+of scope for v1. The mental model the reader builds — hub → section
+hub → content note — matches how an AIDE agent reads specs, and that
+coherence is worth more than a search box.
+
+**Page structure reuses shared primitives.** DocLayout, DocHeader,
+DocToc, DocBody, and InstallFooter are the composition units. DocBody
+is the only one that renders canonical content; the others are
+chrome. DocHeader carries the citation block; DocToc is auto-generated
+from the source file's heading structure; InstallFooter reuses the
+shared CodeBlock / CopyButton primitives from the landing. No
+domain-specific rendering lives in DocBody — it delegates to the
+canonical-rendering service for the markdown-to-HTML transformation
+and only concerns itself with the container and typography.
+
+**The docs section is chrome around content, not content.** This spec
+governs composition and navigation, not the byte-faithfulness guarantee
+itself (that's the canonical-rendering service) and not the archival
+guarantee (that's the archive service). A reader who finds a byte
+drift or a missing archive should file a bug against the relevant
+service, not against this surface — but the bug's symptom shows up
+here, on the page they were reading, so this spec names those
+invariants as tripwires it inherits.
+
+## Good examples
+
+A reader visits `https://aidemd.dev/docs`. The page renders
+`.aide/index.md` converted to HTML, with the same doc list and the
+same progressive-disclosure framing the canonical hub uses. Each link
+in the hub resolves to `/docs/<name>` where the source file is
+`.aide/<name>.md`.
+
+A reader visits `https://aidemd.dev/docs/aide-spec`. The page header
+shows:
+
+> **Published** 2026-04-11 · **Source commit** `a1b2c3d`
+> **Cite as** `aidemd.dev/docs/aide-spec@v20260411`
+> **Archived** `web.archive.org/web/20260411140345/aidemd.dev/docs/aide-spec`
+
+The content region below renders `aide-spec.md` byte-for-byte. At the
+bottom, separated from the content region by a visual break, a small
+InstallFooter block reads "Install AIDE in your Claude Code project →"
+and links to the landing's install section. The reader opens DevTools,
+copies the content region text, diffs it against
+`cat .aide/aide-spec.md`, and finds no semantic differences.
+
+Two weeks later, the canonical spec is updated. The old version stays
+at `/docs/aide-spec@v20260411` with an added errata banner linking to
+the new version at `/docs/aide-spec@v20260425`. Neither URL has been
+overwritten. A reader who cited the old version in a Slack thread
+three weeks ago can still follow their link and see exactly what they
+quoted, with a visible note that a newer version exists.
+
+## Bad examples
+
+`/docs/getting-started` exists with friendly prose that appears nowhere
+in the canonical source ("Welcome to AIDE! Let's get started with your
+first spec…"). A "What's new" banner sits at the top of `/docs` with
+editable content and a last-updated timestamp that isn't tied to any
+git commit. An "Edit this page" button links to a CMS dashboard. A
+fuzzy search bar returning "AIDE for beginners" as the top result for
+the query "progressive disclosure." A `/docs/aide-spec` page whose
+typo was silently corrected in the web version — the canonical source
+still has the typo, so the site and the installed methodology now
+disagree and the source-of-record claim is broken.
+
+A subtler failure: the canonical doc renders correctly but the header
+displays only "Last updated: 2 weeks ago." No commit hash, no versioned
+URL, no Wayback link. The page is byte-faithful but unquotable at
+version-granularity, and the priority-date argument loses its anchor.
+
+Another subtler failure: a "was this helpful?" widget appears below
+every section, populated from a client-side analytics script. The
+content region is byte-faithful in the HTML source but the visible
+rendering interleaves widgets into the content flow, and a reader
+diffing the rendered page against the canonical source finds
+unexpected elements they cannot trace to the source.

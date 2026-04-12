@@ -1,0 +1,197 @@
+---
+scope: src/components/LandingPage/
+intent: >
+  The landing surface composes the single-scroll path that takes a
+  first-time visitor from arrival to pasted-MCP-config-plus-restart-plus-
+  `aide_init` within about thirty seconds, using the AI Domain Expert
+  framing as the lead and the install command as the hero visual. Its
+  only job is install-path conversion; every section either serves that
+  path or is cut. No section here exists for SEO, engagement metrics,
+  social proof, or future-surface staging.
+outcomes:
+  desired:
+    - A visitor reaches the install command before any scrolling — the install block IS the hero, not a section below it.
+    - The five supporting beats — specialist cost strip, how-it-works pipeline, vs-rules-packs section, hallucination-evidence callout, final install block — all appear in this order before the visitor reaches the footer, so the install decision is informed by the time they hit the safety-net CTA.
+    - A visitor completes the install on this page without visiting docs first; the docs footer link exists for after-install reference, not for before-install deep-diving.
+    - The page renders with zero forms, zero gates, zero email captures, zero demo-request CTAs, zero pricing teasers, zero testimonials.
+  undesired:
+    - A persistent top navigation bar. The landing has no header that offers the visitor a way off the conversion path; the only persistent element is the install block itself, present at the top and again at the bottom.
+    - A compatibility row implying multi-framework support. v1 is Claude Code only; a strip reading "Cursor / Windsurf / Copilot coming soon" is a row of one pretending to be a row of four and is specifically forbidden here as well as at the root level.
+    - Stock-icon feature grids, "Trusted by" logo strips, team photos, hero illustrations, auto-playing video, animated particle backgrounds, gradient washes that obscure text. Each of these reads as marketing-site chrome and costs engineering credibility the rest of the landing then has to win back.
+    - Copy that could be pasted onto Cursor, Windsurf, Copilot, Cline, Aider, LangGraph, CrewAI, Autogen, Harvey, Hippocratic AI, Decagon, or Sierra without changing its meaning. Any sentence that fits elsewhere is cut.
+    - A sixth beat or a decorative interstitial between the five canonical beats. No "Meet the team," no "Our philosophy," no "Recent updates from the blog," no "Join our community." The five beats are exhaustive.
+    - A docs link in the hero or the top third of the page. Docs are the after-install reference and belong in the footer, deliberately below the final install CTA.
+---
+
+## Context
+
+This surface carries a specific risk inherited from the root spec's
+scope-creep tripwires but realized locally: landing pages accumulate
+feature tiles, social proof, newsletter captures, and pricing teasers
+because each addition feels individually harmless. This spec makes each
+forbidden addition specifically out of scope so the implementor can
+refuse them by citing this file. The risk is not writing a bad landing —
+it is writing a landing that looks acceptable in isolation but has
+quietly grown into a generic marketing page that pattern-matches as
+such.
+
+This spec narrows the root to the landing surface's unique responsibility:
+the sequenced beats that deliver a visitor to the install block with
+enough context to paste without second-guessing.
+
+## Strategy
+
+**Vertical single-column, no sidebar.** Engineers scan top-to-bottom;
+side columns are filtered as chrome. The single-column rule also forces
+every section to earn its full-width slot — there is no "put it in the
+sidebar" escape hatch for content that does not justify a beat.
+
+**Five beats in this order, no more, no less:**
+
+1. **Install-as-hero.** Headline, one-line subhead, MCP config JSON block
+   with copy button, three-step numbered sequence (paste, restart,
+   `aide_init`), a small troubleshooting callout naming the common
+   friction modes. This IS the hero. No separate hero-above-install.
+2. **Specialist cost strip.** Two concrete, sourced dollar figures — tax
+   attorneys $200–$1,000/hr and a $30K–$60K six-month fractional
+   specialist engagement — each with inline source attribution. Gives
+   the founder-or-eng-lead reader a concrete business reason to care
+   about the mechanism on screen above.
+3. **How it works.** The research → brain → intent → downstream-agent
+   pipeline in one compact diagram plus one-sentence-per-node
+   annotations. This is the mechanism section; it is where the
+   methodology framing ("intent is the contract, code is ephemeral")
+   lives, not the hero.
+4. **vs rules packs.** Dedicated section naming CLAUDE.md, AGENTS.md,
+   and .cursorrules as the nearest-neighbor category and describing the
+   specific mechanical difference — rules packs are flat lumps; AIDE
+   cascades research into outcome-checked intent specs. This section
+   closes the most likely confusion the audience brings in.
+5. **Hallucination evidence.** Stanford HAI / Dahl et al., 2024,
+   attributed verbatim: "purpose-built legal AI still hallucinates on
+   over one in six queries." Cited as evidence against other tools'
+   approach, never as evidence of AIDE's own track record.
+6. **Final install block.** Identical to the hero's install block.
+   Safety-net CTA for visitors who scrolled past the first one. (Count
+   this as beat 6 if you like; it is the hero repeated, not a new
+   beat's worth of content.)
+
+The numbering here is not negotiable; adding a sixth content beat between
+"how it works" and "vs rules packs" or between the hallucination
+callout and the final CTA opens a scope-creep door this spec holds
+closed. The implementor refuses additions by pointing at this list.
+
+**No persistent top navigation.** A header with "Docs / Pricing / Blog"
+gives the visitor three ways to leave the conversion path before they
+reach the install block. The landing has no header. Docs are a single
+footer link, deliberately below the final install CTA so docs are the
+after-install reference, not the before-install distraction.
+
+**Copy is hedge-free, short, declarative, verb-first.** No "helps you,"
+no "empowers teams to," no "unlock the power of," no "AI-native." These
+phrases survive draft review because they sound like something, but
+engineers skim past them as noise and whatever survives is the short
+strong sentences anyway. The landing's copy budget is spent on concrete
+claims with sourced attribution, not on hedges.
+
+**Hero carries the AI Domain Expert framing.** The hero leads with the
+business outcome — "collapses the specialist hire" or "domain expert
+that stays with the project" — not with the methodology framing. The
+methodology framing ("intent is the contract, code is ephemeral") is
+the mechanism that backs the claim up, and it lives in beat 3, the
+how-it-works section, not in the hero. Two hero copy variants are
+acceptable for launch and the implementor picks between them at build
+time; both are documented in the Good Examples section below.
+
+**Specialist cost strip ships two figures, not four.** The research
+note has four defensible ranges (tax attorneys, physician advisors,
+actuarial consulting, HIPAA compliance). Shipping all four reads as a
+table and dilutes the punch; shipping two — the hourly rate and the
+six-month total — gives the reader a concrete anchor and a concrete
+total without looking like a list. The implementor can A/B the exact
+pair if the site ever ships analytics; v1 ships the pair named in the
+Good Examples section below.
+
+**Domain-claim rule enforced locally.** Every section on this surface
+must comply with the root spec's mechanism-yes / usage-no rule. The
+specialist cost strip names the cost of hiring a specialist, not the
+cost of shipping with AIDE. The how-it-works section describes what
+the AIDE pipeline does, not what users have built. The hallucination
+callout cites other tools' failures, not AIDE's successes. No
+testimonials, no case studies, no "built with AIDE" badges, no founder
+quotes. The implementor refuses any addition that cannot be phrased
+as "here is the mechanism" rather than "here is what someone did with
+the mechanism."
+
+## Good examples
+
+**Hero copy variants (implementor picks one at build time):**
+
+Variant C′:
+> **AIDE collapses the specialist hire into the agent loop.**
+>
+> A research agent studies your domain, persists findings to your
+> project's brain, and every downstream agent — planner, architect,
+> implementor, QA — reads that brain when writing code. Works with
+> Claude Code today.
+>
+> `[paste this into .mcp.json]`  `[then run aide_init]`
+
+Variant D:
+> **Give your agents a domain expert that stays with the project.**
+>
+> Your research doesn't live in a single chat window. AIDE persists
+> it to your project so every agent session starts with the same
+> domain knowledge — legal, clinical, tax, compliance, whatever the
+> code actually needs.
+>
+> `[paste this into .mcp.json]`  `[then run aide_init]`
+
+**Specialist cost strip copy (ship verbatim, cite inline):**
+
+> Tax attorneys charge $200–$1,000 per hour (Harness Wealth, 2025).
+> A six-month fractional specialist engagement runs $30,000–$60,000
+> at the low end (Geisheker Group, 2026). AIDE is free via `npx`.
+
+**Reading experience end-to-end:**
+
+A visitor lands at 2:14pm. Fold one: hero — one headline, one subhead,
+the JSON code block with a copy button, the three-step sequence, a
+small troubleshooting callout. Fold two: the cost strip above. Fold
+three: the how-it-works diagram with four nodes (research agent, brain,
+intent spec, downstream agents) and one-line annotations. Fold four:
+the vs-rules-packs section naming CLAUDE.md/AGENTS.md/.cursorrules and
+the persistence-gap argument. Fold five: the Stanford HAI callout with
+full attribution. Fold six: the final install block, identical to the
+hero. Footer: one link, "Read the canonical spec →" pointing to /docs.
+Total reading time about sixty seconds, install completable in under
+two minutes, visitor never encounters a form.
+
+## Bad examples
+
+A hero that reads "The AI-native engineering workflow for modern
+teams. Unlock agent productivity with AIDE. [Request early access]"
+above an auto-playing demo video. Below it: a three-column feature
+grid (Fast / Reliable / Open) with stock icons, a "Trusted by" logo
+strip, a testimonials carousel with italic pull-quotes, a newsletter
+signup card above the fold, a pricing teaser ("Free for open source /
+$49/mo / Contact sales for Enterprise"), a "Meet the founders" block,
+a FAQ accordion, a case-studies block describing "legal and medical
+apps built with AIDE" (zero of which exist), and finally the install
+block at the bottom of the page, hidden behind an email-capture form
+and requiring a second click to reveal the actual command. A persistent
+top nav offers "Docs / Blog / Pricing / About / Sign in," five
+competing off-ramps. A visitor cannot tell in ten seconds whether AIDE
+is a framework, a hosted product, a consultancy, or a newsletter, and
+the install block is effectively unreachable within the first minute
+of the visit.
+
+A subtler failure mode: the five beats are present in the correct order,
+but a sixth beat ("Built for teams like yours") has been inserted
+between beats 3 and 4 with three testimonial pull-quotes. The page
+still converts reasonably, but the testimonials are invented ("We
+shipped our compliance app in two weeks!" — Alex, Fake Co.) because no
+real users exist yet. The spec catches this specifically: testimonials
+are in `outcomes.undesired` at the root level, and this surface spec
+restricts the beat count to five to prevent the slot from existing in
+the first place.
