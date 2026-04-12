@@ -3,7 +3,7 @@
     "aide": {
       "command": "npx",
       "args": [
-        "aidemd-mcp"
+        "@aidemd-mcp/server"
       ]
     },
     "playwright": {
