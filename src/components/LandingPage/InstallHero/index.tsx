@@ -7,7 +7,7 @@ const InstallHero = () => {
   const jsonCode = JSON.stringify(mcpConfig, null, 2);
 
   return (
-    <header className="w-full py-20 px-4">
+    <header id="install" className="w-full py-20 px-4">
       <div className="max-w-2xl mx-auto flex flex-col gap-10">
         <div className="flex flex-col gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-zinc-100">

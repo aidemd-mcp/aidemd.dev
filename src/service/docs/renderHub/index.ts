@@ -16,7 +16,7 @@ type HubEntry = {
  * Throws if `.aide/index.md` cannot be read.
  */
 export default async function renderHub(): Promise<HubEntry[]> {
-  const indexPath = path.join(process.cwd(), ".aide", "index.md");
+  const indexPath = path.join(process.cwd(), ".aide", "docs", "index.md");
   const source = await readFile(indexPath, "utf-8");
 
   const entries: HubEntry[] = [];

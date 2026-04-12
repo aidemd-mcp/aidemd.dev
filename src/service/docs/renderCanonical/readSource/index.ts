@@ -6,7 +6,7 @@ import path from "node:path";
  * Throws if the file does not exist.
  */
 export default async function readSource(slug: string): Promise<string> {
-  const filePath = path.join(process.cwd(), ".aide", `${slug}.md`);
+  const filePath = path.join(process.cwd(), ".aide", "docs", `${slug}.md`);
   try {
     return await readFile(filePath, "utf-8");
   } catch (err) {

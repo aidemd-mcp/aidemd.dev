@@ -1,6 +1,10 @@
 import type { CitationMeta } from "@/types/docs";
 import Link from "next/link";
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  "https://aidemd.dev";
+
 type DocHeaderProps = {
   citationMeta: CitationMeta;
 };
@@ -13,6 +17,8 @@ const DocHeader = ({ citationMeta }: DocHeaderProps) => {
     previousVersionUrl,
     waybackUrl,
   } = citationMeta;
+
+  const citeUrl = `${SITE_URL}${versionedUrl}`;
 
   return (
     <header className="mb-10 pb-8 border-b border-zinc-800">
@@ -33,10 +39,10 @@ const DocHeader = ({ citationMeta }: DocHeaderProps) => {
           <dt className="text-zinc-500 flex-none">Cite as</dt>
           <dd>
             <a
-              href={`https://${versionedUrl}`}
+              href={citeUrl}
               className="text-zinc-300 hover:text-zinc-100 transition-colors underline underline-offset-2"
             >
-              {versionedUrl}
+              {citeUrl}
             </a>
           </dd>
         </div>

@@ -14,7 +14,7 @@ import type { CitationMeta } from "@/types/docs";
  * Never uses frontmatter dates — git history is authoritative.
  */
 export default function extractCitationMeta(slug: string): CitationMeta {
-  const relPath = path.join(".aide", `${slug}.md`).replace(/\\/g, "/");
+  const relPath = path.join(".aide", "docs", `${slug}.md`).replace(/\\/g, "/");
 
   // Fetch the last two commits that touched this specific file.
   // Format: "<short-sha> <author-timestamp-unix>"
