@@ -4,11 +4,11 @@ import LandingPage from "@/components/LandingPage";
 export const metadata: Metadata = {
   title: "AIDE — Autonomous Intent-Driven Engineering",
   description:
-    "Install aidemd-mcp and give your AI agents byte-faithful, timestamped, archivable context. Stop pasting docs. Start shipping.",
+    "Six specialized agents — spec-writer, researcher, domain expert, architect, implementor, QA — share a persistent brain across every session. Self-serve install via npx.",
   openGraph: {
     title: "AIDE — Autonomous Intent-Driven Engineering",
     description:
-      "Install aidemd-mcp and give your AI agents byte-faithful, timestamped, archivable context. Stop pasting docs. Start shipping.",
+      "Six specialized agents — spec-writer, researcher, domain expert, architect, implementor, QA — share a persistent brain across every session. Self-serve install via npx.",
     url: "https://aidemd.dev",
     siteName: "AIDE",
     type: "website",

@@ -6,8 +6,11 @@ intent: >
   `aide_init` within about thirty seconds, using the AI Domain Expert
   framing as the lead and the install command as the hero visual. Its
   only job is install-path conversion; every section either serves that
-  path or is cut. No section here exists for SEO, engagement metrics,
-  social proof, or future-surface staging.
+  path or is cut. The methodology it sells ships six specialized agents
+  as a concrete pipeline — not generic "AI agents" — and the landing
+  must reflect that specificity without becoming an agent catalog. No
+  section here exists for SEO, engagement metrics, social proof, or
+  future-surface staging.
 outcomes:
   desired:
     - A visitor reaches the install command before any scrolling — the install block IS the hero, not a section below it.
@@ -21,6 +24,7 @@ outcomes:
     - Copy that could be pasted onto Cursor, Windsurf, Copilot, Cline, Aider, LangGraph, CrewAI, Autogen, Harvey, Hippocratic AI, Decagon, or Sierra without changing its meaning. Any sentence that fits elsewhere is cut.
     - A sixth beat or a decorative interstitial between the five canonical beats. No "Meet the team," no "Our philosophy," no "Recent updates from the blog," no "Join our community." The five beats are exhaustive.
     - A docs link in the hero or the top third of the page. Docs are the after-install reference and belong in the footer, deliberately below the final install CTA.
+    - Meta descriptions (og:description, meta description tag) that reference deprecated AIDE concepts such as "byte-faithful," "timestamped context," or "archivable context." These belong to an older version of the methodology. Meta copy must reflect the AI Domain Expert framing and the six-agent pipeline that AIDE actually ships.
 ---
 
 ## Context
@@ -57,16 +61,32 @@ sidebar" escape hatch for content that does not justify a beat.
    specialist engagement — each with inline source attribution. Gives
    the founder-or-eng-lead reader a concrete business reason to care
    about the mechanism on screen above.
-3. **How it works.** The research → brain → intent → downstream-agent
-   pipeline in one compact diagram plus one-sentence-per-node
-   annotations. This is the mechanism section; it is where the
-   methodology framing ("intent is the contract, code is ephemeral")
-   lives, not the hero.
+3. **How it works.** The pipeline shows six named agents — spec-writer,
+   researcher, domain expert, architect, implementor, QA — as vertical
+   nodes with one-sentence annotations per node. The brain is shown as
+   shared infrastructure accessed by three agents (researcher writes,
+   domain expert reads, architect reads the coding playbook) rather than
+   as a pipeline stage. The fix loop (QA produces todo, implementor
+   fixes one item per session in clean context, QA re-validates) and
+   resume-mid-pipeline (orchestrator detects state from file existence
+   and picks up where the last session left off) are visible as
+   mechanism annotations, not hidden. This is the mechanism section; it
+   is where the methodology framing ("intent is the contract, code is
+   ephemeral") lives, not the hero.
 4. **vs rules packs.** Dedicated section naming CLAUDE.md, AGENTS.md,
    and .cursorrules as the nearest-neighbor category and describing the
-   specific mechanical difference — rules packs are flat lumps; AIDE
-   cascades research into outcome-checked intent specs. This section
-   closes the most likely confusion the audience brings in.
+   specific mechanical differences. Available ammunition beyond the core
+   persistence-gap argument: auto-learning (when the fix loop closes,
+   retro findings promote to the brain at `process/retro/` — rules packs
+   cannot learn from their own failures), misalignment tags (QA traces
+   where intent was lost to a specific pipeline stage — rules packs
+   cannot diagnose drift), upgrade command (AIDE versions its methodology
+   artifacts and updates them in place — rules packs do not version),
+   coding playbook (the architect navigates a structured convention
+   hierarchy via a dedicated skill — rules packs are flat unstructured
+   text). The architect picks which differentiators fit the sixty-second
+   reading budget; the spec provides all of them as available ammunition.
+   This section closes the most likely confusion the audience brings in.
 5. **Hallucination evidence.** Stanford HAI / Dahl et al., 2024,
    attributed verbatim: "purpose-built legal AI still hallucinates on
    over one in six queries." Cited as evidence against other tools'
@@ -80,6 +100,12 @@ The numbering here is not negotiable; adding a sixth content beat between
 "how it works" and "vs rules packs" or between the hallucination
 callout and the final CTA opens a scope-creep door this spec holds
 closed. The implementor refuses additions by pointing at this list.
+
+**Not every new mechanism needs LP copy.** This spec provides ammunition;
+the architect picks what fits the reading budget. The six agents,
+Obsidian brain, and auto-learning are the headline features. Misalignment
+tags, resume-mid-pipeline, and upgrade are supporting mechanisms that
+strengthen beats 3 and 4 if space allows.
 
 **No persistent top navigation.** A header with "Docs / Pricing / Blog"
 gives the visitor three ways to leave the conversion path before they
@@ -127,13 +153,13 @@ the mechanism."
 
 **Hero copy variants (implementor picks one at build time):**
 
-Variant C′:
+Variant C':
 > **AIDE collapses the specialist hire into the agent loop.**
 >
 > A research agent studies your domain, persists findings to your
-> project's brain, and every downstream agent — planner, architect,
-> implementor, QA — reads that brain when writing code. Works with
-> Claude Code today.
+> brain, and six specialized agents — spec-writer, researcher, domain
+> expert, architect, implementor, QA — draw from that brain across
+> every session. Works with Claude Code today.
 >
 > `[paste this into .mcp.json]`  `[then run aide_init]`
 
@@ -141,9 +167,9 @@ Variant D:
 > **Give your agents a domain expert that stays with the project.**
 >
 > Your research doesn't live in a single chat window. AIDE persists
-> it to your project so every agent session starts with the same
-> domain knowledge — legal, clinical, tax, compliance, whatever the
-> code actually needs.
+> it to your brain so six specialized agents start every session with
+> the same domain knowledge — legal, clinical, tax, compliance,
+> whatever the code actually needs.
 >
 > `[paste this into .mcp.json]`  `[then run aide_init]`
 
@@ -158,14 +184,25 @@ Variant D:
 A visitor lands at 2:14pm. Fold one: hero — one headline, one subhead,
 the JSON code block with a copy button, the three-step sequence, a
 small troubleshooting callout. Fold two: the cost strip above. Fold
-three: the how-it-works diagram with four nodes (research agent, brain,
-intent spec, downstream agents) and one-line annotations. Fold four:
+three: the how-it-works diagram with six agent nodes (spec-writer,
+researcher, domain expert, architect, implementor, QA) shown as a
+vertical pipeline with the brain as shared infrastructure, plus one-line
+annotations per node. Fold four:
 the vs-rules-packs section naming CLAUDE.md/AGENTS.md/.cursorrules and
 the persistence-gap argument. Fold five: the Stanford HAI callout with
 full attribution. Fold six: the final install block, identical to the
 hero. Footer: one link, "Read the canonical spec →" pointing to /docs.
 Total reading time about sixty seconds, install completable in under
 two minutes, visitor never encounters a form.
+
+**Meta description direction:** The meta description and og:description
+must convey the AI Domain Expert mechanism — six specialized agents that
+collapse the specialist hire into the agent loop — not deprecated
+concepts like "byte-faithful" or "timestamped context." The direction is:
+name the six-agent pipeline, name the brain as cross-project knowledge,
+name the self-serve install. Do not reference multi-framework support or
+use marketing hedges. The architect writes the exact copy; this spec
+provides the constraints.
 
 ## Bad examples
 
@@ -195,3 +232,16 @@ real users exist yet. The spec catches this specifically: testimonials
 are in `outcomes.undesired` at the root level, and this surface spec
 restricts the beat count to five to prevent the slot from existing in
 the first place.
+
+A subtler failure mode still: a how-it-works diagram that shows four
+generic nodes ("Research -> Brain -> Intent -> Agents") instead of
+naming the six specific agents. This makes AIDE look like any
+multi-agent framework rather than a pipeline with named, specialized
+roles. The spec's intent paragraph specifically requires showing "six
+specialized agents as a concrete pipeline -- not generic AI agents." A
+four-node diagram violates this by collapsing six distinct roles into a
+single "Agents" box, erasing the pipeline specificity that differentiates
+AIDE from LangGraph, CrewAI, or any other multi-agent framework. The
+correct diagram names all six agents as vertical nodes and shows the
+brain as shared infrastructure beside the pipeline, not as a pipeline
+stage.

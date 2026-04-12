@@ -11,14 +11,13 @@ const InstallHero = () => {
       <div className="max-w-2xl mx-auto flex flex-col gap-10">
         <div className="flex flex-col gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-zinc-100">
-            Ship intent, not instructions.
+            AIDE collapses the specialist hire into the agent loop.
           </h1>
           <p className="text-base text-zinc-400 leading-relaxed">
-            AIDE collapses the specialist hire into the agent loop. A research
-            agent studies your domain, persists findings to your project&apos;s
-            brain, and every downstream agent — planner, architect, implementor,
-            QA — reads that brain when writing code. Works with Claude Code
-            today.
+            A research agent studies your domain, persists findings to your
+            brain, and six specialized agents — spec-writer, researcher, domain
+            expert, architect, implementor, QA — draw from that brain across
+            every session. Works with Claude Code today.
           </p>
         </div>
 

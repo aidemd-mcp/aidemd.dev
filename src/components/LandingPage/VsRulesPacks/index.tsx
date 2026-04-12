@@ -47,32 +47,30 @@ const VsRulesPacks = () => {
             <ul className="flex flex-col gap-2 text-sm text-zinc-300">
               <li className="flex gap-2">
                 <span className="text-zinc-500 mt-0.5">+</span>
-                Cascaded intent specs derived from research
+                Intent specs cascade from research through the full six-agent pipeline
               </li>
               <li className="flex gap-2">
                 <span className="text-zinc-500 mt-0.5">+</span>
-                Research agent updates the brain as the domain changes
+                Cross-project brain persists domain knowledge in an Obsidian vault filed by domain — not trapped in a chat window
               </li>
               <li className="flex gap-2">
                 <span className="text-zinc-500 mt-0.5">+</span>
-                Structured outcomes: desired, undesired, acceptance criteria
+                Auto-learning: when the fix loop closes, retro findings promote to the brain — rules packs cannot learn from their own failures
               </li>
               <li className="flex gap-2">
                 <span className="text-zinc-500 mt-0.5">+</span>
-                QA agent checks outputs against stated intent
+                QA checks every output against the intent spec — drift is caught at the spec boundary, not in review
               </li>
               <li className="flex gap-2">
                 <span className="text-zinc-500 mt-0.5">+</span>
-                Domain knowledge lives in the project, not in a chat window
+                Coding playbook: architect navigates a structured convention hierarchy via a dedicated skill — rules packs are flat unstructured text
               </li>
             </ul>
           </div>
         </div>
 
         <p className="text-sm text-zinc-500">
-          The mechanical difference: rules packs are lumps. AIDE cascades
-          research into outcome-checked intent specs that travel with the repo
-          and are readable by every agent that touches it.
+          The mechanical difference: rules packs are static lumps — they cannot update themselves, cannot verify compliance, and cannot learn. AIDE cascades research into outcome-checked intent specs, and when the fix loop closes, retro findings promote to the brain so every future session starts smarter.
         </p>
       </div>
     </section>

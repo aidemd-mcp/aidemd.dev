@@ -1,0 +1,213 @@
+---
+intent: >
+  Update the four out-of-alignment files — HowItWorks, InstallHero,
+  VsRulesPacks, and page.tsx — so the landing page matches the updated
+  .aide spec's six-agent pipeline, AI Domain Expert framing, brain-as-
+  shared-infrastructure model, and corrected meta descriptions.
+---
+
+## Plan
+
+### Step 1: Update page.tsx meta descriptions
+
+File: `src/app/page.tsx`
+
+- [x] Replace the `description` field in the `metadata` export. The current
+      value references "byte-faithful, timestamped, archivable context" which
+      the spec's `outcomes.undesired` explicitly forbids. Write new copy that:
+      - Names the six-agent pipeline (spec-writer, researcher, domain expert,
+        architect, implementor, QA)
+      - Names the brain as cross-session knowledge
+      - Names the self-serve install (npx / MCP config)
+      - Uses no marketing hedges, no multi-framework claims
+      - Is concise enough for a meta description (under 160 chars ideal)
+- [x] Apply the identical replacement to `openGraph.description`.
+- [x] Leave `title` and `openGraph.title` unchanged — they are fine.
+
+Spec trace: `outcomes.undesired` final bullet; Good Examples "Meta description
+direction" paragraph.
+
+---
+
+### Step 2: Update InstallHero headline and subhead
+
+File: `src/components/LandingPage/InstallHero/index.tsx`
+
+- [x] Replace the `<h1>` content. The current "Ship intent, not instructions."
+      is methodology framing. The spec says the hero leads with the business
+      outcome — "collapses the specialist hire" or "domain expert that stays
+      with the project" — and the methodology framing belongs in beat 3. Pick
+      one of the two Good Example variants (C' or D) as the headline. C' is
+      recommended because it is more concrete and verb-first.
+
+- [x] Replace the `<p>` subhead. Current text says "your project's brain" and
+      lists "planner, architect, implementor, QA" (4 roles, wrong names). Fix:
+      - Change "your project's brain" to "your brain"
+      - Name all six agents: spec-writer, researcher, domain expert, architect,
+        implementor, QA
+      - Match the tone and structure of the chosen Good Example variant
+
+- [x] Do NOT touch: the CodeBlock, the commandSequence list, the
+      TroubleshootingCallout, or any layout/styling.
+
+Spec trace: Strategy "Hero carries the AI Domain Expert framing" paragraph;
+Good Examples Variant C' and Variant D.
+
+---
+
+### Step 3: Update HowItWorks to show six named agents plus brain-as-infrastructure
+
+File: `src/components/LandingPage/HowItWorks/index.tsx`
+
+This is the largest change. The current 4-node numbered pipeline
+(Research Agent -> Brain -> Intent Spec -> Downstream Agents) must become a
+6-node pipeline with the brain shown as shared infrastructure beside it,
+not as a pipeline stage.
+
+- [x] Replace the `nodes` array with six entries, each containing:
+      1. `spec-writer` — writes intent specs from research and requirements
+      2. `researcher` — studies the domain and writes findings to the brain
+      3. `domain expert` — reads the brain and answers domain questions in context
+      4. `architect` — reads the brain (coding playbook) and plans implementation
+      5. `implementor` — executes the plan, writes code
+      6. `QA` — validates output against intent, produces todo for fix loop
+
+      Each node gets a one-sentence annotation per the spec. Keep annotations
+      concrete and mechanism-focused, not hedgy.
+
+- [x] Add a visual element representing the brain as shared infrastructure.
+      This is NOT a seventh pipeline node — it sits beside the pipeline
+      (visually offset or in a sidebar-style callout adjacent to the vertical
+      node list). Show which agents interact with it:
+      - researcher writes to it
+      - domain expert reads from it
+      - architect reads the coding playbook from it
+
+      Implementation approach: add a small aside/callout element beside or
+      below the pipeline nodes. Use the existing design language (zinc palette,
+      rounded borders, mono font for labels). Do not introduce a two-column
+      grid — the spec requires single-column vertical layout. The brain
+      element should be visually distinct (e.g., a bordered card with a
+      different background shade) but still within the single-column flow.
+      Position it after the 6 nodes or float it alongside using a subtle
+      visual connector.
+
+- [x] Add mechanism annotations for:
+      - Fix loop: QA produces todo, implementor fixes one item per session in
+        clean context, QA re-validates. Show as a small annotation or
+        visual indicator connecting QA back to implementor.
+      - Resume-mid-pipeline: orchestrator detects state from file existence
+        and picks up where the last session left off. Show as a one-line
+        annotation on the pipeline overall.
+
+      These are supporting mechanisms. The spec says "not hidden" but also
+      "not every new mechanism needs LP copy." Keep them as brief annotations,
+      not full paragraphs.
+
+- [x] Update the section subtitle. Current: "Intent is the contract. Code is
+      ephemeral." This is fine — the spec says the methodology framing lives
+      in beat 3, which is exactly where this is.
+
+- [x] Remove the numbered-circle rendering for the brain (it should not have
+      a step number). The six agents get numbers 1-6; the brain is
+      infrastructure, not a step.
+
+Spec trace: Strategy beat 3 full paragraph; Bad Examples "four generic nodes"
+failure mode; Strategy "Not every new mechanism needs LP copy."
+
+---
+
+### Step 4: Update VsRulesPacks with new differentiators
+
+File: `src/components/LandingPage/VsRulesPacks/index.tsx`
+
+- [x] Keep the existing two-column comparison layout (Rules packs vs AIDE).
+- [x] Keep the Rules packs column as-is — its five bullets are still accurate.
+- [x] Replace the AIDE column's five bullets. The spec provides new ammunition.
+      Ship these differentiators (selected for the 60-second reading budget):
+
+      1. **Cascaded intent specs** (keep, reword slightly) — specs derived from
+         research that cascade through the pipeline
+      2. **Cross-project brain** (keep, reword) — domain knowledge persists in
+         an Obsidian vault filed by domain, not trapped in a chat window. Rules
+         packs have no knowledge layer.
+      3. **Auto-learning** (new) — when the fix loop closes, retro findings
+         promote to the brain. Rules packs cannot learn from their own failures.
+      4. **QA checks output against intent** (keep, already present)
+      5. **Coding playbook** (new) — the architect navigates a structured
+         convention hierarchy via a dedicated skill. Rules packs are flat
+         unstructured text.
+
+      Excluded from LP (available ammunition not shipped):
+      - Upgrade command — spec categorizes it as supporting, not headline.
+        Better suited for docs or beat 3 annotations if space allows.
+      - Misalignment tags — too inside-baseball for a 60-second read.
+
+- [x] Update the summary paragraph below the comparison grid. Current text
+      mentions "lumps" vs "cascades" which is still directionally correct but
+      should now also reference auto-learning or the fix loop to strengthen
+      the differentiator.
+
+Spec trace: Strategy beat 4 full paragraph; Strategy "Not every new mechanism
+needs LP copy" — architect picks what fits.
+
+---
+
+### Step 5: Verify no regressions
+
+- [x] Visually confirm the five-beat structure is intact: InstallHero,
+      CostStrip, HowItWorks, VsRulesPacks, HallucinationEvidence, then
+      InstallFooter. No new components, no reordering.
+- [x] Confirm no persistent top navigation was introduced.
+- [x] Confirm CostStrip and HallucinationEvidence are unchanged.
+- [x] Confirm InstallFooter is unchanged (it does not contain meta descriptions
+      and its "See full install instructions" / "Read the canonical spec"
+      links are still correct).
+- [x] Run the dev server and confirm the page renders without errors.
+
+## Decisions
+
+### D1: Hero variant — C' over D
+
+C' ("AIDE collapses the specialist hire into the agent loop") is more concrete
+and verb-first than D ("Give your agents a domain expert that stays with the
+project"). C' also directly names the mechanism (collapse + agent loop) while
+D is slightly more abstract ("stays with the project"). The spec allows
+implementor choice; this plan recommends C' but the implementor may switch to D
+if they disagree.
+
+### D2: Brain visualization — inline callout, not sidebar
+
+The spec requires single-column vertical layout. A true two-column layout
+(pipeline left, brain right) would violate this. Instead, the brain should be
+rendered as a visually distinct callout card within the single-column flow,
+positioned after or alongside the pipeline nodes. The callout should use
+connector annotations (e.g., "researcher writes / domain expert reads /
+architect reads playbook") rather than actual drawn lines, keeping the
+implementation in pure Tailwind without SVG or canvas.
+
+### D3: VsRulesPacks ammunition selection — headline features first
+
+The spec's ammunition-budget note is explicit: "six agents, Obsidian brain, and
+auto-learning are the headline features. Misalignment tags, resume-mid-pipeline,
+and upgrade are supporting mechanisms." The five bullets ship all three headline
+features (agents via cascaded specs, brain as cross-project knowledge,
+auto-learning) plus QA-checks-against-intent and coding playbook. Upgrade command
+and misalignment tags are excluded as supporting — they belong in docs or beat 3
+annotations, not headline LP copy.
+
+### D4: Fix loop and resume-mid-pipeline — annotations, not beats
+
+The spec says these mechanisms should be "visible as mechanism annotations, not
+hidden." But it also says "not every new mechanism needs LP copy." These land as
+brief annotations within the HowItWorks section — a one-liner on the QA node
+for the fix loop, and a one-liner at the pipeline level for resume. They do not
+get their own visual blocks or expand the section significantly.
+
+### D5: Headline change is in scope
+
+The delegation called out the subhead specifically, but the headline "Ship
+intent, not instructions" is methodology framing that the spec explicitly says
+belongs in beat 3, not the hero. The spec says "the hero leads with the business
+outcome." Changing the headline is required for spec compliance even though the
+delegation didn't name it explicitly. The spec is the contract.
