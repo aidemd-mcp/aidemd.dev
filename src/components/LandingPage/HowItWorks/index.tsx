@@ -69,7 +69,7 @@ const HowItWorks = () => {
 
         <div className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 flex flex-col gap-3">
           <p className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
-            brain (Obsidian PKB) — shared infrastructure
+            brain (Obsidian vault) — shared infrastructure
           </p>
           <p className="text-sm text-zinc-500">
             Persistent Obsidian vault shared across every agent and every session. Not a pipeline stage — a knowledge layer the pipeline reads and writes.
@@ -92,7 +92,7 @@ const HowItWorks = () => {
             </li>
             <li>
               <span className="text-zinc-400">YOU</span>
-              {" "}writes conventions into{" "}
+              {" "}write conventions into{" "}
               <span className="text-zinc-400">playbook</span>
             </li>
             <li className="italic text-zinc-500">
