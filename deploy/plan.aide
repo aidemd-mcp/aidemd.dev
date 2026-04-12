@@ -1,0 +1,33 @@
+---
+intent: >
+  Configure Next.js static export and GitHub Actions workflow to deploy
+  aidemd.dev to GitHub Pages on every push to master.
+---
+
+## Plan
+
+- [x] Update `next.config.ts` — add `output: "export"` to produce a static `out/` directory. No `basePath` needed (custom domain, not subdirectory hosting). No `images.unoptimized` needed (no `next/image` usage in the project).
+- [x] Create `public/CNAME` — contains `aidemd.dev` (single line, no trailing newline). GitHub Pages requires this file in the deploy root to serve from a custom domain. Placing it in `public/` ensures `next build` copies it to `out/`.
+- [x] Create `.github/workflows/deploy.yml` — GitHub Actions workflow:
+  - Triggers on push to `master` only (spec: "deploy workflow that runs on branches other than master" is undesired)
+  - Uses `actions/configure-pages` to set up Pages
+  - Checks out the repo
+  - Sets up Node 22 via `actions/setup-node` with npm cache
+  - Runs `npm ci` then `npm run build`
+  - Uploads `out/` via `actions/upload-pages-artifact`
+  - Deploys via `actions/deploy-pages`
+  - Sets `permissions: pages: write, id-token: write, contents: read`
+  - Uses `concurrency` group to prevent overlapping deploys
+- [x] Run `npm run build` locally to verify the static export completes without errors — all routes (/, /docs, /docs/[slug]) should produce HTML files in `out/`, and `sitemap.xml` + `robots.txt` should appear in `out/`.
+
+## Decisions
+
+**`output: "export"` over a server-based deploy.** The spec explicitly forbids any runtime dependency. Static export is the only Next.js output mode that produces a zero-runtime artifact. The site has no API routes, no middleware, no server actions, and the dynamic `[slug]` route already has `generateStaticParams` — nothing blocks static export.
+
+**`public/CNAME` over GitHub repo settings alone.** GitHub Pages resets the custom domain on every deploy unless a `CNAME` file exists in the deploy root. Placing it in `public/` is the standard Next.js pattern — it gets copied to `out/` during build, so every deploy re-asserts the custom domain.
+
+**`actions/deploy-pages` over `gh-pages` branch pattern.** The modern GitHub Pages deployment uses artifacts and the Pages API directly, avoiding the need for a `gh-pages` orphan branch and force-pushes. Cleaner history, atomic deploys, and the workflow is the canonical recommendation from GitHub's own docs.
+
+**No `images.unoptimized` config.** The project has zero `next/image` imports. Adding the flag would be dead config.
+
+**No `trailingSlash` config.** GitHub Pages serves `out/docs/index.html` at `/docs` and `/docs/` by default. The existing route structure (`/`, `/docs`, `/docs/[slug]`) maps directly to `out/index.html`, `out/docs/index.html`, and `out/docs/[slug]/index.html` without needing trailing slash normalization.

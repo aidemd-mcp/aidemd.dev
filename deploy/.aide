@@ -1,0 +1,18 @@
+---
+scope: deploy/
+intent: >
+  Deploy aidemd.dev to GitHub Pages as a fully static site. The build
+  produces a zero-runtime export (next export) served from GitHub Pages
+  with the custom domain aidemd.dev. Deployment triggers automatically
+  on push to master. No server, no runtime, no edge functions — the
+  site is a static artifact and GitHub Pages is the only hosting target.
+outcomes:
+  desired:
+    - Pushing to master triggers a GitHub Actions workflow that builds the Next.js static export and deploys it to GitHub Pages with zero manual steps.
+    - The site is reachable at https://aidemd.dev with the custom domain configured in GitHub Pages; all existing routes (/, /docs, /docs/[slug]) resolve correctly as static HTML files.
+    - sitemap.xml and robots.txt are generated at build time and included in the static output.
+  undesired:
+    - Any runtime dependency — the deployed site must not require a Node.js server, edge runtime, or serverless functions. If the build fails because a feature is incompatible with static export, that feature must be removed or replaced, not worked around with a server.
+    - A broken font pipeline — next/font/google must produce self-hosted font files in the static output, not runtime requests to Google Fonts.
+    - Deploy workflow that runs on branches other than master, or that deploys without a successful build step gating it.
+---

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import renderHub from "@/service/docs/renderHub";
 
+export const dynamic = "force-static";
+
 const BASE_URL = "https://aidemd.dev";
 const LAST_MODIFIED = new Date("2026-04-11");
 
