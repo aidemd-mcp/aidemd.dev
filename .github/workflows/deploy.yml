@@ -26,6 +26,9 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          WAYBACK_ACCESS_KEY: ${{ secrets.WAYBACK_ACCESS_KEY }}
+          WAYBACK_SECRET_KEY: ${{ secrets.WAYBACK_SECRET_KEY }}
 
       - uses: actions/configure-pages@v5
 
