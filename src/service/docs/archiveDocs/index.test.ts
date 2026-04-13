@@ -16,7 +16,7 @@ const mockArchiveDoc = vi.mocked(archiveDoc);
 const mockReadFileSync = vi.mocked(readFileSync);
 
 const WAYBACK_URL =
-  "https://web.archive.org/web/20260101000000/https://aidemd.dev/docs/aide-spec?v=abc1234";
+  "https://web.archive.org/web/20260101000000/https://aidemd.devhttps://aidemd.dev/docs/aide-spec?v=abc1234";
 
 const THREE_ENTRIES = {
   "aide-spec": { publishedAt: "2026-01-01T00:00:00.000Z", sourceCommit: "abc1234" },
@@ -31,7 +31,7 @@ function mockVersionsJson(data: Record<string, unknown>) {
 beforeEach(() => {
   vi.clearAllMocks();
   mockArchiveDoc.mockResolvedValue({
-    live: "/docs/aide-spec?v=abc1234",
+    live: "https://aidemd.dev/docs/aide-spec?v=abc1234",
     sourceCommit: "abc1234",
     publishedAt: "2026-01-01T00:00:00.000Z",
     wayback: WAYBACK_URL,
@@ -49,19 +49,19 @@ describe("archiveDocs", () => {
       slug: "aide-spec",
       sourceCommit: "abc1234",
       publishedAt: "2026-01-01T00:00:00.000Z",
-      versionedUrl: "/docs/aide-spec?v=abc1234",
+      versionedUrl: "https://aidemd.dev/docs/aide-spec?v=abc1234",
     });
     expect(mockArchiveDoc).toHaveBeenNthCalledWith(2, {
       slug: "aide-workflow",
       sourceCommit: "def5678",
       publishedAt: "2026-02-01T00:00:00.000Z",
-      versionedUrl: "/docs/aide-workflow?v=def5678",
+      versionedUrl: "https://aidemd.dev/docs/aide-workflow?v=def5678",
     });
     expect(mockArchiveDoc).toHaveBeenNthCalledWith(3, {
       slug: "aide-agents",
       sourceCommit: "ghi9012",
       publishedAt: "2026-03-01T00:00:00.000Z",
-      versionedUrl: "/docs/aide-agents?v=ghi9012",
+      versionedUrl: "https://aidemd.dev/docs/aide-agents?v=ghi9012",
     });
   });
 
@@ -69,14 +69,14 @@ describe("archiveDocs", () => {
     mockVersionsJson(THREE_ENTRIES);
     mockArchiveDoc
       .mockResolvedValueOnce({
-        live: "/docs/aide-spec?v=abc1234",
+        live: "https://aidemd.dev/docs/aide-spec?v=abc1234",
         sourceCommit: "abc1234",
         publishedAt: "2026-01-01T00:00:00.000Z",
         wayback: WAYBACK_URL,
       })
       .mockRejectedValueOnce(new Error("Wayback unavailable"))
       .mockResolvedValueOnce({
-        live: "/docs/aide-agents?v=ghi9012",
+        live: "https://aidemd.dev/docs/aide-agents?v=ghi9012",
         sourceCommit: "ghi9012",
         publishedAt: "2026-03-01T00:00:00.000Z",
         wayback: WAYBACK_URL,
@@ -97,19 +97,19 @@ describe("archiveDocs", () => {
       slug: "aide-spec",
       sourceCommit: "abc1234",
       publishedAt: "2026-01-01T00:00:00.000Z",
-      versionedUrl: "/docs/aide-spec?v=abc1234",
+      versionedUrl: "https://aidemd.dev/docs/aide-spec?v=abc1234",
     });
     expect(calls[1][0]).toEqual({
       slug: "aide-workflow",
       sourceCommit: "def5678",
       publishedAt: "2026-02-01T00:00:00.000Z",
-      versionedUrl: "/docs/aide-workflow?v=def5678",
+      versionedUrl: "https://aidemd.dev/docs/aide-workflow?v=def5678",
     });
     expect(calls[2][0]).toEqual({
       slug: "aide-agents",
       sourceCommit: "ghi9012",
       publishedAt: "2026-03-01T00:00:00.000Z",
-      versionedUrl: "/docs/aide-agents?v=ghi9012",
+      versionedUrl: "https://aidemd.dev/docs/aide-agents?v=ghi9012",
     });
   });
 
