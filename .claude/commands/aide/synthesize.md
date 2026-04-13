@@ -1,12 +1,11 @@
 # /aide-synthesize — Synthesize Phase
 
-> **Agent:** This command is executed by the `aide-domain-expert` agent.
+> **Agent:** This command is executed by the `aide-strategist` agent.
 
-Read the intent spec's frontmatter and the brain's research, then fill in the `.aide` body sections (Context, Strategy, Good examples, Bad examples). This is a fresh Domain Expert session — it did not run the research phase and carries no prior context.
+Read the intent spec's frontmatter and the brain's research, then fill in the `.aide` body sections (Context, Strategy, Good examples, Bad examples). This is a fresh strategist session — it did not run the research phase and carries no prior context.
 
 ## Checklist
 
-- [ ] Use `aide_discover` to walk the full `.aide` chain from root to leaf — understand the intent tree before writing anything
 - [ ] Read the target `.aide` file. Confirm frontmatter is complete (scope, intent, outcomes.desired, outcomes.undesired). If frontmatter is missing or incomplete, stop and escalate back to `/aide:spec`
 - [ ] Identify the domain from the intent. Search the brain for research notes filed under that domain (e.g., `research/email-marketing/`, `research/local-seo/`)
 - [ ] If no brain is available, check for a co-located `research.aide` in the same folder as the intent spec

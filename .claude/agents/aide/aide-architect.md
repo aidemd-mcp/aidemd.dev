@@ -34,15 +34,13 @@ Specifically:
 
 ## Planning Process
 
-1. **Walk the intent tree.** Use `aide_discover` to understand the full `.aide` chain. Ancestor outcomes apply.
+1. **Read the complete spec.** Frontmatter AND body. The intent tells you what to build; the strategy tells you how to think about it; the examples tell you what correct and incorrect look like.
 
-2. **Read the complete spec.** Frontmatter AND body. The intent tells you what to build; the strategy tells you how to think about it; the examples tell you what correct and incorrect look like.
+2. **Consult the playbook.** Load conventions for the relevant domains — naming, file structure, patterns, anti-patterns.
 
-3. **Consult the playbook.** Load conventions for the relevant domains — naming, file structure, patterns, anti-patterns.
+3. **Scan the codebase.** Read the target module and its neighbors. Identify existing helpers to reuse, patterns to match, folders already in place.
 
-4. **Scan the codebase.** Read the target module and its neighbors. Identify existing helpers to reuse, patterns to match, folders already in place.
-
-5. **Write `plan.aide`.** Format:
+4. **Write `plan.aide`.** Format:
    - **Frontmatter:** `intent` — one-line summary of what this plan delivers
    - **`## Plan`** — checkboxed steps the implementor executes top-to-bottom:
      - Which files to create, modify, or delete
@@ -50,6 +48,7 @@ Specifically:
      - Function boundaries and contracts between steps
      - Sequencing — what must exist before the next step
      - Tests to write for each behavior the spec names
+     - Structure numbered steps as self-contained units of work. Each gets its own implementor agent. Use lettered sub-steps (3a, 3b) only when actions are tightly coupled and cannot be independently verified.
    - **`## Decisions`** — architectural choices: why X over Y, naming rationale, tradeoffs
 
 ## Plan Quality Standards
@@ -60,6 +59,7 @@ Specifically:
 - **Progressive disclosure supersedes the playbook.** The AIDE progressive disclosure docs (`.aide/docs/progressive-disclosure.md`, `.aide/docs/agent-readable-code.md`) are the structural foundation. If the playbook contradicts them, the AIDE docs win. The playbook adds project-specific conventions on top — naming, testing, patterns — but never overrides the orchestrator/helper pattern, modularization rules, or cascading structure.
 - **No scope creep.** If you discover issues unrelated to the task, note them separately.
 - **Traceability.** Every step traces back to the `.aide` spec, a playbook convention, or the progressive disclosure conventions above.
+- **Steps are units of delegation.** Each numbered step will be executed by a fresh implementor agent in clean context. Write steps that are self-contained — the agent reads the plan, reads the current code, and executes. It does not know what the previous agent did in-memory. When steps are tightly coupled (creating a helper and wiring it into the caller in the same session), group them as lettered sub-steps under one number (2a, 2b, 2c). The orchestrator keeps one agent for all sub-steps. Default to independent numbered steps; letter only when coupling is unavoidable.
 
 ## Return Format
 
