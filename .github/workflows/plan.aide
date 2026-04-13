@@ -1,0 +1,220 @@
+---
+intent: >
+  Implement a CI archive script that discovers canonical docs from
+  versions.json, calls archiveDoc for each sequentially with fail-fast
+  semantics, and wire it into the deploy workflow between build and deploy.
+---
+
+## Plan
+
+- [x] **1. Create the script module at `src/service/docs/archiveDocs/index.ts`**
+
+  Create a new orchestrator module following the orchestrator/helper pattern.
+  This module is the single entry point the CI step and local runs both call.
+
+  **Location rationale:** The script is a service-layer orchestrator that
+  coordinates existing service helpers (`archiveDoc`). It belongs in
+  `src/service/docs/` alongside its sibling `archive/` — not in a top-level
+  `scripts/` directory. The folder name is `archiveDocs` (verb-first:
+  "archive docs"), matching its default export.
+
+  **The orchestrator (`archiveDocs/index.ts`):**
+  - Default export: `async function archiveDocs(): Promise<void>`
+  - No parameters. It reads `versions.json` itself and derives everything
+    it needs. This satisfies the spec's "single command, no manual
+    configuration" outcome.
+  - Reads `.aide/docs/versions.json` using the same `path.join(process.cwd(), ...)`
+    pattern that `extractCitationMeta` already uses.
+  - Iterates entries sequentially (for...of loop, not Promise.all).
+  - For each entry in `versions.json`, constructs an `ArchiveDocInput`:
+    - `slug`: the key from versions.json (e.g. `"aide-spec"`)
+    - `sourceCommit`: from the version entry
+    - `publishedAt`: from the version entry
+    - `versionedUrl`: derived as `/docs/${slug}?v=${sourceCommit}` (same
+      formula as `extractCitationMeta`)
+  - Calls `archiveDoc(input)` from `@/service/docs/archive`.
+  - Logs progress to stdout in the format from the spec's good example:
+    ```
+    archive-docs: N docs discovered in versions.json
+      [1/N] slug (sha) ... archived -> waybackUrl
+    archive-docs: all N docs archived successfully
+    ```
+  - **Fail-fast:** When `archiveDoc` throws, the orchestrator catches the
+    error, logs which doc failed and why (plus which remaining docs were
+    not attempted), then re-throws or calls `process.exit(1)`. It does NOT
+    continue to the next doc.
+  - **No manifest/feed logic.** The orchestrator calls `archiveDoc` and
+    trusts its side effects. It does not import `updateManifest` or
+    `writeFeedEntry`.
+  - JSDoc on the default export summarizing the full flow: reads
+    versions.json, calls archiveDoc sequentially, exits nonzero on
+    first failure.
+
+  **Helpers:** This orchestrator likely needs no extracted helpers. The
+  logic is: read JSON, loop, call archiveDoc, log. If the implementor
+  finds that the `versions.json` reading + parsing is complex enough to
+  warrant extraction, they may create a `discoverDocs/index.ts` helper,
+  but this is optional. The reading logic is ~5 lines (readFileSync,
+  JSON.parse, Object.entries) and does not justify a subfolder by default.
+
+  **Type for versions.json entries:** Reuse the `VersionEntry` shape
+  `{ publishedAt: string; sourceCommit: string }` already defined in
+  `extractCitationMeta/index.ts`. Since that type is not currently
+  exported, the implementor has two choices: (a) define it locally in
+  `archiveDocs/index.ts` (acceptable since it's 3 lines and the script
+  should not import from a sibling service's internal helper), or
+  (b) lift it to `src/types/docs.ts` and update both consumers. Option
+  (a) is preferred to keep this step self-contained; lifting can happen
+  later if more consumers appear.
+
+- [x] **2. Create the CLI entry point at `src/service/docs/archiveDocs/run.ts`**
+
+  Create a thin runner file that imports `archiveDocs` and invokes it,
+  catching errors and calling `process.exit(1)` on failure. This file
+  exists so the orchestrator function stays testable (no `process.exit`
+  in the function body itself) while giving CI and local runs a single
+  `npx tsx src/service/docs/archiveDocs/run.ts` command.
+
+  The runner:
+  - Imports `archiveDocs` from `./index`.
+  - Calls `archiveDocs()`.
+  - On success: process exits naturally (exit 0).
+  - On error: logs the error message to stderr, calls `process.exit(1)`.
+  - No other logic. This is a 10-line file.
+
+  **Add an npm script** in `package.json`:
+  ```
+  "archive-docs": "tsx src/service/docs/archiveDocs/run.ts"
+  ```
+  This satisfies the spec's requirement that the script is callable as a
+  single command. Both CI and local runs use `npm run archive-docs`.
+
+  **Why `run.ts` not `index.ts`?** The `index.ts` is the testable
+  orchestrator (default export, no side effects on import). `run.ts` is
+  the entry point that triggers side effects (`process.exit`). This
+  follows the convention that `index.ts` is always the importable module.
+  The file is named `run.ts` (not `cli.ts` or `main.ts`) because its
+  only job is to run the function.
+
+  **tsx dependency:** `tsx` is not currently in devDependencies. The
+  implementor must add it: `npm install -D tsx`. This is a lightweight
+  TypeScript runner that lets the script run without a build step, which
+  is exactly what CI needs (the script runs between `npm run build` and
+  artifact upload, so it cannot depend on the Next.js build output for
+  its own execution).
+
+- [x] **3. Write tests at `src/service/docs/archiveDocs/index.test.ts`**
+
+  Co-located test file following the project's existing pattern (see
+  `archive/index.test.ts` for the exact mocking style).
+
+  **Mocking strategy:**
+  - Mock `@/service/docs/archive` (the `archiveDoc` function) with
+    `vi.mock`.
+  - Mock `node:fs` `readFileSync` to control what `versions.json`
+    returns without touching the filesystem.
+  - Use `vi.mocked()` for type-safe mock access.
+  - `beforeEach`: `vi.clearAllMocks()`.
+
+  **Test cases (each maps to a spec outcome or strategy decision):**
+
+  1. **Happy path: all docs archived successfully.**
+     Mock versions.json with 3 entries. Mock archiveDoc to resolve for
+     each. Assert archiveDoc was called 3 times, in order, with correct
+     ArchiveDocInput for each entry. Assert the function resolves (does
+     not throw).
+
+  2. **Fail-fast: first failure stops processing.**
+     Mock versions.json with 3 entries. Mock archiveDoc to throw on the
+     2nd call. Assert the function rejects/throws. Assert archiveDoc was
+     called exactly 2 times (not 3) — proving remaining docs were not
+     attempted.
+
+  3. **Discovery reads versions.json correctly.**
+     Mock versions.json with known entries. Assert each archiveDoc call
+     receives the correct `slug`, `sourceCommit`, `publishedAt`, and
+     `versionedUrl` (derived as `/docs/${slug}?v=${sourceCommit}`).
+
+  4. **Empty versions.json: zero docs is a valid (if unusual) success.**
+     Mock versions.json as `{}`. Assert archiveDoc was never called.
+     Assert the function resolves without error.
+
+  5. **Missing versions.json: throws descriptive error.**
+     Mock readFileSync to throw ENOENT. Assert the function rejects with
+     an error message mentioning versions.json.
+
+  6. **Sequential execution order.**
+     Mock versions.json with 3 entries. Use mock implementation that
+     records call order. Assert archiveDoc calls happened in the order
+     the entries appear in versions.json.
+
+- [x] **4. Wire the script into `deploy.yml`**
+
+  Modify `.github/workflows/deploy.yml` to add one step between
+  `npm run build` and `actions/configure-pages@v5`.
+
+  The new step:
+  ```yaml
+  - run: npm run archive-docs
+    env:
+      WAYBACK_ACCESS_KEY: ${{ secrets.WAYBACK_ACCESS_KEY }}
+      WAYBACK_SECRET_KEY: ${{ secrets.WAYBACK_SECRET_KEY }}
+  ```
+
+  **Placement:** After `npm run build`, before `actions/configure-pages`.
+  The Wayback secrets are already referenced in the build step's env
+  block. The new step needs its own `env` block with the same secrets
+  because env vars in GitHub Actions are scoped per step.
+
+  **Remove the Wayback env vars from the build step** if they were only
+  there as a placeholder for this future integration. Check whether the
+  build step actually uses them — if `npm run build` (Next.js build) does
+  not reference Wayback keys, remove them from the build step's env to
+  avoid confusion. If the build step does use them (e.g. renderCanonical
+  calls archiveDoc during build), leave them and add the same vars to the
+  new step.
+
+  **No other workflow changes.** No new jobs, no artifacts, no
+  conditional logic. The deploy job's `needs: build` dependency is
+  unchanged. If the archive step fails (exit nonzero), the build job
+  fails, and the deploy job never runs.
+
+
+## Decisions
+
+1. **Module location: `src/service/docs/archiveDocs/` not `scripts/`.**
+   The script is a service-layer orchestrator that imports from
+   `@/service/docs/archive`. Placing it in the service tree gives it
+   access to the `@/` path alias, keeps it co-located with the domain it
+   operates on, and makes it testable with the same vitest config. A
+   top-level `scripts/` directory would require separate tsconfig paths
+   or relative imports, and would break the cascading domain structure
+   convention (playbook: Architecture > Folder Structure).
+
+2. **Separate `run.ts` entry point from `index.ts` orchestrator.**
+   The orchestrator function must be importable and testable without
+   triggering `process.exit`. The runner is a thin wrapper that adds the
+   exit-code behavior. This mirrors the playbook's rule that `index.ts`
+   is always the importable module with a default export, and side
+   effects live elsewhere.
+
+3. **`tsx` as the runner, not a compiled script.**
+   The script runs between build and deploy in CI. It cannot be part of
+   the Next.js build output (the spec explicitly prohibits framework
+   dependencies). `tsx` runs TypeScript directly without compilation,
+   which means the script works identically in CI and locally. `tsx` is
+   the same tool the playbook references for integration test runners.
+
+4. **Local `VersionEntry` type, not shared.**
+   The type is 3 lines and used by two consumers in different service
+   subdomains. Lifting it to `src/types/docs.ts` now would couple the
+   archive script to a shared type file for minimal benefit. If a third
+   consumer appears, lift it then. This follows the playbook's escalation
+   path: single consumer -> stays local.
+
+5. **versionedUrl derived in the script, not delegated to extractCitationMeta.**
+   `extractCitationMeta` is a helper inside `renderCanonical/` — importing
+   it from `archiveDocs/` would break horizontal isolation (sibling services
+   never import each other, per playbook: Architecture > Folder Structure >
+   Dependency Flow). The derivation is one line (`/docs/${slug}?v=${sha}`),
+   so duplicating it is cheaper than extracting a shared utility.

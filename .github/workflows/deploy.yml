@@ -26,6 +26,8 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+
+      - run: npm run archive-docs
         env:
           WAYBACK_ACCESS_KEY: ${{ secrets.WAYBACK_ACCESS_KEY }}
           WAYBACK_SECRET_KEY: ${{ secrets.WAYBACK_SECRET_KEY }}

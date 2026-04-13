@@ -1,0 +1,198 @@
+---
+scope: .github/workflows/
+description: CI publish script that orchestrates post-build archival for every canonical doc before deploy proceeds
+intent: >
+  After a successful Next.js build in CI, detect which canonical docs were
+  produced, call the archive service for each one, and gate the deploy on
+  every archive completing successfully. This is the missing link between
+  the build step and the deploy step: the archive service exists and works,
+  the CI workflow exists and deploys, but nothing currently connects them.
+  Until this script runs between build and deploy, every publish violates
+  the root intent's requirement that archive failure rolls back the publish.
+outcomes:
+  desired:
+    - The script runs after `next build` and before deploy in CI; it discovers every canonical doc that was built, invokes the archive service for each one, and exits nonzero if any archival fails — blocking the deploy.
+    - The script is callable as a single command from the CI workflow with no manual configuration beyond environment secrets already available to the build runner.
+    - When all archival succeeds, the script exits zero and the deploy proceeds with the build manifest and feed file updated by the archive service.
+    - When any archival fails (after the archive service's own retries exhaust), the script reports which docs failed and why, then exits nonzero — the deploy never runs for a partially archived publish.
+  undesired:
+    - The script duplicating archive logic (Wayback calls, feed writing, manifest updates) that already lives in the archive service. This script is a caller and sequencer, not a reimplementation.
+    - Silent partial success — archiving nine of ten docs, logging a warning for the tenth, and exiting zero. Partial archival is a failed publish.
+    - A script that only works locally or only works in CI. It must be runnable in both contexts (CI for real publishes, local for dry-run validation) without forking into two code paths.
+    - The script importing or depending on Next.js internals, framework middleware, or app-router runtime. It reads build output; it does not participate in the build.
+---
+
+## Context
+
+The root intent requires that every canonical doc publish triggers a
+Wayback Machine snapshot and an RSS feed entry before the publish is
+considered complete, and that archive failure rolls back the publish.
+The archive service (`src/service/docs/archive/`) already implements
+this guarantee at the single-doc level: `archiveDoc` calls Wayback
+Save Page Now, appends to `build-manifest.json`, writes the feed
+entry, and throws on failure. The rendering pipeline
+(`src/service/docs/renderCanonical/`) already produces the built
+pages and derives citation metadata from `versions.json`. The CI
+workflow (`deploy.yml`) already builds and deploys. But today,
+nothing sits between the build step and the deploy step to invoke
+`archiveDoc` for each doc that was built. The deploy proceeds
+whether archival happened or not, which means every publish to date
+has violated the root intent's archival-gates-deploy requirement.
+
+This spec governs the glue script that closes that gap: a single
+callable entry point that discovers which canonical docs the build
+produced, calls the archive service for each one, collects results,
+and exits nonzero if any archival failed. The CI workflow adds one
+step between build and deploy that runs this script. The archive
+service owns the hard problems (Wayback retry, manifest append,
+feed write); this script owns only discovery and sequencing.
+
+## Strategy
+
+**Discovery reads `versions.json`, not the filesystem tree.** The
+script needs to know which canonical docs exist and what their
+slugs, commit SHAs, and publication dates are. That information
+already lives in `.aide/docs/versions.json`, the same file the
+rendering pipeline uses for citation metadata. Reading
+`versions.json` gives the script the complete list of docs to
+archive along with the exact metadata `archiveDoc` requires as
+input, without the script needing to parse build output, scan HTML
+files, or import any Next.js internals. This satisfies the outcome
+that the script does not depend on framework internals and the
+guard against reimplementing logic that already exists elsewhere.
+
+**Sequential archival, not parallel.** The Wayback Machine Save
+Page Now API is rate-limited and the archive service's retry logic
+uses exponential backoff. Running all archival calls in parallel
+would multiply the chance of rate-limit failures across docs and
+make error attribution harder. The script calls `archiveDoc` for
+each doc in sequence. The total time cost is acceptable: a site
+with ten canonical docs and three-second Wayback round trips takes
+thirty seconds, well within CI budget. Sequential execution also
+makes the failure report trivially ordered: the script can report
+"docs A, B, C succeeded; doc D failed; docs E-J were not attempted"
+rather than a jumble of interleaved parallel failures.
+
+**Fail-fast on first archival failure.** When `archiveDoc` throws
+for a given doc (meaning its own three retries with exponential
+backoff have already exhausted), the script stops processing
+remaining docs, reports the failure, and exits nonzero. The
+alternative -- attempting all docs and reporting failures at the
+end -- would burn Wayback API budget on docs whose publish will be
+blocked anyway. The root intent and archive service spec both
+treat partial archival as a failed publish, so there is no value
+in continuing past the first unrecoverable failure.
+
+**Exit code is the only integration surface.** The CI workflow does
+not parse the script's stdout for structured data. Exit zero means
+all docs archived and the manifest and feed are updated; exit
+nonzero means the deploy must not proceed. This keeps the workflow
+integration to a single `run:` step with no conditional logic,
+output parsing, or artifact passing beyond what the build step
+already produces. The script writes human-readable status to stdout
+for CI log inspection, but the workflow gates solely on exit code.
+
+**Single entry point, dual context.** The script is callable as a
+single command (`node scripts/archive-docs.ts` or equivalent npm
+script) in both CI and local environments. In CI, Wayback secrets
+are injected via GitHub Actions secrets already configured in
+`deploy.yml`. Locally, the same secrets can be set as environment
+variables for a real run, or omitted for a dry-run that validates
+discovery and sequencing without making Wayback calls. The script
+does not fork into separate CI and local code paths; the archive
+service itself handles the presence or absence of credentials.
+
+**The script does not touch the manifest or feed directly.** All
+mutations to `build-manifest.json` and `public/feed.xml` are
+performed by `archiveDoc`'s helpers (`updateManifest`,
+`writeFeedEntry`). This script calls `archiveDoc` and trusts its
+return value. This satisfies the guard against duplicating archive
+logic and keeps the script's responsibility limited to discovery,
+sequencing, and exit-code signaling.
+
+**Workflow integration is a single new step.** The existing
+`deploy.yml` gains one step between `npm run build` and
+`actions/upload-pages-artifact`: a `run:` line that invokes this
+script. The Wayback secrets are already available in the build job's
+environment. No new jobs, no new artifacts, no conditional matrices.
+The deploy job's `needs: build` dependency continues to gate deploy
+on a fully successful build, which now includes successful archival.
+
+## Good examples
+
+A push to master triggers the deploy workflow. The build step runs
+`npm run build` successfully, producing rendered canonical doc pages.
+The new archive step runs. The script reads
+`.aide/docs/versions.json` and finds entries for `aide-spec`,
+`aide-workflow`, and `aide-commands`. It calls `archiveDoc` for each
+in sequence. Each call succeeds: Wayback returns snapshot URLs,
+`build-manifest.json` gains three new entries, `public/feed.xml`
+gains three new Atom entries. The script logs:
+
+```
+archive-docs: 3 docs discovered in versions.json
+  [1/3] aide-spec (a1b2c3d) ... archived -> web.archive.org/web/20260413.../aidemd.dev/docs/aide-spec
+  [2/3] aide-workflow (e4f5a6b) ... archived -> web.archive.org/web/20260413.../aidemd.dev/docs/aide-workflow
+  [3/3] aide-commands (c7d8e9f) ... archived -> web.archive.org/web/20260413.../aidemd.dev/docs/aide-commands
+archive-docs: all 3 docs archived successfully
+```
+
+Exit code 0. The workflow proceeds to upload the pages artifact
+(which now includes the updated manifest and feed) and deploy.
+
+A developer runs the same script locally with Wayback secrets set.
+The output is identical in format. They verify that the manifest
+and feed were updated correctly before pushing. The script did not
+require any CI-specific flag or environment variable beyond the
+Wayback credentials.
+
+## Bad examples
+
+The script scans the `out/` directory for HTML files matching
+`docs/*.html`, parses each file's content to extract the slug and
+commit SHA from the rendered DocHeader, and constructs the
+`archiveDoc` input from scraped HTML. This couples the script to
+the rendered page structure -- if the DocHeader component changes
+its markup, the script breaks. The slug and metadata were already
+available in `versions.json` without any HTML parsing.
+
+The script calls `archiveDoc` for all ten docs in parallel using
+`Promise.all`. Three of them hit Wayback rate limits simultaneously.
+The archive service retries each independently, tripling the
+rate-limit pressure. Two eventually succeed; one exhausts retries.
+The error log shows interleaved retry messages from three docs,
+making it unclear which doc actually failed. The sequential approach
+would have hit the rate limit on the first doc, retried it
+successfully, and proceeded without triggering cascading limits.
+
+The script catches `archiveDoc` errors, logs
+`"Warning: archival failed for aide-spec, continuing..."`, and
+proceeds to archive the remaining docs. All remaining docs succeed.
+The script exits zero. The deploy runs. The site is live with nine
+of ten docs archived. The missing archive for `aide-spec` is not
+discovered until someone checks the Wayback snapshot two weeks
+later. The root intent says partial archival is a failed publish;
+this script turned a failed publish into a deployed one.
+
+The script has a `--ci` flag that changes its behavior: in CI mode
+it calls Wayback; in local mode it skips archival entirely and
+always exits zero. A developer runs it locally to "validate" before
+pushing, sees green, pushes confidently. In CI, the Wayback call
+fails because the secrets are misconfigured. The developer's local
+run gave false confidence because it tested a different code path
+than CI executes. The spec requires a single code path for both
+contexts.
+
+The script imports `next/config` to read the build output directory
+from the Next.js configuration. This creates a runtime dependency
+on the Next.js framework -- the script now requires Next.js to be
+installed and configured even though it only needs to read a JSON
+file from a known path. If Next.js upgrades change the config API,
+the archive script breaks for reasons unrelated to archival.
+
+## References
+
+- `research/aidemd-dev/canonical-record-publishing` -- The finding that passive reliance on the Wayback crawler is insufficient and every publish must trigger a Save Page Now call; the arXiv pattern of uneditable timestamps coupled to publication events; the RFC 8153 principle that publish and archive are atomic (not decoupled via cron or background jobs). These findings justify the strategy decisions that archival gates deploy, runs coupled to the publish event, and cannot be deferred to a background job.
+- `research/aidemd-dev/aidemd-dev` -- The hub note's framing that the docs surface doubles as a byte-faithful, timestamped, archivable canonical record, confirming that the archival step is not optional infrastructure but a core requirement of the site's value proposition.
+- `src/service/docs/archive/.aide` -- The archive service spec's strategy section documenting the publish sequence (renderCanonical -> diff check -> Wayback save -> RSS entry -> manifest commit -> deploy) and the decision that each step blocks the next on failure. This established that the CI script's role is caller and sequencer, not reimplementor, and that the archive service already handles retry logic internally.
+- `src/service/docs/renderCanonical/.aide` -- The rendering pipeline spec confirming that `versions.json` is the authoritative source for slug-to-version mappings and citation metadata, which justified the discovery strategy of reading `versions.json` rather than scanning build output or parsing HTML.

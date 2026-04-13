@@ -1,0 +1,18 @@
+---
+intent: >
+  The script runs after `next build` and before deploy in CI; it discovers
+  every canonical doc that was built, invokes the archive service for each
+  one, and exits nonzero if any archival fails — blocking the deploy.
+misalignment:
+  - test-gap
+---
+
+## Issues
+
+- [x] `src/service/docs/archiveDocs/index.test.ts:28` — `mockVersionsJson` double-casts a string to `Buffer` with `as unknown as Buffer`, which causes a TypeScript type error under `tsc --noEmit` (TS2345). The tests pass at runtime but the project fails a strict type-check.
+  Traces to: desired outcome 1 (the script exits nonzero if any archival fails — blocking the deploy; a CI pipeline that runs `tsc --noEmit` as a check step would treat this as a build failure unrelated to the archival logic itself).
+  Misalignment: test-gap
+
+## Retro
+
+The type error would have been caught at the plan stage if the plan had explicitly listed `tsc --noEmit` as a verification step alongside `vitest run`. The plan describes the mocking strategy in detail but specifies `vi.mocked()` for type-safe mock access but does not specify that `mockReturnValue` must be called with a type-compatible value. A stronger plan step would have been: "run `tsc --noEmit` after writing tests; if the mock return type diverges from the `readFileSync` overload signature, use the overload that accepts `string` directly rather than casting."
