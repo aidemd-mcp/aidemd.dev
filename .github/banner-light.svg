@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 830 120" width="830" height="120">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;display=swap');
+    </style>
+  </defs>
+  <text
+    x="415"
+    y="68"
+    font-family="Inter, sans-serif"
+    font-weight="700"
+    font-size="64"
+    fill="#1c1c1c"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    letter-spacing="-1"
+  >AIDE</text>
+  <text
+    x="415"
+    y="100"
+    font-family="Inter, sans-serif"
+    font-weight="400"
+    font-size="16"
+    fill="#1c1c1c"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    letter-spacing="0.5"
+  >Autonomous Intent-Driven Engineering</text>
+</svg>

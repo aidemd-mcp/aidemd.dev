@@ -1,0 +1,183 @@
+---
+scope: .github/ + README.md
+description: GitHub repository presence — the README signpost and header banner that redirect visitors to the MCP server repo.
+intent: >
+  When someone lands on the aidemd.dev GitHub repository, the README tells them
+  in one sentence what AIDE is, sends them to the server repo where the
+  installable tool and contributions live, and makes clear this repo is the
+  website source maintained by the core team. A header banner anchors the page
+  visually using the site's achromatic design language, switching between dark
+  and light variants to match the viewer's GitHub theme. The entire README is a
+  signpost — 100 to 200 words that answer "where do I go?" and nothing else.
+outcomes:
+  desired:
+    - A visitor who opens the repository page on GitHub can identify within five seconds that this is the website source, not the tool, and sees a prominent link to the server repo.
+    - The README contains no setup instructions, no tech stack listing, no methodology explanation beyond one sentence, and no contribution invitation — those belong in the server repo.
+    - The header banner renders correctly on GitHub in both dark and light modes via the picture element, with no visible breakage, no fallback-to-alt-text, and no aspect ratio distortion.
+    - The banner's visual language matches the site's design tokens — Inter font, zinc palette, achromatic — so a visitor who clicks through to aidemd.dev perceives continuity, not a brand mismatch.
+  undesired:
+    - A README that tries to sell AIDE, explain the methodology, or document the pipeline — turning the signpost into a landing page and duplicating content that belongs on aidemd.dev or in the server repo's README.
+    - A banner that introduces color, gradients, illustrations, or visual elements outside the site's achromatic design language — creating a first impression that the site itself will then contradict.
+    - A banner that only works in one GitHub theme (dark or light) because the picture element is missing or misconfigured, causing viewers in the other theme to see a clashing or invisible image.
+---
+
+## Context
+
+This repo hosts the aidemd.dev website — not the AIDE tool. Visitors arrive
+here one of two ways: clicking "Source" from the live site, or finding the
+repo through GitHub search while looking for AIDE itself. In both cases the
+visitor's actual intent is almost never "read the website source code." It is
+either "install AIDE" or "contribute to AIDE," and both of those happen in
+the server repo. The README's only job is to confirm what this repo is,
+redirect the visitor to where they actually want to be, and do so before
+they close the tab.
+
+The header banner is the first visual a visitor sees on the GitHub repo page.
+GitHub renders README images inside a constrained column (830px max on
+desktop) and offers both dark and light themes that users can toggle
+independently of their OS setting. A banner that only works in one theme
+looks broken to roughly half the audience. The banner must also read as
+continuous with the aidemd.dev site itself — if the GitHub page introduces
+color or illustration the site doesn't use, the visitor's first impression
+contradicts the site they click through to.
+
+## Strategy
+
+**The README is a signpost, not a door.** Across twelve real website-repo
+READMEs, the highest-rated pattern (modelcontextprotocol/docs, 5/5) is a
+minimal redirect: one sentence identifying the repo, one bold link to the
+canonical location, one sentence on where to file issues. The lowest-rated
+(biomejs/website, prisma/docs, both 2/5) are pure developer-setup READMEs
+with no orientation — they assume every visitor already knows what they are
+looking at. The README uses the minimal-redirect pattern because its intent
+is redirection, not contribution onboarding.
+
+**Scope declaration goes in the first sentence.** The tailwindlabs/tailwindcss.com
+and commonmark/commonmark-spec READMEs both lead with "what this is and is
+not" framing in sentence one, never burying the distinction below setup
+instructions. The README opens with a single sentence naming this repo as
+the website source, then immediately names the server repo as the place
+visitors actually want.
+
+**Word count stays between 100 and 200.** Research across twelve repos shows
+that non-contributable website READMEs land in a sweet spot: shorter than
+100 words risks missing the redirect entirely, longer than 200 words buries
+it. The README targets this range and does not exceed it.
+
+**No contribution invitation, no dev setup, no tech stack.** The
+tailwindlabs/tailwindcss.com README explicitly states "not licensed under
+an open-source license" and accepts fixes for minor mistakes only. For a
+non-contributable repo, including contribution instructions creates
+confusion and generates unwanted PRs. The README states that the site is
+maintained by the core team and directs all contribution energy to the
+server repo.
+
+**One sentence on AIDE, maximum.** The commonmark/commonmark-spec and
+tc39/proposal-temporal READMEs show the right proportion: one line on what
+the spec/methodology does, then immediately redirect to implementations.
+The README gives one sentence defining AIDE's purpose (for visitors who
+arrived without context), then redirects. No methodology explanation, no
+pipeline diagram, no feature list — those live on aidemd.dev and in the
+server repo.
+
+**Banner uses SVG with the HTML picture element for dual-mode switching.**
+GitHub officially supports the `<picture>` element with
+`prefers-color-scheme` media queries, and this maps to GitHub's own theme
+toggle (not just OS-level dark mode). The deprecated fragment-identifier
+method (`#gh-dark-mode-only`) still works but is not recommended for new
+work. Embedded SVG media queries fail in Safari entirely. The picture
+element is the only method that works reliably across all browsers and
+GitHub's theme system. Tailwind CSS's README is the reference
+implementation.
+
+**Banner is a wordmark with short tagline, not a logo-only mark.** AIDE is
+not yet a household name — the acronym alone is opaque to a first-time
+visitor. A wordmark-plus-tagline banner (e.g., "AIDE" in Inter bold with
+"Autonomous Intent-Driven Engineering" or a compressed variant below)
+provides immediate recognition context. Once brand recognition is
+established, a logo-only approach becomes viable. The tagline is rendered
+as SVG text so it remains editable without regenerating raster assets.
+
+**Banner dimensions target wordmark proportions, not full-width cinematic.**
+Research shows two viable dimension classes: logo-only at 350-400 x 70-80px
+(5:1 ratio, per Tailwind CSS) and full-width at 830 x 200-300px (3:1-4:1
+ratio, per Astro). A wordmark-plus-tagline fits the wider format — target
+approximately 830 x 120px rendered, with source at 2x for retina. GitHub
+applies `max-width: 100%` automatically, so the banner scales down on
+mobile without special handling.
+
+**Two SVG files stored in .github/, transparent backgrounds.** Dark variant:
+light text on transparent background (blends with GitHub dark theme). Light
+variant: dark text on transparent background (blends with GitHub light
+theme). Both use the site's design tokens — Inter font, zinc palette
+(zinc-100 for light text, zinc-950 for dark text). Files live in `.github/`
+alongside the spec, version-controlled. No external CDN hosting — Prisma's
+use of Imgur for banner hosting is an anti-pattern that creates a fragile
+external dependency.
+
+**Banner is centered on the page.** GitHub supports `align="center"` on
+wrapper elements. Most polished repos (Tailwind CSS, Astro) center their
+banners. A left-aligned banner reads as less considered. The banner is
+wrapped in a centered container.
+
+**Alt text is meaningful.** The banner's `<img>` fallback includes alt text
+that communicates the project name and purpose ("AIDE — Autonomous
+Intent-Driven Engineering") rather than a generic "banner" or "logo"
+label. This serves accessibility and provides context if image loading
+fails.
+
+## Good examples
+
+The GitHub repo page loads. A centered banner reads "AIDE" in a clean
+sans-serif with "Autonomous Intent-Driven Engineering" set smaller beneath
+it, rendered in near-white on GitHub's dark theme or near-black on its
+light theme, blending seamlessly with the page background. Below the banner:
+
+> **This repo contains the source for [aidemd.dev](https://aidemd.dev), the
+> website for the AIDE methodology.**
+>
+> AIDE cascades your intent through specialized agents into working code.
+>
+> **Looking for the tool?** Install and contribute at
+> [aidemd-mcp/server](https://github.com/aidemd-mcp/server).
+>
+> This site is maintained by the core team. For bugs, features, and
+> contributions, see the server repo above.
+
+Total: roughly 60 words of body text plus the banner. A visitor who opened
+the page looking for the installable tool finds the server repo link within
+three seconds and clicks through. A visitor who was curious about the
+website source gets confirmation in one sentence and knows not to open PRs
+here. Switching GitHub from dark to light theme shows the banner swap
+cleanly — no flash of wrong-colored text, no hard-edged rectangle, no
+fallback to alt text.
+
+## Bad examples
+
+The README opens with a full-width JPG banner showing a gradient wash in
+blue and purple with the text "Build the future with AIDE" — colors and
+language that appear nowhere on aidemd.dev. Below it, two hundred words
+explain the eight-agent pipeline, what cascading intent means, why AIDE
+beats rules packs, and how the brain stores domain knowledge — all content
+that duplicates the landing page and the server repo's README. A "Getting
+Started" section follows with `pnpm install && pnpm dev` instructions,
+inviting drive-by contributors to a repo that does not accept outside
+contributions. The server repo link appears at the bottom, below the fold,
+after content the visitor was never looking for. On GitHub's light theme,
+the dark JPG banner creates a harsh rectangular block because JPG does not
+support transparency and no picture element was used. There is no alt text
+on the image. The README is 600 words long and answers every question except
+the one the visitor actually had: "Where is the tool?"
+
+Another failure mode: the README is a single line — "aidemd.dev" — with no
+banner, no link to the server repo, and no indication of what AIDE is. A
+visitor who arrives via GitHub search has zero context and no path forward.
+This is the biomejs/website anti-pattern: assuming every visitor already
+knows what they are looking at.
+
+## References
+
+- `research/open-source-readme/website-repo-readme-patterns` -- Minimal-redirect pattern rated 5/5 (modelcontextprotocol/docs) and the 100-200 word sweet spot for non-contributable website repos; anti-patterns for pure dev-setup READMEs (biomejs, prisma rated 2/5); scope-declaration-first pattern from tailwindcss.com and commonmark-spec.
+- `research/open-source-readme/website-repo-readme-examples` -- The modelcontextprotocol/docs 3-line redirect as the closest model; tailwindcss.com's explicit "not open-source licensed" contribution framing; tc39/proposal-temporal's spec-vs-implementation separation pattern.
+- `research/github-readme-banners/github-rendering-technical` -- GitHub desktop container width of 830px; picture element as the current standard for dark/light switching (deprecated fragment identifiers confirmed); SVG embedded media queries fail in Safari; max-width 100% automatic responsive behavior; centering via align center wrapper.
+- `research/github-readme-banners/github-readme-banner-design-patterns` -- Tailwind CSS reference implementation (SVG, 350x70, picture element, dual variants); wordmark-plus-tagline recommendation for repos without established brand recognition; AIDE design token extraction (Inter, zinc palette, achromatic); in-repo .github/ hosting over external CDN.

@@ -1,0 +1,52 @@
+---
+intent: >
+  Deliver the GitHub repository presence: two SVG banner variants
+  (dark/light) in .github/ and a README.md with the picture element
+  banner and signpost body content.
+---
+
+## Plan
+
+### 1. Create the dark-mode banner SVG
+
+- [x] Create `.github/banner-dark.svg` — the variant shown on GitHub's dark theme.
+- [ ] Content: "AIDE" as the primary wordmark in Inter bold (or Inter 700), with "Autonomous Intent-Driven Engineering" as a smaller tagline beneath it.
+- [ ] Text color: zinc-100 (~#f9f9f9, oklch(0.985 0 0)). Background: transparent (no rect fill, no background color).
+- [ ] Dimensions: target ~830x120 rendered. Set the SVG `viewBox` to achieve this aspect ratio. Set explicit `width` and `height` attributes so GitHub renders it at the intended size. No 2x source — SVG is resolution-independent; retina is free.
+- [ ] Typography: embed Inter via a Google Fonts CSS `@import` inside a `<style>` block within the SVG `<defs>`. Use `font-family="Inter, sans-serif"` on text elements so the font renders correctly in browsers. GitHub's SVG renderer may not load external fonts — provide `sans-serif` as the fallback so the layout degrades gracefully without breaking.
+- [ ] Layout: center both text lines horizontally within the viewBox. The wordmark "AIDE" is the dominant element (large font size); the tagline sits below it at a smaller size. Vertical spacing should feel balanced — not cramped, not floating.
+- [ ] No decorative elements, no gradients, no color, no illustrations. The spec's achromatic design language is the constraint.
+
+### 2. Create the light-mode banner SVG
+
+- [x] Create `.github/banner-light.svg` — the variant shown on GitHub's light theme.
+- [x] Identical structure, layout, dimensions, and typography to `banner-dark.svg`. The only difference is text color.
+- [x] Text color: zinc-950 (~#1c1c1c, oklch(0.145 0 0)). Background: transparent.
+- [x] Verify that both SVGs are structurally identical except for the fill color on text elements. This makes future edits trivial — change content in one, mirror to the other, swap the color.
+
+### 3. Update README.md with the picture element banner and signpost body
+
+- [x] Replace the entire content of `README.md` at the project root.
+- [x] The file opens with a centered `<picture>` element using GitHub's `prefers-color-scheme` media query pattern. Structure:
+  - A `<source>` with `media="(prefers-color-scheme: dark)"` pointing to `.github/banner-dark.svg`.
+  - A `<source>` with `media="(prefers-color-scheme: light)"` pointing to `.github/banner-light.svg`.
+  - An `<img>` fallback pointing to `banner-light.svg` (light variant is the safe default since GitHub's default theme is light).
+  - Alt text on the `<img>`: `"AIDE — Autonomous Intent-Driven Engineering"`.
+- [x] Wrap the `<picture>` element in a `<p align="center">` tag for centering, matching the pattern used by Tailwind CSS and other polished repos.
+- [x] Below the banner, write the signpost body. The body must stay between 100 and 200 words. Use the existing README.md content as the baseline — it already has the right structure (scope declaration, server repo link, one-sentence AIDE description, contribution notice). Preserve that structure and content. The key change is prepending the banner above it.
+- [x] Do not add setup instructions, tech stack listings, methodology explanations beyond one sentence, contribution invitations, or any content the spec's undesired outcomes prohibit.
+- [x] Ensure blank lines separate the HTML `<picture>` block from the markdown body so GitHub's renderer does not merge them into a single HTML block.
+
+## Decisions
+
+**SVG over raster (PNG/JPG).** SVG is resolution-independent — no need for 2x source files for retina. It also supports transparent backgrounds natively, which the spec requires. PNG would work but doubles the asset count (1x + 2x) for no benefit. JPG cannot do transparency at all (called out as an anti-pattern in the spec's bad examples).
+
+**Google Fonts @import for Inter inside the SVG.** The spec requires Inter as the heading font. SVG text elements need the font available at render time. Embedding via `@import url(...)` inside a `<style>` block is the most portable approach for SVGs rendered in browsers. GitHub's CSP may block the external font load — the `sans-serif` fallback ensures the banner still renders with correct layout. An alternative (converting text to `<path>` outlines) would guarantee pixel-perfect rendering but make the text uneditable and the SVG unmaintainable. Editable SVG text is explicitly called out in the spec as a requirement.
+
+**Light variant as the `<img>` fallback.** GitHub's default theme is light. Readers who see the fallback (RSS readers, email previews, clients that strip `<source>`) will most likely be on a light background. Dark text on transparent background is the safer default.
+
+**Full README replacement, not a patch.** The existing README already contains the correct signpost content. The plan replaces the full file rather than surgically inserting the banner because the final file is short (~20 lines of markdown + the HTML block) and a full write is less error-prone than editing around existing content. The body content is preserved; only the banner is new.
+
+**No width/height attributes on the `<img>` tag.** GitHub applies `max-width: 100%` automatically to images in READMEs. Setting explicit dimensions on the `<img>` would fight GitHub's responsive scaling on mobile. The SVG's intrinsic `viewBox` + `width`/`height` attributes control the rendered size; the `<img>` tag inherits it.
+
+**Two separate SVG files, not one SVG with embedded media queries.** The spec explicitly states that embedded SVG media queries fail in Safari. The `<picture>` element with two `<source>` tags is the only method that works reliably across all browsers and GitHub's theme system. This matches the Tailwind CSS reference implementation cited in the spec.
