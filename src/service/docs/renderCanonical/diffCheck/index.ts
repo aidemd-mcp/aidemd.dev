@@ -20,36 +20,47 @@ function extractTextFromHtml(html: string): string {
 
 /**
  * Extracts plain text from markdown by stripping syntax markers.
+ * Fenced code block content is preserved verbatim — only the ``` delimiters
+ * are removed. Markdown syntax stripping applies only to prose sections.
  */
 function extractTextFromMarkdown(md: string): string {
-  return (
-    md
-      // Remove fenced code block delimiters (preserve content inside)
-      .replace(/^```[^\n]*$/gm, "")
-      // Remove ATX headings markers
-      .replace(/^#{1,6}\s+/gm, "")
-      // Remove setext underlines
-      .replace(/^[=\-]{2,}\s*$/gm, "")
-      // Remove blockquote markers
-      .replace(/^>\s?/gm, "")
-      // Remove horizontal rules
-      .replace(/^[-*_]{3,}\s*$/gm, "")
-      // Remove unordered list markers
-      .replace(/^(\s*)[-*+]\s+/gm, "$1")
-      // Remove ordered list markers
-      .replace(/^(\s*)\d+\.\s+/gm, "$1")
-      // Remove images (keep alt text)
-      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-      // Remove links (keep link text)
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      // Remove inline code backticks
-      .replace(/`([^`]*)`/g, "$1")
-      // Remove bold/italic (greedy within lines)
-      .replace(/\*{1,3}(.+?)\*{1,3}/g, "$1")
-      .replace(/_{1,3}(.+?)_{1,3}/g, "$1")
-      // Remove strikethrough
-      .replace(/~~(.+?)~~/g, "$1")
-  );
+  // Split on fenced code block boundaries, preserving content inside blocks.
+  // Odd-indexed segments are code block content (left untouched).
+  const segments = md.split(/^```[^\n]*$/gm);
+
+  return segments
+    .map((segment, i) => {
+      // Odd segments are inside fenced code blocks — return as-is
+      if (i % 2 === 1) return segment;
+
+      // Even segments are prose — strip markdown syntax
+      return (
+        segment
+          // Remove ATX headings markers
+          .replace(/^#{1,6}\s+/gm, "")
+          // Remove setext underlines
+          .replace(/^[=\-]{2,}\s*$/gm, "")
+          // Remove blockquote markers
+          .replace(/^>\s?/gm, "")
+          // Remove horizontal rules
+          .replace(/^[-*_]{3,}\s*$/gm, "")
+          // Remove unordered list markers
+          .replace(/^(\s*)[-*+]\s+/gm, "$1")
+          // Remove ordered list markers
+          .replace(/^(\s*)\d+\.\s+/gm, "$1")
+          // Remove images (keep alt text)
+          .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+          // Remove links (keep link text)
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+          // Remove inline code backticks
+          .replace(/`([^`]*)`/g, "$1")
+          // Remove bold/italic (greedy within lines)
+          .replace(/\*{1,3}(.+?)\*{1,3}/g, "$1")
+          // Remove strikethrough
+          .replace(/~~(.+?)~~/g, "$1")
+      );
+    })
+    .join(" ");
 }
 
 /**
