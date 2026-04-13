@@ -76,8 +76,6 @@ async function attemptSave(
 
   const saveData = (await saveResponse.json()) as Record<string, unknown>;
 
-  console.log(`  [saveToWayback] response: ${JSON.stringify(saveData)}`);
-
   // SPN2 returns a job_id for async jobs; fall through to polling
   const jobId =
     typeof saveData["job_id"] === "string" ? saveData["job_id"] : null;

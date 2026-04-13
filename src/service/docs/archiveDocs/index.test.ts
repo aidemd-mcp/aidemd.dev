@@ -130,6 +130,21 @@ describe("archiveDocs", () => {
     await expect(archiveDocs()).rejects.toThrow(/versions\.json/);
   });
 
+  it("index slug maps to /docs not /docs/index", async () => {
+    mockVersionsJson({
+      index: { publishedAt: "2026-01-01T00:00:00.000Z", sourceCommit: "abc1234" },
+    });
+
+    await archiveDocs();
+
+    expect(mockArchiveDoc).toHaveBeenCalledWith({
+      slug: "index",
+      sourceCommit: "abc1234",
+      publishedAt: "2026-01-01T00:00:00.000Z",
+      versionedUrl: "https://aidemd.dev/docs?v=abc1234",
+    });
+  });
+
   it("sequential execution order: calls happen in versions.json entry order", async () => {
     mockVersionsJson(THREE_ENTRIES);
 

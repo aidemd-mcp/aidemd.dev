@@ -37,7 +37,8 @@ export default async function archiveDocs(): Promise<void> {
 
   for (let i = 0; i < entries.length; i++) {
     const [slug, { publishedAt, sourceCommit }] = entries[i];
-    const versionedUrl = `https://aidemd.dev/docs/${slug}?v=${sourceCommit}`;
+    const docPath = slug === "index" ? "/docs" : `/docs/${slug}`;
+    const versionedUrl = `https://aidemd.dev${docPath}?v=${sourceCommit}`;
     const position = i + 1;
 
     process.stdout.write(`  [${position}/${total}] ${slug} (${sourceCommit}) ... `);
