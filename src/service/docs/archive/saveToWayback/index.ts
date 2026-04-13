@@ -46,7 +46,7 @@ async function attemptSave(
   accessKey: string | undefined,
   secretKey: string | undefined
 ): Promise<string> {
-  const saveEndpoint = `https://web.archive.org/save/${versionedUrl}`;
+  const saveEndpoint = "https://web.archive.org/save";
 
   const headers: Record<string, string> = {
     "Content-Type": "application/x-www-form-urlencoded",
@@ -117,15 +117,19 @@ async function pollForCompletion(
       await sleep(pollIntervalMs);
     }
 
-    const statusResponse = await fetch(statusEndpoint, { headers });
-
-    if (!statusResponse.ok) {
-      throw new Error(
-        `Wayback status poll failed: HTTP ${statusResponse.status} ${statusResponse.statusText}`
-      );
+    let statusData: Record<string, unknown>;
+    try {
+      const statusResponse = await fetch(statusEndpoint, { headers });
+      if (!statusResponse.ok) {
+        // Transient HTTP error — retry on next poll
+        continue;
+      }
+      statusData = (await statusResponse.json()) as Record<string, unknown>;
+    } catch {
+      // Network error (fetch failed, timeout, etc.) — retry on next poll
+      continue;
     }
 
-    const statusData = (await statusResponse.json()) as Record<string, unknown>;
     const status = statusData["status"];
 
     if (status === "success") {
