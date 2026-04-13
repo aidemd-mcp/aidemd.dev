@@ -12,13 +12,13 @@ const nodes: PipelineNode[] = [
   },
   {
     step: 2,
-    label: "researcher",
+    label: "domain expert",
     annotation: "Studies the domain — internal tools, content production, workflows — and writes findings to the brain.",
   },
   {
     step: 3,
-    label: "domain expert",
-    annotation: "Reads the brain and answers domain questions in context so every agent session starts informed.",
+    label: "strategist",
+    annotation: "Reads the brain's domain research and distills it into the .aide body sections — context, strategy, good examples.",
   },
   {
     step: 4,
@@ -34,6 +34,16 @@ const nodes: PipelineNode[] = [
     step: 6,
     label: "QA",
     annotation: "Validates output against the intent spec and produces a fix-loop todo when anything drifts.",
+  },
+  {
+    step: 7,
+    label: "aligner",
+    annotation: "Verifies specs across the intent tree are internally consistent — no node contradicts its parent.",
+  },
+  {
+    step: 8,
+    label: "auditor",
+    annotation: "Audits existing code against the coding playbook and flags drift before it accumulates.",
   },
 ];
 
@@ -76,27 +86,22 @@ const HowItWorks = () => {
           </p>
           <ul className="flex flex-col gap-1 text-xs font-mono text-zinc-500">
             <li>
-              <span className="text-zinc-400">researcher</span>
+              <span className="text-zinc-400">domain expert</span>
               {" "}writes findings to{" "}
               <span className="text-zinc-400">brain</span>
             </li>
             <li>
-              <span className="text-zinc-400">domain expert</span>
-              {" "}reads context from{" "}
+              <span className="text-zinc-400">strategist</span>
+              {" "}reads domain research from{" "}
               <span className="text-zinc-400">brain</span>
             </li>
             <li>
               <span className="text-zinc-400">architect</span>
-              {" "}reads coding playbook from{" "}
-              <span className="text-zinc-400">brain</span>
+              {" "}reads coding playbook and brain
             </li>
             <li>
-              <span className="text-zinc-400">YOU</span>
-              {" "}write conventions into{" "}
-              <span className="text-zinc-400">playbook</span>
-            </li>
-            <li className="italic text-zinc-500">
-              the agent learns over time
+              <span className="text-zinc-400">auditor</span>
+              {" "}reads coding playbook and brain
             </li>
           </ul>
         </div>

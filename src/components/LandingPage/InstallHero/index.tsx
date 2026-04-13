@@ -14,10 +14,10 @@ const InstallHero = () => {
             Describe what you want. AIDE cascades your intent into working code.
           </h1>
           <p className="text-base text-zinc-400 leading-relaxed">
-            Six specialized agents — spec-writer, researcher, domain expert,
-            architect, implementor, QA — turn what you know into what you ship.
-            Research persists to an Obsidian vault every agent reads. Works with Claude
-            Code today.
+            Eight specialized agents — spec-writer, domain expert, strategist,
+            architect, implementor, QA, aligner, auditor — turn what you know
+            into what you ship. Research persists to a brain every agent reads.
+            Works with Claude Code today.
           </p>
         </div>
 

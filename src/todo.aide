@@ -1,0 +1,43 @@
+# Alignment Re-check
+
+---
+intent: >
+  The src/.aide spec makes claims about the AIDE agent pipeline that
+  contradict the canonical methodology docs upgraded in `.aide/docs/`.
+  Agent count, agent names, and brain access descriptions are stale.
+misalignment:
+  - spec-gap
+---
+
+## Issues
+
+- [x] `src/.aide` intent (line 1 of intent paragraph): "ships six specialized agents as a concrete pipeline"
+  The canonical Pipeline Agents table (`.aide/docs/index.md`) lists eight agents: spec-writer, domain-expert, strategist, architect, implementor, QA, aligner, auditor. The spec claims six, omitting the aligner and auditor agents added in the latest canonical version.
+  Traces to: `.aide/docs/index.md` Pipeline Agents table (8 rows)
+  Misalignment: spec-gap
+
+- [x] `src/.aide` Strategy "How it works" beat 3: names "six named agents -- spec-writer, researcher, domain expert, architect, implementor, QA"
+  Two issues: (a) the canonical count is eight, not six; (b) "researcher" is not a canonical agent name. The canonical agent is `aide-domain-expert`, and the pipeline phase is "Domain Expert" (`/aide:research`). The strategist agent (phase 3, `/aide:synthesize`) is omitted entirely from the list.
+  Traces to: `.aide/docs/index.md` Pipeline Agents table; `.aide/docs/aide-spec.md` lines 185-196 (pipeline phases)
+  Misalignment: spec-gap
+
+- [x] `src/.aide` Strategy "How it works" beat 3: "brain is shown as shared infrastructure accessed by three agents (researcher writes, domain expert reads, architect reads the coding playbook)"
+  The canonical brain access pattern (`.aide/docs/index.md` Pipeline Agents table) shows four agents with brain access, not three: domain-expert (write), strategist (read), architect (read playbook+brain), auditor (read playbook+brain). The spec's description conflates the domain-expert (who writes to the brain) with a "researcher," misidentifies "domain expert" as a reader (the strategist reads domain research), and omits the auditor entirely.
+  Traces to: `.aide/docs/index.md` Pipeline Agents table, Brain Access column
+  Misalignment: spec-gap
+
+- [x] `src/.aide` Strategy "How it works" beat 3: omits the strategist agent
+  The canonical pipeline has a strategist phase (`/aide:synthesize`) between domain-expert and architect. The strategist reads the brain's domain knowledge and distills it into the `.aide` body sections. This agent is absent from the spec's pipeline description.
+  Traces to: `.aide/docs/aide-spec.md` line 189 (Strategist phase); `.aide/docs/index.md` Pipeline Agents table (aide-strategist row)
+  Misalignment: spec-gap
+
+- [x] `src/.aide` Good examples: "six-agent pipeline with the brain as shared infrastructure"
+  Should reference eight agents to match the canonical roster.
+  Traces to: `.aide/docs/index.md` Pipeline Agents table (8 agents)
+  Misalignment: spec-gap
+
+## Retro
+
+The spec was written when the canonical methodology shipped six pipeline phases (spec-writer through QA). The canonical docs have since been upgraded to include the aligner and auditor agents, bringing the total to eight. The spec was not re-checked against the canonical docs after the upgrade.
+
+The spec-writer should call `aide_discover` and read the canonical docs (especially the Pipeline Agents table in `index.md`) before writing or updating outcome claims about the AIDE methodology. The alignment check should have been triggered automatically when `.aide/docs/` was upgraded -- any spec that makes methodology claims is a candidate for drift when the methodology itself changes.

@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AIDE — Autonomous Intent-Driven Engineering",
   description:
-    "Describe what you want. AIDE cascades your intent through six specialized agents and a persistent brain into working code. Self-serve via npx.",
+    "Describe what you want. AIDE cascades your intent through eight specialized agents and a persistent brain into working code. Self-serve via npx.",
 };
 
 const organizationSchema = {

@@ -1,4 +1,5 @@
 ---
+status: current
 scope: src/
 intent: >
   aidemd.dev is the public face and canonical record of the AIDE methodology.
@@ -193,7 +194,7 @@ sequence: paste this, restart Claude Code, run `aide_init` from the
 tool palette. They scroll once, see a concrete cost strip anchored to
 operational domains ("a fractional marketing strategist runs $30K–$60K
 for six months; AIDE is free via npx"), then a "how it works" block
-showing the six-agent pipeline with the brain as shared infrastructure,
+showing the eight-agent pipeline (the agents listed in the Pipeline Agents table in `.aide/docs/index.md`) with the brain as shared infrastructure accessed by four agents (domain-expert writes, strategist reads, architect reads playbook and brain, auditor reads playbook and brain),
 then a "vs rules packs" section naming the persistence gap, then a
 Stanford HAI hallucination callout cited as "Dahl et al., Stanford HAI,
 2024" (reinforcing why AIDE targets operational domains, not regulated

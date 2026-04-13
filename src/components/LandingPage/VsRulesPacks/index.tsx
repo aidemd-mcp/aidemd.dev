@@ -53,7 +53,7 @@ const VsRulesPacks = () => {
             <ul className="flex flex-col gap-2 text-sm text-zinc-300">
               <li className="flex gap-2">
                 <span className="text-emerald-500 mt-0.5">+</span>
-                Intent specs cascade from research through the full six-agent pipeline
+                Intent specs cascade from research through the full eight-agent pipeline
               </li>
               <li className="flex gap-2">
                 <span className="text-emerald-500 mt-0.5">+</span>

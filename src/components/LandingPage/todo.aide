@@ -1,54 +1,55 @@
-# QA Re-alignment Document
-
 ---
 intent: >
-  Verify the landing page components and meta tags against the updated root
-  spec (src/.aide) and LP spec (src/components/LandingPage/.aide) after the
-  framing shift from "collapses the specialist hire" to "cascading intent +
-  accessibility." Confirm all plan.aide checkboxes were executed correctly
-  and no undesired outcomes were tripped.
+  Multiple components and meta tags still reference six agents and carry the
+  deprecated "researcher" agent name — the corrected spec requires eight named
+  agents (spec-writer, domain expert, strategist, architect, implementor, QA,
+  aligner, auditor) and a brain-access panel showing exactly four agents
+  (domain expert writes, strategist reads, architect reads, auditor reads).
+  Every "six" must become "eight", "researcher" must be removed as a standalone
+  pipeline node, and the brain panel must match the corrected four-accessor
+  pattern.
 misalignment:
   - implementation-drift
 ---
 
 ## Issues
 
-- [ ] **`src/components/LandingPage/HallucinationEvidence/index.tsx` line 25-26** — Framing paragraph misattributes the Stanford HAI finding to rules packs instead of to purpose-built domain AI. The blockquote says "purpose-built legal AI still hallucinates on over one in six queries" (correctly citing the study), but the explanatory paragraph immediately pivots to "This finding applies to systems that use flat instruction files — rules packs that sit in the context window with no verification layer." The study is about purpose-built legal AI (Dahl et al.), not about rules packs. Attributing a legal-AI hallucination finding to rules packs is factually incoherent and an engineer reading both sentences will catch the mismatch, costing the credibility the citation is supposed to build.
-  - Traces to: LP spec `outcomes.desired` bullet 2 ("five supporting beats all appear"); LP spec Strategy "Hallucination evidence" ("cited as evidence against other tools' approach"); root spec Strategy "Domain examples are operational, not regulated" ("The Stanford HAI hallucination finding is cited as evidence that even purpose-built domain AI gets it wrong — reinforcing why AIDE targets operational domains"); root spec `outcomes.undesired` bullet 1 (no implication AIDE solves regulated domains — misattributing the finding muddles rather than avoids this implication).
-  - Misalignment: implementation-drift
+- [x] **src/components/LandingPage/InstallHero/index.tsx:17-21** — Subhead says "Six specialized agents — spec-writer, researcher, domain expert, architect, implementor, QA". Count is wrong (6 not 8). Agent list is wrong: missing strategist, aligner, auditor; "researcher" is a deprecated name that does not exist in the corrected pipeline.
+      Traces to: spec Strategy section ("the hero subhead names the eight-agent pipeline") and Good Examples Variant A (canonical agent list: spec-writer, domain expert, strategist, architect, implementor, QA, aligner, auditor)
+      Misalignment: `implementation-drift`
 
-- [ ] **`src/components/LandingPage/HowItWorks/index.tsx` line 72** — Brain infrastructure callout label reads `"brain — shared infrastructure"` using the bare word "brain" while the spec task (last-minute change) requires "Obsidian PKB" in place of "brain" for the subhead. The InstallHero subhead was correctly updated to "Obsidian PKB" (line 19 of InstallHero), but the HowItWorks section continues to use "brain" throughout — section label (line 72), inline spans (lines 80, 85, 90), and the brain-panel prose (line 75). The last-minute change was applied inconsistently: one component got it, four references in another did not.
-  - Traces to: LP spec `outcomes.desired` bullet 1 (visitor reaches install command with accurate framing); verification requirement in the task spec ("Subhead now says 'Obsidian PKB' instead of 'brain' (last-minute change)").
-  - Misalignment: implementation-drift
+- [x] **src/components/LandingPage/HowItWorks/index.tsx:7-38** — `nodes` array has 6 entries. Missing: strategist (between domain expert and architect), aligner (after QA), auditor (after aligner). Step 2 is labelled "researcher" — a deprecated agent that does not exist in the corrected 8-agent roster.
+      Traces to: spec Strategy beat 3 ("The pipeline shows eight named agents — spec-writer, domain expert, strategist, architect, implementor, QA, aligner, auditor — as vertical nodes with one-sentence annotations per node")
+      Misalignment: `implementation-drift`
 
-  **Clarification note for implementor:** Before acting on this item, confirm with the spec owner whether "Obsidian PKB" was intended only for the hero subhead or for all landing page references to the brain. The LP spec's Strategy and Good Examples sections use "brain" and "Obsidian vault" interchangeably for the HowItWorks section. If the change is hero-subhead-only, this item is a false positive and should be closed. If it is site-wide, all four HowItWorks references need updating.
+- [x] **src/components/LandingPage/HowItWorks/index.tsx:78-101** — Brain panel lists "researcher writes findings to brain", "domain expert reads context from brain", "architect reads coding playbook from brain", "YOU write conventions into playbook". Corrected spec defines four agents: domain expert (writes), strategist (reads), architect (reads coding playbook and brain), auditor (reads coding playbook and brain). "researcher" is a deprecated name. Strategist and auditor are absent. "YOU write conventions" has no basis in the spec's brain-access description.
+      Traces to: spec Strategy beat 3 ("The brain is shown as shared infrastructure accessed by four agents (domain expert writes, strategist reads, architect reads the coding playbook and brain, auditor reads the coding playbook and brain)")
+      Misalignment: `implementation-drift`
 
-## Passing checks
+- [x] **src/components/LandingPage/VsRulesPacks/index.tsx:56** — AIDE column item reads "Intent specs cascade from research through the full six-agent pipeline". Must say eight-agent pipeline.
+      Traces to: `outcomes.undesired` — "copy that could be pasted onto ... any other multi-agent framework without changing its meaning"; an incorrect count erases the pipeline specificity that differentiates AIDE
+      Misalignment: `implementation-drift`
 
-The following items were explicitly verified and are clean:
+- [x] **src/app/layout.tsx:18** — Root layout `metadata.description` says "six specialized agents". Must say eight.
+      Traces to: `outcomes.undesired` — "Meta descriptions that reference deprecated AIDE concepts ... must reflect ... the eight-agent pipeline that AIDE actually ships"
+      Misalignment: `implementation-drift`
 
-- Hero headline uses spec-approved Variant A verbatim: "Describe what you want. AIDE cascades your intent into working code." — no "collapses the specialist hire" language present anywhere in landing-page-facing TSX files.
-- Hero subhead names both audiences (non-technical "turn what you know into what you ship" + technical "research persists"), names all six agents by role, and ends with "Works with Claude Code today." — matches Variant A template.
-- "Obsidian PKB" appears in InstallHero subhead (line 19). No bare "brain" in hero copy.
-- CostStrip ships the single universal anchor verbatim: "$30,000–$60,000 at the low end (Geisheker Group, 2026)" with correct strong/span markup. No tax attorney, physician advisor, or regulated-domain specialty named. Section label is "The cost of not knowing" — compliant with spec constraint (must not reference replacing specialists).
-- HowItWorks researcher annotation reads "Studies the domain — internal tools, content production, workflows — and writes findings to the brain." — operational domains only, no "legal, clinical, tax, compliance."
-- All six agents named as vertical pipeline nodes (spec-writer, researcher, domain expert, architect, implementor, QA). Brain shown as shared infrastructure beside the pipeline, not as a pipeline stage. Fix loop and resume-mid-pipeline visible as mechanism annotations.
-- VsRulesPacks names CLAUDE.md, AGENTS.md, .cursorrules explicitly and covers the four spec-provided differentiators: persistence gap, auto-learning, QA intent-spec verification, coding playbook. No multi-framework comparisons.
-- Beat order is correct and intact: InstallHero → CostStrip → HowItWorks → VsRulesPacks → HallucinationEvidence → InstallFooter (verified in `src/components/LandingPage/index.tsx`).
-- Zero forms, email captures, demo-request CTAs, pricing teasers, testimonials, or gates present anywhere in the landing page component tree.
-- No persistent top navigation. No docs link in the hero or top third.
-- Docs link appears only in InstallFooter ("Read the canonical spec →") below the final install CTA — correct placement.
-- `layout.tsx` meta description updated to cascading-intent framing: "Describe what you want. AIDE cascades your intent through six specialized agents and a persistent brain into working code. Self-serve via npx." — no "byte-faithful" or "timestamped context."
-- `page.tsx` description and og:description updated: "Intent in, working code out. Six specialized agents and a persistent brain turn what you describe into what you ship. Self-serve install via npx." — cascading-intent lead, six agents named, no deprecated terms.
-- No deprecated terms ("collapses the specialist hire," "byte-faithful," "timestamped context," "legal, clinical, tax, compliance," "tax attorney") appear in any landing-page-facing TSX file. The "byte-faithful" occurrences in `src/app/docs/page.tsx` and `src/components/DocsPage/DocHub/index.tsx` are in-scope for the docs surface, not the landing, and are consistent with the root spec's docs byte-fidelity requirement.
-- All plan.aide checkboxes are marked checked (Steps 1–8).
+- [x] **src/app/page.tsx:7** — Page-level `metadata.description` says "Six specialized agents". Must say eight.
+      Traces to: `outcomes.undesired` (same as above)
+      Misalignment: `implementation-drift`
+
+- [x] **src/app/page.tsx:11** — `metadata.openGraph.description` says "Six specialized agents". Must say eight.
+      Traces to: `outcomes.undesired` (same as above)
+      Misalignment: `implementation-drift`
 
 ## Retro
 
-**What was caught:** One factual incoherence in a framing paragraph (HallucinationEvidence misattribution) and one potential scope gap on the "Obsidian PKB" terminology change. Both are subtle — neither causes a test failure, neither breaks layout, and both pass a casual read.
+All seven issues share the same root: the spec was corrected from 6→8 agents (and "researcher" → "domain expert" as the standalone agent, with strategist, aligner, auditor added) after the components were written, and no propagation pass ran on the code.
 
-**What would have caught the misattribution earlier:** The plan.aide Step 4 marked HallucinationEvidence as "verify-only, not rewrite" and noted the existing framing "appears compliant." That assessment stopped at the final sentence ("the research documents the failure mode, not AIDE's track record") and did not check whether the explanatory paragraph's attribution was internally consistent with the blockquote it explains. A spec review step that cross-checks the explanatory prose against the quoted source — not just the final disclaimer sentence — would have caught this at the plan stage rather than QA.
+Two patterns worth hardening in future cycles:
 
-**What would have caught the PKB inconsistency earlier:** Last-minute copy changes that affect a term used across multiple components need a grep-scope check in the plan step, not just a targeted file edit. The plan directed the implementor to `InstallHero/index.tsx` for the subhead change but did not enumerate every other component that renders "brain" as a display label. A plan step reading "replace 'brain' with 'Obsidian PKB' in all landing-page-facing files — run a grep to confirm scope before editing" would have surfaced the four HowItWorks references.
+1. When a spec amendment changes a concrete count or a named roster, the plan stage should produce an explicit grep-and-replace checklist — every file that contains the old count or deprecated name becomes a named checklist item before any code changes happen. Abstract prose ("update components to reflect eight agents") is insufficient when the number appears in seven separate locations across five files.
 
-**What went well:** The primary framing migration was clean. The "collapses the specialist hire" headline, the tax attorney CostStrip copy, the regulated-domain researcher annotation, and both meta description deprecations were all corrected precisely as specified. The five-beat structure is intact, the no-gate requirement is clean, and the VsRulesPacks differentiator set matches the spec's available ammunition exactly. The plan.aide was a high-fidelity implementation guide and the implementor followed it faithfully for the explicitly scoped steps.
+2. The "researcher" deprecated name survived in two components (HowItWorks pipeline node and brain panel). A standing QA check — grep for "researcher" in any component file after any agent-roster change — would catch this class of drift in under a minute. The aligner or spec-writer should note deprecated names explicitly in the spec's `## Bad examples` section to make them greppable targets.
+
+The plan stage gap is the correct diagnosis: the implementation plan did not enumerate the files by name or the string literals by value, so the implementor had no explicit map of what to change.
