@@ -23,7 +23,7 @@ outcomes:
     - The AIDEMD wordmark appears as the dominant visual element at the very top of the page — large, bold, unmissable — with the catchphrase 'Code is ephemeral. Intent is law.' in smaller text directly beneath it. This is the first thing a visitor sees before reaching the install hero. It is a product brand identity element, not a navigation bar.
     - The page header and primary product references display "AIDEMD" as the product name, clearly distinguishing the product (AIDEMD) from the methodology (AIDE) it delivers.
     - A visitor reaches the install command before any scrolling — the install block IS the hero, not a section below it.
-    - The five supporting beats — cost-of-not-knowing strip, how-it-works pipeline, vs-rules-packs section, hallucination-evidence callout, final install block — all appear in this order before the visitor reaches the footer, so the install decision is informed by the time they hit the safety-net CTA.
+    - The five supporting beats — cost-of-not-knowing strip, how-it-works pipeline, vs-rules-packs section, cascading-intent-tree diagram, final install block — all appear in this order before the visitor reaches the footer, so the install decision is informed by the time they hit the safety-net CTA.
     - A visitor completes the install on this page without visiting docs first; the docs footer link exists for after-install reference, not for before-install deep-diving.
     - The page renders with zero forms, zero gates, zero email captures, zero demo-request CTAs, zero pricing teasers, zero testimonials.
   undesired:
@@ -99,19 +99,26 @@ sidebar" escape hatch for content that does not justify a beat.
    text). The architect picks which differentiators fit the sixty-second
    reading budget; the spec provides all of them as available ammunition.
    This section closes the most likely confusion the audience brings in.
-5. **Hallucination evidence.** Stanford HAI / Dahl et al., 2024,
-   attributed verbatim: "purpose-built legal AI still hallucinates on
-   over one in six queries." Cited as evidence against other tools'
-   approach, never as evidence of AIDE's own track record.
+5. **Cascading intent tree.** A static visual folder-tree diagram showing
+   an example application with `.aide` specs at multiple levels — project
+   root, src, feature, submodule — rendered in the style of the
+   `aide_discover` tool output. The diagram makes progressive disclosure
+   and cascading intent visually obvious: each deeper spec narrows the
+   parent's intent, helpers have no specs, and the tree shape matches the
+   module composition. No interactivity, no animation — a typographic
+   diagram that reads as engineering artifact, not marketing illustration.
+   The example application uses operational domain names (not regulated
+   domains) and the tree is realistic enough that a visitor who has read
+   the methodology docs recognizes the pattern immediately.
 6. **Final install block.** Identical to the hero's install block.
    Safety-net CTA for visitors who scrolled past the first one. (Count
    this as beat 6 if you like; it is the hero repeated, not a new
    beat's worth of content.)
 
 The numbering here is not negotiable; adding a sixth content beat between
-"how it works" and "vs rules packs" or between the hallucination
-callout and the final CTA opens a scope-creep door this spec holds
-closed. The implementor refuses additions by pointing at this list.
+"how it works" and "vs rules packs" or between the intent-tree diagram
+and the final CTA opens a scope-creep door this spec holds closed.
+The implementor refuses additions by pointing at this list.
 
 **Not every new mechanism needs LP copy.** This spec provides ammunition;
 the architect picks what fits the reading budget. The eight agents,
@@ -159,11 +166,9 @@ acquiring domain knowledge generically, not the cost of a specific
 licensed professional. The how-it-works section describes what the AIDEMD
 pipeline does, not what users have built. The domain-expert annotation
 names operational domains (internal tools, content production) not
-regulated ones. The hallucination callout cites other tools' failures
-as evidence that even purpose-built AI gets domains wrong — reinforcing
-why AIDE's approach (persistent, auditable research) matters, not
-implying AIDEMD solves those regulated domains. No testimonials, no case
-studies, no "built with AIDEMD" badges, no founder quotes.
+regulated ones. The intent-tree diagram uses operational module names
+consistent with this constraint. No testimonials, no case studies, no
+"built with AIDEMD" badges, no founder quotes.
 
 ## Good examples
 
@@ -204,9 +209,10 @@ domain expert, strategist, architect, implementor, QA, aligner, auditor)
 shown as a vertical pipeline with the brain as shared infrastructure,
 plus one-line annotations per node. Fold four: the vs-rules-packs section naming
 CLAUDE.md/AGENTS.md/.cursorrules and the persistence-gap argument.
-Fold five: the Stanford HAI callout with full attribution — framed as
-evidence that even purpose-built domain AI gets it wrong, reinforcing
-why persistent auditable research matters. Fold six: the final install
+Fold five: the cascading-intent-tree diagram — a static folder-tree
+showing an example application with `.aide` specs at multiple levels,
+making progressive disclosure and cascading intent visually obvious at
+a glance. Fold six: the final install
 block, identical to the hero. Footer: one link, "Read the canonical
 spec →" pointing to /docs. Total reading time about sixty seconds,
 install completable in under two minutes, visitor never encounters a
@@ -273,6 +279,32 @@ AIDE from LangGraph, CrewAI, or any other multi-agent framework. The
 correct diagram names all eight agents as vertical nodes and shows the
 brain as shared infrastructure beside the pipeline, not as a pipeline
 stage.
+
+An intent-tree section built as an interactive file-explorer widget —
+click-to-expand folders, hover tooltips showing spec contents, animated
+transitions as nodes open and close. This reads as a product demo, not
+engineering documentation. The diagram is a static typographic artifact:
+a visitor should be able to screenshot it and paste it into a Slack
+thread as a comprehensible image. Interactivity adds implementation
+complexity without adding comprehension — the tree's shape IS the
+argument, and shape is visible at rest.
+
+A generic project file tree that happens to include `.aide` files but
+does not make the cascading relationship between specs visually obvious.
+If you removed the `.aide` files from the diagram it would look like
+any project listing — the inheritance relationship between parent and
+child specs is invisible. The correct diagram makes the spec files and
+their narrowing relationship the focal point; the code files are
+supporting context, not co-equal entries.
+
+An intent-tree diagram using regulated-domain module names — a legal
+document analyzer, a patient intake system, a tax compliance checker.
+This violates the parent spec's operational-not-regulated constraint
+and positions AIDEMD against domains where a five-minute-old install
+has zero credibility. The example application must use operational
+domain names (content pipelines, internal tools, data processing)
+consistent with the domain-example rules enforced across the entire
+landing surface.
 
 ## References
 

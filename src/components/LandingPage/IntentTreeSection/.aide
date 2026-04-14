@@ -1,0 +1,259 @@
+---
+scope: src/components/LandingPage/IntentTreeSection/
+description: Visual folder-tree diagram showing how .aide specs cascade from project root to leaf modules in an example application.
+intent: >
+  A static visual folder-tree diagram that shows the cascading intent tree
+  of an example application, making it visually obvious how .aide specs
+  inherit and narrow intent through progressive disclosure. The diagram
+  renders like aide_discover tool output — a project tree with spec-file
+  indicators at each level — so a visitor understands at a glance that
+  intent flows top-down and each level narrows the parent's scope. This
+  is the landing page's "show, don't tell" moment for the cascading intent
+  concept that differentiates AIDEMD from flat rules files.
+outcomes:
+  desired:
+    - The visitor sees a realistic project folder tree with .aide specs at the project root, src level, feature level, and submodule level, with helpers shown as having no spec — the full depth of the cascade is visible in one diagram.
+    - A visitor who has never read the methodology docs understands from the diagram alone that intent flows top-down and each deeper spec narrows the parent's scope, not restates it.
+    - The diagram visually distinguishes itself from a generic file tree by making the .aide spec files and their inheritance relationship the focal point, not the code files.
+    - A visitor familiar with rules packs recognizes this as fundamentally different from a flat .cursorrules or CLAUDE.md — the tree structure itself is the argument.
+  undesired:
+    - An interactive or animated tree that behaves like a file explorer widget — click-to-expand, hover tooltips, transition animations. The diagram is a static typographic artifact that reads as engineering documentation, not a product demo.
+    - A generic file tree that shows folder structure without making the cascading intent relationship between specs visually obvious — if you removed the .aide files the diagram would look like any project tree.
+    - Example module names drawn from regulated domains — legal, medical, tax, compliance. The example application uses operational domain names consistent with the parent spec's domain-example constraint.
+    - A tree so deep or wide that it overwhelms the sixty-second reading budget — the diagram should be scannable in under ten seconds.
+---
+
+## Context
+
+This section is beat 5 of the landing page — it follows the "vs rules
+packs" section that names the mechanical differences between AIDE and
+flat rules files. That section makes the argument in words; this section
+makes it visually. The cascading intent tree is the single concept that
+no rules pack can replicate: `.aide` specs live at multiple directory
+levels, each child inheriting the parent's intent and narrowing it to
+the slice of the problem it owns. Helpers have no specs. The tree shape
+itself encodes the architecture. A visitor who sees this diagram should
+understand the cascade without having read any methodology docs — the
+visual does the teaching.
+
+The diagram renders as a static typographic artifact in the same
+monospace register as the install code block in beat 1. It is not an
+interactive widget, not an animation, not a product demo. It reads as
+engineering documentation: something a visitor could screenshot and paste
+into a Slack thread and it would still make sense as a standalone image.
+
+## Strategy
+
+**Use a content-pipeline application as the example domain.** The parent
+spec requires operational domains only — no legal, medical, tax, or
+compliance. A content pipeline (ingest, transform, publish) is
+immediately legible to the landing's two audiences (technical builders
+and non-technical users describing what they want), uses everyday
+vocabulary, and is a domain where iteration is cheap and stakes are
+operational (root spec `outcomes.undesired` item 1; parent spec Strategy
+"domain examples are operational, not regulated"). A content pipeline
+also naturally decomposes into submodules with distinct responsibilities,
+which makes the tree shape feel earned rather than contrived.
+
+**Show four levels of the intent tree: project root, src, feature,
+submodule.** The canonical spec defines the cascading intent tree as
+running from `.aide/intent.aide` at the top down to the deepest module
+spec (aide-spec.md, "Example: full project intent tree"). Four levels
+are the minimum needed to demonstrate that intent narrows at each step
+— fewer looks flat, more overwhelms the ten-second scan budget
+(frontmatter `outcomes.undesired` item 4). The tree should show
+approximately 15–20 lines total: enough to feel realistic, not so many
+that the visitor's eye loses the pattern.
+
+**Show two to three siblings at the feature level, one expanded to
+submodule depth.** Expanding every branch would double the line count
+without adding conceptual value. Expanding one branch to submodule depth
+proves the cascade goes deeper; showing collapsed siblings proves the
+pattern repeats horizontally. This mirrors the canonical example tree
+structure in aide-spec.md lines 51–79, which shows one feature expanded
+with submodules while keeping the overall tree scannable.
+
+**Include at least one helper folder without a `.aide` spec.** The
+placement rule — orchestrators have specs, helpers don't (aide-spec.md,
+"Where `.aide` Files Live") — is a key differentiator from flat rules
+files that apply globally. Showing a helper with no spec makes the
+selective placement visible and teaches that AIDE specs are intentional,
+not boilerplate. The helper's absence of a spec is as important as the
+orchestrator's presence of one.
+
+**Visually distinguish `.aide` files from code files using inline
+annotations.** Each `.aide` file in the tree gets a short right-aligned
+annotation (preceded by a left-arrow marker) that names what that spec
+level does — e.g., "project-wide intent," "narrows to content pipeline,"
+"narrows to ingestion." This is the mechanism that makes the cascading
+relationship visible without requiring the visitor to read actual spec
+content. Without annotations, the diagram is just a file tree that
+happens to contain `.aide` files — indistinguishable from a generic
+project listing (frontmatter `outcomes.undesired` item 2). The
+annotation style matches the `aide_discover` tool output format, which
+uses the same right-aligned description pattern.
+
+**Do not annotate code files or helper folders.** Annotations are
+reserved for `.aide` spec files. Code files (`index.ts`) and helper
+folders appear in the tree for realism but carry no description. This
+creates a visual contrast: the spec files are the annotated focal
+points, the code files are the quiet supporting structure. The visitor's
+eye is drawn to the annotations, which are the cascade.
+
+**Render as a monospace code block, not a styled component tree.** The
+diagram should use the same typographic treatment as the install config
+block in beat 1 — monospace font, box-drawing characters for tree
+branches, muted code-file entries, highlighted `.aide` entries. This
+reads as an engineering artifact consistent with the rest of the page
+(parent spec Strategy: "copy is hedge-free, short, declarative"). The
+Evil Martians 100-site study found that code/config blocks as visual
+elements are the dominant pattern for dev-tool landings that lack a UI
+screenshot (skeptical-engineer-conversion research, Source 2). The
+intent-tree diagram is another instance of that same pattern.
+
+**Connect to beat 4 through visual proof, not redundant copy.** Beat 4
+("vs rules packs") makes the persistence-gap argument in text: rules
+packs are flat, AIDE cascades. Beat 5 is the visual receipt. The
+diagram should not re-argue the comparison — no "unlike CLAUDE.md..."
+copy. The tree structure IS the argument. A visitor who just read "rules
+packs are flat unstructured lumps" and then sees a four-level cascading
+tree with narrowing annotations gets the point without being told twice.
+Problem-first storytelling over feature lists (Evil Martians 100-site
+study, feature hierarchy ranking in skeptical-engineer-conversion
+research, Source 2).
+
+**Keep the section to one diagram with a single heading line above it.**
+No explanatory paragraph between the heading and the tree. The heading
+names what the visitor is looking at ("Intent cascades through the
+project tree" or similar); the diagram does the rest. Additional prose
+would push the diagram below the fold on shorter viewports and violate
+the ten-second scan constraint. The diagram is self-explanatory by
+design — if it needs a paragraph of explanation, the annotations are
+not doing their job.
+
+## Good examples
+
+A heading reads "Intent cascades through the project tree." Directly
+below it, a monospace code block:
+
+```
+content-pipeline/
+├── .aide/
+│   └── intent.aide           ← project-wide intent
+├── src/
+│   ├── .aide                 ← narrows to content domain
+│   └── service/
+│       ├── ingest/
+│       │   ├── .aide         ← narrows to ingestion
+│       │   ├── index.ts
+│       │   ├── parseFeed/
+│       │   │   ├── .aide     ← narrows to feed parsing
+│       │   │   └── index.ts
+│       │   └── normalize/
+│       │       └── index.ts  (helper — no spec)
+│       ├── transform/
+│       │   ├── .aide         ← narrows to transformation
+│       │   └── index.ts
+│       └── publish/
+│           ├── .aide         ← narrows to publishing
+│           └── index.ts
+```
+
+The visitor's eye tracks the left-arrow annotations down the tree. Each
+annotation uses the word "narrows," reinforcing the cascade concept
+without requiring methodology vocabulary. The helper `normalize/` has
+no `.aide` and no annotation — its absence is visible. The tree is
+18 lines, scannable in under ten seconds. A visitor who just read the
+"vs rules packs" section sees immediately that this is not a flat file
+— it is a hierarchy where each level specializes the one above it. The
+diagram could be screenshotted and pasted into a Slack thread as a
+self-contained explanation of what AIDE does differently.
+
+## Bad examples
+
+A tree that shows only two levels — project root and one feature — with
+no submodule expansion. This fails to demonstrate cascading: two levels
+could be a flat config at the root plus one module override, which is
+exactly what `.cursorrules` plus a local override looks like. The
+cascade requires at least three spec levels (root, feature, submodule)
+to be visually distinct from a flat-plus-override pattern.
+
+A tree using regulated-domain module names:
+
+```
+legal-doc-analyzer/
+├── .aide/
+│   └── intent.aide
+├── src/
+│   └── service/
+│       ├── contractReview/
+│       │   ├── .aide
+│       │   └── index.ts
+│       └── complianceCheck/
+│           ├── .aide
+│           └── index.ts
+```
+
+This violates the parent spec's operational-not-regulated constraint.
+A visitor seeing "contractReview" and "complianceCheck" will question
+whether they should trust an AI methodology for legal work — and
+they should not, because AIDE is not positioned for domains where
+mistakes are irreversible.
+
+A tree where every folder has a `.aide` file, including helpers:
+
+```
+├── parseFeed/
+│   ├── .aide         ← validates feed format
+│   └── index.ts
+├── normalize/
+│   ├── .aide         ← normalizes content shape
+│   └── index.ts
+```
+
+This misrepresents the methodology. The placement rule is that helpers
+do not have specs — their folder name and code are self-explanatory
+(aide-spec.md). Showing specs on helpers makes AIDE look like
+boilerplate overhead rather than selective, intentional documentation.
+
+An interactive tree with expand/collapse controls, hover tooltips
+showing spec content, and a smooth animation when branches open. This
+reads as a product demo widget, not engineering documentation. The
+parent spec requires a static typographic artifact — something that
+works as a screenshot. Interactivity adds implementation complexity
+without adding comprehension; the tree's shape is the argument, and
+shape is visible at rest.
+
+A tree with no annotations — just folder names and `.aide` files listed
+alongside `index.ts` files with no visual distinction:
+
+```
+├── ingest/
+│   ├── .aide
+│   ├── index.ts
+│   ├── parseFeed/
+│   │   ├── .aide
+│   │   └── index.ts
+```
+
+Without annotations, the `.aide` files blend into the file listing.
+The cascading relationship is invisible — removing the `.aide` files
+would leave an ordinary project tree. The annotations are what make
+the inheritance and narrowing relationship the focal point.
+
+A diagram preceded by two paragraphs of explanation: "The AIDE
+methodology uses cascading intent specs that live next to your code.
+Each spec inherits from its parent and narrows the intent to the
+specific module it governs. Here is what that looks like in
+practice..." This burns ten seconds of reading time before the
+visitor even reaches the diagram, violating the scan-budget constraint.
+If the diagram needs that much preamble, the annotations are failing.
+
+## References
+
+- `research/aidemd-dev/aide-positioning-landscape.md` -- "vs rules packs" differentiators: per-module cascading, falsifiable outcomes, QA pipeline; AIDE's one-line differentiator is "intent as the contract, not the prompt."
+- `research/aidemd-dev/skeptical-engineer-conversion.md` -- Evil Martians 100-site study finding that code/config blocks serve as the dominant visual element for dev-tool landings; problem-first storytelling ranked strongest for early-stage products; above-the-fold clutter hurts technical credibility.
+- `.aide/docs/aide-spec.md` -- Canonical definition of the cascading intent tree, the example project tree (lines 51-79), the inheritance rule, the placement rule (orchestrators have specs, helpers don't), and the "copy-paste sibling" test for spec specificity.
+- `.aide/docs/progressive-disclosure.md` -- The three-tier model (folder structure, JSDoc, inline comments) that the diagram implicitly teaches by showing the tree as architecture.
+- `src/components/LandingPage/.aide` (parent spec) -- Beat ordering (intent tree is beat 5 after vs-rules-packs), domain-example constraint (operational not regulated), static-typographic-artifact requirement, sixty-second reading budget, no interactivity rule.
+- `.aide/intent.aide` (root spec) -- Project-wide constraint against regulated-domain positioning; v1 is Claude Code only; no marketing hedges.

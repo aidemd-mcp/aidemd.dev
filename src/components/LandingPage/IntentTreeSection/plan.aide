@@ -1,0 +1,143 @@
+---
+intent: >
+  Build the IntentTreeSection component — a static monospace folder-tree
+  diagram with inline annotations showing how .aide specs cascade through
+  a content-pipeline example application — and wire it into the LandingPage
+  orchestrator as beat 5 between VsRulesPacks and HallucinationEvidence.
+---
+
+## Plan
+
+### 1. Create the IntentTreeSection component
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`
+
+- [x] Create `src/components/LandingPage/IntentTreeSection/index.tsx`.
+- [x] Default export: `IntentTreeSection`, arrow function component, no props.
+- [x] JSDoc: one line — "Static folder-tree diagram showing cascading .aide
+      intent specs through an example content-pipeline application."
+- [x] Outer element: `<section className="w-full py-16 px-4 border-t border-zinc-800">`
+      — matches VsRulesPacks, HallucinationEvidence, CostStrip section wrappers.
+- [x] Inner container: `<div className="max-w-2xl mx-auto flex flex-col gap-6">`
+      — matches sibling beat sections.
+- [x] Heading block (same pattern as VsRulesPacks/HallucinationEvidence):
+      - `<h2 className="text-xl font-semibold text-zinc-100">` with text:
+        "Intent cascades through the project tree"
+      - No subtitle `<p>` below the heading. The spec explicitly forbids
+        explanatory prose between the heading and the diagram — the diagram
+        is self-explanatory via its annotations.
+- [x] Tree diagram container: style the outer wrapper to match the shared
+      `CodeBlock` visual treatment — `rounded-lg bg-zinc-900 border border-zinc-800`.
+      Add inner padding `p-4`. Do NOT reuse the shared `CodeBlock` component
+      because it renders a plain string; the tree needs per-line styling to
+      visually distinguish `.aide` annotation lines from plain file lines.
+- [x] Render the tree as a `<pre>` with `className="text-sm font-mono leading-relaxed overflow-x-auto"`.
+      Inside the `<pre>`, render each line of the tree as its own element so
+      annotations can be styled differently from file/folder names.
+- [x] Tree data representation: define the tree as an array of objects at the
+      top of the file (above the component, below imports). Each object has:
+      `text` (the folder/file portion including box-drawing characters) and
+      an optional `annotation` (the right-aligned description). This keeps the
+      data declarative and the rendering logic minimal. Approximately 18 lines
+      per the spec's good example.
+- [x] Tree content — use the exact content-pipeline example from the spec's
+      Good Examples section. The domain is `content-pipeline/` with modules
+      `ingest/`, `transform/`, `publish/` and a submodule `parseFeed/` under
+      ingest. The helper `normalize/` has no `.aide` spec. Annotations use the
+      word "narrows" to reinforce the cascade concept.
+- [x] Styling per line:
+      - Tree structure characters and folder/file names: `text-zinc-400` (muted).
+      - `.aide` and `intent.aide` file names within the text portion: `text-zinc-200`
+        (brighter than surrounding structure to draw the eye).
+      - Annotation arrows and text (`<- ...`): `text-zinc-500` — visible but
+        secondary to the tree structure. Use `text-emerald-500` or `text-zinc-500`
+        for the arrow marker to create a subtle highlight consistent with the
+        VsRulesPacks section's use of emerald for positive markers. Pick one:
+        `text-zinc-500` for the arrow, keeping annotations understated as
+        engineering documentation rather than marketing highlights.
+      - The helper line `(helper - no spec)`: `text-zinc-600` — deliberately
+        dimmer to show absence.
+- [x] No interactivity, no animation, no click handlers, no hover effects.
+      The spec explicitly forbids interactive tree behavior.
+- [x] No copy button on this code block. Unlike the install JSON, the tree
+      diagram is a visual artifact, not something the visitor pastes.
+
+Spec traces:
+- `.aide` frontmatter `intent` — "static visual folder-tree diagram"
+- `.aide` `outcomes.desired[0]` — realistic tree with specs at four levels, helpers with no spec
+- `.aide` `outcomes.desired[1]` — visitor understands top-down flow from diagram alone
+- `.aide` `outcomes.desired[2]` — .aide files are the focal point, not code files
+- `.aide` `outcomes.undesired[0]` — no interactivity or animation
+- `.aide` `outcomes.undesired[3]` — scannable in under ten seconds
+- `.aide` Strategy: "Render as a monospace code block, not a styled component tree"
+- `.aide` Strategy: "Keep the section to one diagram with a single heading line above it"
+- Progressive disclosure: component in its own folder with index.tsx, default export
+
+---
+
+### 2. Wire IntentTreeSection into the LandingPage orchestrator
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [x] In `src/components/LandingPage/index.tsx`, add the import:
+      `import IntentTreeSection from "@/components/LandingPage/IntentTreeSection";`
+      — place it after the VsRulesPacks import, before HallucinationEvidence.
+- [x] In the JSX, insert `<IntentTreeSection />` between `<VsRulesPacks />`
+      and `<HallucinationEvidence />`. The resulting beat order becomes:
+      Wordmark, InstallHero, CostStrip, HowItWorks, VsRulesPacks,
+      IntentTreeSection, HallucinationEvidence, InstallFooter.
+- [x] Verify the page renders with `npm run dev` — the new section should
+      appear between "Not a rules pack" and "The hallucination problem is
+      not solved" with consistent spacing and border treatment.
+
+Spec traces:
+- Parent LP spec `outcomes.desired[3]` — five beats appear in order before footer
+- Parent LP spec Strategy — beat 5 is "Cascading intent tree"
+- Progressive disclosure: LandingPage index.tsx is the orchestrator; its import
+  list reads as the page composition
+
+---
+
+## Decisions
+
+**Tree data as typed array, not raw string or JSX.** The spec's good example is
+~18 lines of monospace text with annotations. Three representations were
+considered: (1) a raw template literal string in a `<pre>` — simplest but
+impossible to style annotations differently from file names; (2) inline JSX
+with manual `<span>` per line — works but mixes data with markup and is
+hard to maintain; (3) a typed array of `{ text, annotation? }` objects mapped
+to styled elements — keeps data declarative, rendering minimal, and annotation
+styling trivial. Option 3 wins because it satisfies the spec's requirement that
+`.aide` files be the visual focal point (via differential styling) while keeping
+the component under 100 lines.
+
+**Custom tree rendering, not shared CodeBlock.** The shared `CodeBlock` component
+renders a plain string with a copy button. The tree diagram needs per-line
+styling (annotations vs file names vs helpers) and no copy button. Reusing
+CodeBlock would require either hacking around its interface or making it
+support structured content — both are scope creep. The tree container matches
+CodeBlock's visual treatment (same bg, border, border-radius, font) for
+consistency without coupling.
+
+**IntentTreeSection slots between VsRulesPacks and HallucinationEvidence.**
+The parent LP spec defines beat 5 as the cascading intent tree, after
+vs-rules-packs (beat 4). HallucinationEvidence is not one of the five
+canonical beats — it is supporting evidence that currently sits between
+VsRulesPacks and InstallFooter. The intent tree is beat 5 and belongs
+immediately after beat 4, pushing HallucinationEvidence down. This matches
+the parent spec's beat ordering: install-hero, cost-strip, how-it-works,
+vs-rules-packs, cascading-intent-tree, final-install-block.
+
+**No test step.** This is a static presentational component with zero logic,
+zero props, zero state, and zero conditional rendering beyond a `.map()` over
+a hardcoded array. A test would assert that static strings render — pure
+noise. The value of testing is proportional to the logic being tested; this
+component has none.
+
+**Annotation styling uses zinc-500, not emerald.** The VsRulesPacks section
+uses emerald-500 for positive markers in a comparison context (AIDE vs rules
+packs). The intent tree is not a comparison — it is engineering documentation.
+Using emerald would make the annotations look like marketing callouts rather
+than the aide_discover output format the spec references. Zinc-500 keeps
+the annotations readable but understated, consistent with the "typographic
+artifact" requirement.

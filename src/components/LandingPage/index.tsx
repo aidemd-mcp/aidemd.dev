@@ -3,7 +3,7 @@ import InstallHero from "@/components/LandingPage/InstallHero";
 import CostStrip from "@/components/LandingPage/CostStrip";
 import HowItWorks from "@/components/LandingPage/HowItWorks";
 import VsRulesPacks from "@/components/LandingPage/VsRulesPacks";
-import HallucinationEvidence from "@/components/LandingPage/HallucinationEvidence";
+import IntentTreeSection from "@/components/LandingPage/IntentTreeSection";
 import InstallFooter from "@/components/shared/InstallFooter";
 
 const LandingPage = () => {
@@ -14,7 +14,7 @@ const LandingPage = () => {
       <CostStrip />
       <HowItWorks />
       <VsRulesPacks />
-      <HallucinationEvidence />
+      <IntentTreeSection />
       <InstallFooter />
     </main>
   );
