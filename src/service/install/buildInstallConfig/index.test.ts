@@ -20,13 +20,23 @@ describe("buildInstallConfig", () => {
     expect(commandSequence).toHaveLength(3);
   });
 
-  it("no version pinning in args (no version numbers in args array)", () => {
+  it("rejects semver pins but allows @latest dist-tag", () => {
     const { mcpConfig } = buildInstallConfig();
     const args = mcpConfig.mcpServers.aide.args;
     // Version strings look like @1.2.3 or @^1.2.3 — none should appear
     const versionPattern = /@[\^~]?\d+\.\d+/;
     for (const arg of args) {
       expect(arg).not.toMatch(versionPattern);
+    }
+  });
+
+  it("args contain @latest dist-tag", () => {
+    const { mcpConfig } = buildInstallConfig();
+    const args = mcpConfig.mcpServers.aide.args;
+    for (const arg of args) {
+      if (arg.startsWith("@aidemd-mcp/server")) {
+        expect(arg).toContain("@latest");
+      }
     }
   });
 

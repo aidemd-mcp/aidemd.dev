@@ -1,0 +1,85 @@
+---
+intent: >
+  Verify the `@latest` dist-tag amendment is fully applied across the
+  install config source, the InstallFooter component, and the test suite,
+  and update the test description to clarify that `@latest` is the
+  required dist-tag (not merely "no version pinning").
+---
+
+## Plan
+
+1. [x] **Verify `@latest` in `buildInstallConfig/index.ts`**
+
+   Read: `coding-playbook/foundations/conventions.md`
+
+   The `.aide` spec now requires `@aidemd-mcp/server@latest` in both the
+   `mcpConfig.args` array and the `commandSequence` step-1 JSON block.
+   Open `src/service/install/buildInstallConfig/index.ts` and confirm both
+   occurrences use `@aidemd-mcp/server@latest`. If either still uses the
+   bare package name (`@aidemd-mcp/server` without `@latest`), update it.
+
+   Files: `src/service/install/buildInstallConfig/index.ts`
+
+   Acceptance: both `args` arrays in the file contain exactly
+   `"@aidemd-mcp/server@latest"`.
+
+2. [x] **Verify `@latest` in `InstallFooter/index.tsx`**
+
+   Read: `coding-playbook/client/components.md`
+
+   The inline `<code>` element in the InstallFooter must show
+   `npx @aidemd-mcp/server@latest init`. Open
+   `src/components/shared/InstallFooter/index.tsx` and confirm the code
+   element text matches. If it still uses the bare package name, update it.
+
+   Files: `src/components/shared/InstallFooter/index.tsx`
+
+   Acceptance: the rendered text is exactly
+   `npx @aidemd-mcp/server@latest init`.
+
+3. [x] **Update the test description and add a positive `@latest` assertion**
+
+   Read: `coding-playbook/workflow/testing.md`
+
+   Open `src/service/install/buildInstallConfig/index.test.ts`. Two changes:
+
+   3a. Rename the existing test from
+   `"no version pinning in args (no version numbers in args array)"` to
+   `"rejects semver pins but allows @latest dist-tag"`. The test body
+   (the regex check against `/@[\^~]?\d+\.\d+/`) is still correct and
+   should stay as-is — it guards against semver pins and does not
+   false-positive on `@latest`.
+
+   3b. Add a new test case:
+   `"args contain @latest dist-tag"`. This test should assert that
+   every element in `mcpConfig.mcpServers.aide.args` that starts with
+   `@aidemd-mcp/server` includes the `@latest` suffix. Use a simple
+   string check (e.g., `expect(arg).toContain("@latest")`). This is
+   the positive counterpart to the existing negative regex test — it
+   confirms the dist-tag is present, not just that semver is absent.
+
+   Files: `src/service/install/buildInstallConfig/index.test.ts`
+
+   Acceptance: `rtk vitest run` passes with all five tests green
+   (the original four plus the new one).
+
+## Decisions
+
+- **Rename, don't delete the existing test.** The semver-pin regex guard
+  is still valuable — it catches regressions like `@0.3.0` or `@^1.2.3`.
+  Renaming it clarifies its purpose without losing coverage.
+
+- **Separate positive and negative assertions.** The existing test proves
+  "no semver pins." The new test proves "`@latest` is present." These are
+  independent properties. A future change could accidentally strip the
+  dist-tag entirely (bare package name) and the semver test would still
+  pass — the positive assertion catches that gap.
+
+- **Steps 1 and 2 are verification, not implementation.** The code
+  changes were already applied. The plan includes them so QA has explicit
+  checkpoints to confirm correctness rather than assuming prior work was
+  complete.
+
+- **No changes to the InstallConfig type.** The type
+  (`src/types/install.ts`) defines `args` as `string[]`, which already
+  accommodates the `@latest` suffix. No type-level change needed.
