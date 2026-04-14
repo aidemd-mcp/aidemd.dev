@@ -10,7 +10,7 @@ const CostStrip = () => {
           <strong className="text-zinc-100">$30,000–$60,000</strong> at the low
           end{" "}
           <span className="text-zinc-500 text-sm">(Geisheker Group, 2026)</span>
-          . AIDE captures the same domain knowledge for free via{" "}
+          . AIDEMD captures the same domain knowledge for free via{" "}
           <code className="text-zinc-300 font-mono">npx</code>.
         </p>
       </div>

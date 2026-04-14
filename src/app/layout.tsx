@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AIDE — Autonomous Intent-Driven Engineering",
+  title: "AIDEMD — Code is ephemeral. Intent is law.",
   description:
     "Describe what you want. AIDE cascades your intent through eight specialized agents and a persistent brain into working code. Self-serve via npx.",
 };
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "AIDE",
+  name: "AIDEMD",
   url: "https://aidemd.dev",
 };
 
@@ -29,7 +29,7 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   url: "https://aidemd.dev",
-  name: "AIDE",
+  name: "AIDEMD",
 };
 
 export default function RootLayout({

@@ -1,7 +1,7 @@
 ---
 status: aligned
 scope: src/components/LandingPage/
-description: Spec governing the single-scroll landing surface that converts first-time visitors to AIDE installers.
+description: Spec governing the single-scroll landing surface that converts first-time visitors to AIDEMD installers.
 intent: >
   The landing surface composes the single-scroll path that takes a
   first-time visitor from arrival to pasted-MCP-config-plus-restart-plus-
@@ -9,27 +9,32 @@ intent: >
   accessibility as the lead and the install command as the hero visual.
   The hero speaks to two audiences at once: non-technical users who
   describe what they want, and technical builders working outside their
-  domain expertise who research and capture knowledge. Its only job is
-  install-path conversion; every section either serves that path or is
-  cut. The methodology it sells ships eight specialized agents as a
-  concrete pipeline — not generic "AI agents" — and the landing must
-  reflect that specificity without becoming an agent catalog. No section
-  here exists for SEO, engagement metrics, social proof, or
-  future-surface staging.
+  domain expertise who research and capture knowledge. The page sells
+  AIDEMD — the MCP product that delivers the AIDE methodology to AI
+  agents — and every heading, label, and meta element must name the
+  product as AIDEMD, not AIDE. Its only job is install-path conversion;
+  every section either serves that path or is cut. The methodology it
+  sells ships eight specialized agents as a concrete pipeline — not
+  generic "AI agents" — and the landing must reflect that specificity
+  without becoming an agent catalog. No section here exists for SEO,
+  engagement metrics, social proof, or future-surface staging.
 outcomes:
   desired:
+    - The AIDEMD wordmark appears as the dominant visual element at the very top of the page — large, bold, unmissable — with the catchphrase 'Code is ephemeral. Intent is law.' in smaller text directly beneath it. This is the first thing a visitor sees before reaching the install hero. It is a product brand identity element, not a navigation bar.
+    - The page header and primary product references display "AIDEMD" as the product name, clearly distinguishing the product (AIDEMD) from the methodology (AIDE) it delivers.
     - A visitor reaches the install command before any scrolling — the install block IS the hero, not a section below it.
     - The five supporting beats — cost-of-not-knowing strip, how-it-works pipeline, vs-rules-packs section, hallucination-evidence callout, final install block — all appear in this order before the visitor reaches the footer, so the install decision is informed by the time they hit the safety-net CTA.
     - A visitor completes the install on this page without visiting docs first; the docs footer link exists for after-install reference, not for before-install deep-diving.
     - The page renders with zero forms, zero gates, zero email captures, zero demo-request CTAs, zero pricing teasers, zero testimonials.
   undesired:
+    - A header or product label that reads "AIDE" without the "MD" suffix, or a page that lacks the AIDEMD wordmark entirely at the top. The methodology is AIDE; the product is AIDEMD. The wordmark is the brand anchor — omitting it or displaying just "AIDE" conflates the product with the methodology and fails to establish the product trademark.
     - A persistent top navigation bar. The landing has no header that offers the visitor a way off the conversion path; the only persistent element is the install block itself, present at the top and again at the bottom.
     - A compatibility row implying multi-framework support. v1 is Claude Code only; a strip reading "Cursor / Windsurf / Copilot coming soon" is a row of one pretending to be a row of four and is specifically forbidden here as well as at the root level.
     - Stock-icon feature grids, "Trusted by" logo strips, team photos, hero illustrations, auto-playing video, animated particle backgrounds, gradient washes that obscure text. Each of these reads as marketing-site chrome and costs engineering credibility the rest of the landing then has to win back.
     - Copy that could be pasted onto Cursor, Windsurf, Copilot, Cline, Aider, LangGraph, CrewAI, Autogen, Harvey, Hippocratic AI, Decagon, or Sierra without changing its meaning. Any sentence that fits elsewhere is cut.
     - A sixth beat or a decorative interstitial between the five canonical beats. No "Meet the team," no "Our philosophy," no "Recent updates from the blog," no "Join our community." The five beats are exhaustive.
     - A docs link in the hero or the top third of the page. Docs are the after-install reference and belong in the footer, deliberately below the final install CTA.
-    - Meta descriptions (og:description, meta description tag) that reference deprecated AIDE concepts such as "byte-faithful," "timestamped context," "archivable context," or "collapses the specialist hire." Meta copy must reflect the cascading-intent framing, the two-audience accessibility story, and the eight-agent pipeline that AIDE actually ships.
+    - Meta descriptions (og:description, meta description tag) that reference deprecated AIDE concepts such as "byte-faithful," "timestamped context," "archivable context," or "collapses the specialist hire." Meta copy must reflect the cascading-intent framing, the two-audience accessibility story, and the eight-agent pipeline that AIDEMD actually ships.
 ---
 
 ## Context
@@ -64,7 +69,7 @@ sidebar" escape hatch for content that does not justify a beat.
 2. **Cost-of-not-knowing strip.** A concrete, sourced dollar figure —
    a six-month fractional specialist engagement at $30K–$60K — with
    inline source attribution. Anchors the business case: domain
-   knowledge has historically been expensive to acquire, and AIDE
+   knowledge has historically been expensive to acquire, and AIDEMD
    makes it free to capture and cascade. No specific regulated-domain
    specialties named; the figure is the universal anchor.
 3. **How it works.** The pipeline shows eight named agents — spec-writer,
@@ -87,7 +92,7 @@ sidebar" escape hatch for content that does not justify a beat.
    retro findings promote to the brain at `process/retro/` — rules packs
    cannot learn from their own failures), misalignment tags (QA traces
    where intent was lost to a specific pipeline stage — rules packs
-   cannot diagnose drift), upgrade command (AIDE versions its methodology
+   cannot diagnose drift), upgrade command (AIDEMD versions its methodology
    artifacts and updates them in place — rules packs do not version),
    coding playbook (the architect navigates a structured convention
    hierarchy via a dedicated skill — rules packs are flat unstructured
@@ -130,7 +135,7 @@ claims with sourced attribution, not on hedges.
 **Hero leads with cascading intent and accessibility.** The hero
 speaks to both audiences — non-technical users who describe what they
 want, and technical builders who research an unfamiliar domain and let
-AIDE cascade that knowledge into code. The headline names the mechanism
+AIDEMD cascade that knowledge into code. The headline names the mechanism
 (intent in, working code out); the subhead names the eight-agent
 pipeline and the brain as the persistence layer. The methodology
 framing ("intent is the contract, code is ephemeral") lives in beat 3,
@@ -140,32 +145,32 @@ time; both are documented in the Good Examples section below.
 
 **Cost strip ships one anchor figure.** The research note has four
 defensible specialist rate ranges, but naming specific regulated-domain
-specialties (tax attorneys, physician advisors) positions AIDE against
+specialties (tax attorneys, physician advisors) positions AIDEMD against
 domains we explicitly avoid. The strip ships a single universal anchor
 — the six-month fractional engagement total ($30K–$60K) — which
 communicates "domain knowledge is expensive to acquire" without naming
-a specialty that implies AIDE replaces licensed professionals.
+a specialty that implies AIDEMD replaces licensed professionals.
 
 **Domain examples are operational, not regulated — enforced locally.**
 Every section on this surface must comply with the root spec's
 operational-not-regulated rule. No legal, medical, tax, or compliance
-domains named as AIDE use cases. The cost strip names the cost of
+domains named as AIDEMD use cases. The cost strip names the cost of
 acquiring domain knowledge generically, not the cost of a specific
-licensed professional. The how-it-works section describes what the AIDE
+licensed professional. The how-it-works section describes what the AIDEMD
 pipeline does, not what users have built. The domain-expert annotation
 names operational domains (internal tools, content production) not
 regulated ones. The hallucination callout cites other tools' failures
 as evidence that even purpose-built AI gets domains wrong — reinforcing
 why AIDE's approach (persistent, auditable research) matters, not
-implying AIDE solves those regulated domains. No testimonials, no case
-studies, no "built with AIDE" badges, no founder quotes.
+implying AIDEMD solves those regulated domains. No testimonials, no case
+studies, no "built with AIDEMD" badges, no founder quotes.
 
 ## Good examples
 
 **Hero copy variants (implementor picks one at build time):**
 
 Variant A (accessibility-first):
-> **Describe what you want. AIDE cascades your intent into working code.**
+> **Describe what you want. AIDEMD cascades your intent into working code.**
 >
 > Eight specialized agents — spec-writer, domain expert, strategist,
 > architect, implementor, QA, aligner, auditor — turn what you know
@@ -177,7 +182,7 @@ Variant A (accessibility-first):
 Variant B (methodology-first):
 > **Tell your agents what to build, not how to build it.**
 >
-> AIDE captures intent as a spec and cascades it through eight
+> AIDEMD captures intent as a spec and cascades it through eight
 > specialized agents. Domain knowledge persists to a brain — not a
 > chat window — so every session starts where the last one left off.
 >
@@ -186,7 +191,7 @@ Variant B (methodology-first):
 **Cost-of-not-knowing strip copy (ship verbatim, cite inline):**
 
 > A six-month fractional specialist engagement runs $30,000–$60,000
-> at the low end (Geisheker Group, 2026). AIDE captures the same
+> at the low end (Geisheker Group, 2026). AIDEMD captures the same
 > domain knowledge for free via `npx`.
 
 **Reading experience end-to-end:**
@@ -209,7 +214,7 @@ form.
 
 **Meta description direction:** The meta description and og:description
 must convey cascading intent and accessibility — anyone can describe
-what they want and AIDE turns it into working code through eight
+what they want and AIDEMD turns it into working code through eight
 specialized agents and a persistent brain. Do not reference "collapses
 the specialist hire," regulated domains, multi-framework support, or
 deprecated concepts like "byte-faithful" or "timestamped context." The
@@ -225,11 +230,11 @@ strip, a testimonials carousel with italic pull-quotes, a newsletter
 signup card above the fold, a pricing teaser ("Free for open source /
 $49/mo / Contact sales for Enterprise"), a "Meet the founders" block,
 a FAQ accordion, a case-studies block describing "legal and medical
-apps built with AIDE" (zero of which exist), and finally the install
+apps built with AIDEMD" (zero of which exist), and finally the install
 block at the bottom of the page, hidden behind an email-capture form
 and requiring a second click to reveal the actual command. A persistent
 top nav offers "Docs / Blog / Pricing / About / Sign in," five
-competing off-ramps. A visitor cannot tell in ten seconds whether AIDE
+competing off-ramps. A visitor cannot tell in ten seconds whether AIDEMD
 is a framework, a hosted product, a consultancy, or a newsletter, and
 the install block is effectively unreachable within the first minute
 of the visit.
@@ -247,18 +252,18 @@ the first place.
 A subtler failure mode still: a hero that reads "AIDE collapses the
 specialist hire into the agent loop" with a researcher annotation
 listing "legal, clinical, tax, compliance" as example domains. This
-positions AIDE against exactly the domains where a technical reader
+positions AIDEMD against exactly the domains where a technical reader
 would never trust it — nobody ships a legal or medical product on an
 AI methodology they installed five minutes ago. The framing also
 excludes non-technical users entirely by speaking only to engineering
-teams replacing headcount. The correct hero names what AIDE actually
+teams replacing headcount. The correct hero names what AIDEMD actually
 does (captures intent, cascades it into code) and speaks to anyone
 who can describe what they want, not just engineers replacing
 specialists they can't afford.
 
 The subtlest failure mode: a how-it-works diagram that shows four
 generic nodes ("Research -> Brain -> Intent -> Agents") instead of
-naming the eight specific agents. This makes AIDE look like any
+naming the eight specific agents. This makes AIDEMD look like any
 multi-agent framework rather than a pipeline with named, specialized
 roles. The spec's intent paragraph specifically requires showing "eight
 specialized agents as a concrete pipeline -- not generic AI agents." A
@@ -268,3 +273,8 @@ AIDE from LangGraph, CrewAI, or any other multi-agent framework. The
 correct diagram names all eight agents as vertical nodes and shows the
 brain as shared infrastructure beside the pipeline, not as a pipeline
 stage.
+
+## References
+
+- `journal/log/2026-04-13/17-28` -- Established the AIDE/AIDEMD naming rule: AIDE is the methodology acronym, AIDEMD is the product name; PDF title was corrected from "AIDEMD Methodology" to "AIDE Methodology" as the canonical example of this distinction.
+- `.aide/intent.aide` (root spec) -- Product is named "aidemd-mcp" throughout; the methodology is "AIDE"; the site is "aidemd.dev." Confirmed the naming convention applies project-wide, not just to this surface.

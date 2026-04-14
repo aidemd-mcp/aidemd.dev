@@ -24,10 +24,10 @@ const HallucinationEvidence = () => {
         <p className="text-sm text-zinc-500 leading-relaxed">
           This is purpose-built legal AI — systems designed from the ground up
           for a single domain — and they still hallucinate one in six times.
-          AIDE&apos;s answer is persistent, auditable research a human can verify
+          AIDEMD&apos;s answer is persistent, auditable research a human can verify
           before agents ship code, targeting operational domains where iteration
           is cheap, not regulated domains where errors are irreversible. The
-          research documents the failure mode, not AIDE&apos;s track record.
+          research documents the failure mode, not AIDEMD&apos;s track record.
         </p>
       </div>
     </section>

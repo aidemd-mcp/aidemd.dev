@@ -1,250 +1,157 @@
 ---
 intent: >
-  Realign five landing page files with the updated root and LP specs: replace
-  the deprecated "collapses the specialist hire" hero headline with the
-  cascading-intent framing, rewrite CostStrip to drop the tax attorney
-  reference and ship only the universal anchor, replace the researcher's
-  regulated-domain annotation with operational domains, verify
-  HallucinationEvidence does not imply AIDE solves regulated domains, and
-  update meta descriptions in both layout.tsx and page.tsx to reflect the
-  new framing.
+  Add the AIDEMD wordmark and catchphrase as the dominant brand identity element
+  at the very top of the landing page, above the InstallHero. Update page titles
+  to use the product catchphrase instead of the methodology acronym expansion,
+  and fix the layout.tsx description to reference AIDE (methodology), not AIDEMD.
 ---
 
 ## Plan
 
-### Step 1: Replace hero headline and subhead in InstallHero
+### Step 1: Create the Wordmark component
 
-File: `src/components/LandingPage/InstallHero/index.tsx`
+Read: `coding-playbook/client/components.md` (component file structure, no-padding rule,
+semantic HTML), `coding-playbook/foundations/conventions.md` (naming, JSDoc, function ordering)
 
-- [x] Replace the h1 text. The current headline is "AIDE collapses the
-      specialist hire into the agent loop." — this is explicitly listed in
-      the LP spec Bad Examples as a subtler failure mode. Replace it with
-      one of the two spec-approved variants. The LP spec Good Examples
-      section provides both verbatim:
-      - Variant A: "Describe what you want. AIDE cascades your intent into
-        working code."
-      - Variant B: "Tell your agents what to build, not how to build it."
-      The implementor picks one. Both are approved by the spec.
-- [x] Replace the subhead paragraph. The current subhead reads "A research
-      agent studies your domain, persists findings to your brain, and six
-      specialized agents..." — this leads with the research agent rather
-      than addressing both audiences. Replace with copy that names both
-      entry points (non-technical users who describe outcomes, and technical
-      builders who research unfamiliar domains) and mentions the six named
-      agents and the persistent brain. Use the spec Good Examples subhead
-      copy as the template (Variant A or B, matching whichever headline was
-      chosen). The subhead must end with "Works with Claude Code today."
+Create folder and file: `src/components/LandingPage/Wordmark/index.tsx`
 
-Spec trace: LP spec `outcomes.undesired` bullet 4 (copy that could be
-pasted onto any agent framework); LP spec Bad Examples paragraph 3
-(the "AIDE collapses the specialist hire" failure mode); LP spec
-Good Examples hero copy variants A and B; LP spec Strategy "Hero leads
-with cascading intent and accessibility."
+- [x] Create a new component `Wordmark` as the default export.
+- [x] The component renders a `<div>` (not `<header>` — InstallHero already uses
+      `<header>` for the page hero; this is a brand identity element, not a page
+      header) containing:
+      - An `<h1>` with the text "AIDEMD" — this is the dominant visual. Style it
+        large and bold: `text-6xl sm:text-8xl font-bold tracking-tighter text-zinc-100`.
+        The h1 carries the product name as the page's primary heading.
+      - A `<p>` beneath it with the text "Code is ephemeral. Intent is law." — the
+        catchphrase in smaller text: `text-lg sm:text-xl text-zinc-500 tracking-wide`.
+- [x] The outer `<div>` uses `flex flex-col items-center text-center` for centering
+      and `py-16 sm:py-24 px-4` for vertical spacing. No horizontal padding on the
+      outermost element per the no-padding rule — but since this is a full-width
+      centered text block (not a card composed into a parent grid), the `px-4` is
+      the page-level safety margin against viewport edges, not layout padding. This
+      matches InstallHero's own `px-4` on its outer element.
+- [x] Add JSDoc on the component: one line explaining this is the product brand
+      identity element shown at the very top of the landing page.
+- [x] No props. No interactivity. No imports beyond React (if needed — likely not
+      since this is a plain functional component with no hooks).
 
----
+The component is intentionally minimal — two text elements, no logic. It exists as
+its own folder/index.tsx per progressive disclosure so the LandingPage orchestrator's
+import list reads as the page composition at a glance.
 
-### Step 2: Rewrite CostStrip copy
-
-File: `src/components/LandingPage/CostStrip/index.tsx`
-
-- [x] Remove the tax attorney reference entirely. The current copy opens
-      with "Tax attorneys charge $200-$1,000 per hour (Harness Wealth,
-      2025)." — this names a regulated-domain specialty, violating the
-      root spec `outcomes.undesired` bullet 1 and the LP spec Strategy
-      "Domain examples are operational, not regulated."
-- [x] Ship only the universal anchor figure. The LP spec Good Examples
-      provides the exact copy verbatim: "A six-month fractional specialist
-      engagement runs $30,000-$60,000 at the low end (Geisheker Group,
-      2026). AIDE captures the same domain knowledge for free via npx."
-      Use this copy as-is. The strong tags should wrap "$30,000-$60,000"
-      and the citation should be in a muted span, matching the existing
-      styling pattern.
-- [x] Change the section label from "What you replace" to a label that
-      reflects the new framing. The LP spec Strategy names this beat
-      "Cost-of-not-knowing strip" and the spec says it "anchors the
-      business case: domain knowledge has historically been expensive to
-      acquire." A label like "The cost of not knowing" or "What domain
-      knowledge costs" fits. The implementor picks the exact wording; the
-      constraint is that it must not reference replacing specialists or
-      hiring.
-
-Spec trace: LP spec Good Examples "Cost-of-not-knowing strip copy (ship
-verbatim, cite inline)"; LP spec Strategy "Cost strip ships one anchor
-figure"; root spec `outcomes.undesired` bullet 1 (no regulated domains).
+Spec trace: LP spec `outcomes.desired[0]` ("The AIDEMD wordmark appears as the
+dominant visual element at the very top of the page"); LP spec `outcomes.undesired[0]`
+("A header or product label that reads 'AIDE' without the 'MD' suffix");
+LP spec `outcomes.undesired[1]` ("A persistent top navigation bar" — this is NOT
+a nav bar, it is a brand identity element).
 
 ---
 
-### Step 3: Replace researcher annotation in HowItWorks
+### Step 2: Wire Wordmark into the LandingPage orchestrator and demote InstallHero's h1
 
-File: `src/components/LandingPage/HowItWorks/index.tsx`
+Read: `coding-playbook/foundations/conventions.md` (orchestrator/helper pattern,
+JSDoc on imports), `coding-playbook/client/seo.md` (semantic HTML)
 
-- [x] Change the researcher node annotation. The current text is "Studies
-      the domain — legal, clinical, tax, compliance — and writes findings
-      to the brain." Replace the parenthetical domain list with operational
-      domains. The LP spec Strategy says: "The researcher annotation names
-      operational domains (internal tools, content production) not regulated
-      ones." Use examples like "internal tools, content production,
-      workflows" or similar operational-domain phrasing. The annotation
-      must still end with "writes findings to the brain" (or equivalent)
-      since that is the researcher's core action.
+Files to modify:
+- `src/components/LandingPage/index.tsx`
+- `src/components/LandingPage/InstallHero/index.tsx`
 
-Spec trace: LP spec Strategy "Domain examples are operational, not
-regulated — enforced locally"; root spec `outcomes.undesired` bullet 1;
-LP spec Bad Examples paragraph 3 (researcher listing "legal, clinical,
-tax, compliance").
+2a. In `src/components/LandingPage/index.tsx`:
 
----
+- [x] Add `import Wordmark from "@/components/LandingPage/Wordmark";` as the first
+      import (it is the first visual element on the page).
+- [x] Insert `<Wordmark />` as the first child inside `<main>`, above `<InstallHero />`.
+- [x] No other changes to this file. The existing component order remains:
+      Wordmark, InstallHero, CostStrip, HowItWorks, VsRulesPacks,
+      HallucinationEvidence, InstallFooter.
 
-### Step 4: Verify HallucinationEvidence framing
+2b. In `src/components/LandingPage/InstallHero/index.tsx`:
 
-File: `src/components/LandingPage/HallucinationEvidence/index.tsx`
+- [x] Demote the `<h1>` on line 13 to `<h2>`. The Wordmark now carries the page's
+      `<h1>`. A page must have exactly one `<h1>` for semantic HTML correctness.
+      Update the element tag only — keep all existing className attributes and text
+      content unchanged.
 
-- [x] Read the framing paragraph below the blockquote (lines 24-29). The
-      current text says: "This finding applies to systems that use flat
-      instruction files — rules packs that sit in the context window with
-      no verification layer. When an agent has no structured intent spec
-      to check its output against, it cannot detect when it has drifted.
-      The research documents the failure mode, not AIDE's track record."
-      Verify this paragraph does NOT imply AIDE solves regulated domains.
-      The LP spec says the hallucination callout is "cited as evidence
-      against other tools' approach, never as evidence of AIDE's own track
-      record" and "reinforcing why AIDE targets operational domains, not
-      regulated ones." The current copy appears compliant — it explicitly
-      says "the research documents the failure mode, not AIDE's track
-      record" and frames the issue as a rules-packs limitation. If the
-      implementor confirms no regulated-domain implication, mark this step
-      done with no changes. If any implication is found, adjust the
-      framing to reinforce operational-domain targeting.
-
-Spec trace: LP spec Strategy "Hallucination evidence" paragraph; root
-spec Strategy "Domain examples are operational, not regulated."
+Spec trace: LP spec strategy ("No persistent top navigation"); LP spec
+`outcomes.desired[0]` (wordmark is the first thing a visitor sees before the
+install hero).
 
 ---
 
-### Step 5: Update meta description in root layout
+### Step 3: Update page titles and layout description
 
-File: `src/app/layout.tsx`
+Read: `coding-playbook/client/seo.md` (metadata conventions, Schema.org)
 
-- [x] Replace the `description` field in the exported `metadata` constant.
-      The current value is: "The canonical methodology for agentic
-      engineering. Install aidemd-mcp and give your AI agents byte-faithful,
-      timestamped context." — this references "byte-faithful" and
-      "timestamped context," both listed in the LP spec `outcomes.undesired`
-      bullet 7 as deprecated concepts that must not appear in meta copy.
-      Replace with a description that conveys cascading intent, the
-      two-audience accessibility story (describe what you want / research
-      what you need), and the six-agent pipeline. Keep it under 160
-      characters for SEO. The implementor writes the exact copy; the LP
-      spec Meta description direction provides the constraints.
+Files to modify:
+- `src/app/page.tsx`
+- `src/app/layout.tsx`
 
-Spec trace: LP spec `outcomes.undesired` bullet 7 (meta descriptions
-must not reference "byte-faithful," "timestamped context," "collapses
-the specialist hire"); LP spec Good Examples "Meta description direction."
+3a. In `src/app/page.tsx`:
 
----
+- [x] Change `title` from "AIDEMD — Autonomous Intent-Driven Engineering" to
+      "AIDEMD — Code is ephemeral. Intent is law." — the catchphrase replaces the
+      methodology acronym expansion because "Autonomous Intent-Driven Engineering"
+      is the AIDE methodology's full name, not the product's tagline.
+- [x] Change `openGraph.title` to match: "AIDEMD — Code is ephemeral. Intent is law."
+- [x] Leave `description`, `openGraph.description`, `openGraph.url`, and
+      `openGraph.siteName` unchanged — they are already correct.
 
-### Step 6: Update meta description and og:description in page.tsx
+3b. In `src/app/layout.tsx`:
 
-File: `src/app/page.tsx`
+- [x] Change `title` from "AIDEMD — Autonomous Intent-Driven Engineering" to
+      "AIDEMD — Code is ephemeral. Intent is law." — same rationale as page.tsx.
+- [x] Change `description` from "Describe what you want. AIDEMD cascades your
+      intent through eight specialized agents..." to "Describe what you want. AIDE
+      cascades your intent through eight specialized agents..." — revert "AIDEMD"
+      to "AIDE" in this sentence. The description describes what the methodology
+      does (cascading intent), not the product brand. The spec's naming rule: AIDE
+      is the methodology, AIDEMD is the product. "Cascades your intent" is a
+      methodology action.
+- [x] Leave `organizationSchema` and `websiteSchema` unchanged — their `name`
+      fields correctly say "AIDEMD" (the product/site name).
 
-- [x] Review the `description` and `openGraph.description` fields. The
-      current value is: "Six specialized agents — spec-writer, researcher,
-      domain expert, architect, implementor, QA — share a persistent brain
-      across every session. Self-serve install via npx." This is already
-      closer to the new framing — it names the six agents and the brain.
-      However, it does not mention cascading intent or the two-audience
-      accessibility angle. Update both the `description` and
-      `openGraph.description` to lead with cascading intent (intent in,
-      working code out) and mention the six agents and persistent brain.
-      Keep the self-serve install mention. Both fields should use the same
-      string. Keep under 160 characters.
-
-Spec trace: LP spec Good Examples "Meta description direction"; LP spec
-Strategy "Hero leads with cascading intent and accessibility."
+Spec trace: LP spec `intent` ("every heading, label, and meta element must name
+the product as AIDEMD"); user instruction to use the catchphrase as the title
+and revert the description to "AIDE cascades."
 
 ---
-
-### Step 7: Verify no other files reference deprecated framing
-
-- [x] Search the `src/` directory for any remaining references to:
-      - "collapses the specialist hire"
-      - "byte-faithful"
-      - "timestamped context"
-      - "legal, clinical, tax, compliance" (the old domain list)
-      - "tax attorney" or "tax attorneys"
-      If any are found in files other than `.aide` specs (specs are
-      already updated and must not be modified), add them as additional
-      changes in this step. If none are found, mark done.
-
-Spec trace: root spec `outcomes.undesired` bullet 1; LP spec
-`outcomes.undesired` bullet 7.
-
----
-
-### Step 8: Visual verification
-
-- [x] Run the dev server and verify at desktop (1280px), tablet (768px),
-      and mobile (375px) that:
-      - The hero shows the new headline and subhead
-      - The CostStrip shows only the universal anchor figure with no tax
-        attorney reference
-      - The HowItWorks researcher annotation names operational domains
-      - The HallucinationEvidence section does not imply AIDE solves
-        regulated domains
-      - The page title and meta description in the document head reflect
-        the updated copy
-- [x] Confirm the five-beat structure is intact and no new beats, navigation,
-      or chrome were introduced.
-
-Spec trace: LP spec `outcomes.desired` bullets 1-4; LP spec
-`outcomes.undesired` bullets 1-3.
 
 ## Decisions
 
-### D1: Copy changes only — no structural or styling changes
+### D1: Wordmark gets its own component folder, not inline JSX
 
-This plan touches only text content and meta tags. No component structure,
-no CSS, no new files, no deleted files. The previous plan.aide addressed
-visual/styling issues and those changes are already shipped. This plan is
-scoped strictly to the framing realignment the updated specs require.
-Mixing structural changes with copy changes would make the diff harder to
-review and risks introducing regressions in the visual fixes already
-landed.
+The Wordmark is a distinct visual element with a clear single responsibility —
+product brand identity. Per progressive disclosure, it belongs in its own
+`Wordmark/index.tsx` subfolder so the LandingPage orchestrator's import list
+reads as the page composition. An inline `<div>` in the orchestrator would
+muddy the orchestrator with presentation markup and make the page structure
+less scannable at Tier 1.
 
-### D2: HallucinationEvidence is verify-only, not rewrite
+### D2: Wordmark uses `<div>` + `<h1>`, not `<header>`
 
-The current HallucinationEvidence framing paragraph already says "the
-research documents the failure mode, not AIDE's track record" — this
-appears compliant with the spec. The plan includes a verification step
-rather than a mandatory rewrite because the spec does not provide
-replacement copy for this section and the existing copy may already be
-correct. If the implementor finds a problem during verification, they
-adjust; otherwise, no change.
+InstallHero already uses `<header>` as the semantic page header. The Wordmark is
+a brand identity element (like a logo), not a page header with navigation or
+introductory content. Using a second `<header>` would be semantically wrong.
+The `<h1>` inside the Wordmark carries the page's primary heading ("AIDEMD"),
+and InstallHero's heading demotes to `<h2>`.
 
-### D3: Layout.tsx description is a separate step from page.tsx
+### D3: InstallHero's h1 demotes to h2
 
-The root layout (`layout.tsx`) sets the site-wide default metadata. The
-page-level metadata in `page.tsx` overrides it for the landing page.
-Both need updating but for different reasons: layout.tsx has the
-"byte-faithful" and "timestamped context" terms that are explicitly
-forbidden; page.tsx is closer to correct but missing the cascading-intent
-lead. Separating them as distinct steps ensures neither is skipped and
-the implementor can verify each independently.
+A page should have exactly one `<h1>`. Since the Wordmark now carries the `<h1>`
+with the product name, InstallHero's headline ("Describe what you want...") becomes
+`<h2>`. This maintains correct heading hierarchy for accessibility and SEO.
 
-### D4: Implementor picks between hero Variant A and Variant B
+### D4: Title uses the catchphrase, not the acronym expansion
 
-The LP spec provides two approved hero copy variants and says "the
-implementor picks between them at build time." This plan does not
-pre-select because both are spec-approved and the choice is aesthetic,
-not architectural. The implementor should pick the one that reads better
-with the chosen subhead copy. The constraint is that they must pick one
-of the two — no third option, no hybrid, no rewrite.
+"Autonomous Intent-Driven Engineering" is the AIDE methodology acronym expansion.
+The product is AIDEMD, and its tagline is "Code is ephemeral. Intent is law."
+Using the catchphrase in the `<title>` tag reinforces the product brand in browser
+tabs and search results rather than expanding a methodology acronym that most
+visitors won't recognize.
 
-### D5: CostStrip label wording is implementor's call within constraints
+### D5: Layout description reverts to "AIDE cascades" (methodology, not product)
 
-The spec names this beat "Cost-of-not-knowing strip" but does not
-prescribe the exact label text. The previous plan used "What you replace"
-which is now outdated (it implies replacing a specialist). The implementor
-picks a label that communicates "domain knowledge is expensive" without
-referencing hiring or specialists. "The cost of not knowing" is a
-suggestion, not a mandate.
+The description sentence "cascades your intent through eight specialized agents"
+describes what the AIDE methodology does. Per the naming rule (AIDE = methodology,
+AIDEMD = product), this should read "AIDE cascades" not "AIDEMD cascades." The
+prior plan's step 6 incorrectly changed this to "AIDEMD" — this plan reverts it.
