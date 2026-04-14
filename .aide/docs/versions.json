@@ -1,13 +1,13 @@
 {
   "index": {
-    "publishedAt": "2026-04-13T09:52:38-07:00",
-    "sourceCommit": "d89d3cd",
-    "previousCommit": "0682bfb"
+    "publishedAt": "2026-04-13T17:15:54-07:00",
+    "sourceCommit": "027f166",
+    "previousCommit": "b859854"
   },
   "aide-spec": {
-    "publishedAt": "2026-04-13T09:52:38-07:00",
-    "sourceCommit": "d89d3cd",
-    "previousCommit": "5e749fa"
+    "publishedAt": "2026-04-13T13:47:06-07:00",
+    "sourceCommit": "b859854",
+    "previousCommit": "d89d3cd"
   },
   "aide-template": {
     "publishedAt": "2026-04-13T09:52:38-07:00",
@@ -30,16 +30,18 @@
     "previousCommit": "2d6ecdd"
   },
   "plan-aide": {
-    "publishedAt": "2026-04-12T19:18:58-07:00",
-    "sourceCommit": "1c83644",
-    "previousCommit": "ccba506"
+    "publishedAt": "2026-04-13T17:15:54-07:00",
+    "sourceCommit": "027f166",
+    "previousCommit": "a1606e0"
   },
   "todo-aide": {
-    "publishedAt": "2026-04-11T20:06:53-07:00",
-    "sourceCommit": "c32e887"
+    "publishedAt": "2026-04-13T13:47:06-07:00",
+    "sourceCommit": "b859854",
+    "previousCommit": "c32e887"
   },
   "cascading-alignment": {
-    "publishedAt": "2026-04-13T09:52:38-07:00",
-    "sourceCommit": "d89d3cd"
+    "publishedAt": "2026-04-13T17:15:54-07:00",
+    "sourceCommit": "027f166",
+    "previousCommit": "d89d3cd"
   }
 }

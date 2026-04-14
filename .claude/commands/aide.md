@@ -83,9 +83,23 @@ This is non-negotiable. When the user invokes `/aide`, your very first action �
 2. Determine the current pipeline state (see Resume Protocol below)
 3. Route to the correct stage
 
+## Routing — Explicit Intent Beats File State
+
+**Before consulting the Resume Protocol, check whether the user explicitly requested a specific phase or flow.** If they did, route directly to that phase — the Resume Protocol does not apply.
+
+Explicit requests override file state. Examples:
+- "run an alignment check" → **Align**, even if file state says QA is next
+- "do a refactor on src/tools/" → **Refactor**, even if no `plan.aide` exists
+- "start the spec for this module" → **Stage 1 (Spec)**, even if a prior spec exists
+- "plan this" → **Stage 4 (Plan)**, even if the spec has no body sections yet
+- "run QA" → **Stage 6 (QA)**, even if `plan.aide` has unchecked items
+- "build it" → **Stage 5 (Build)**, even if no plan exists yet (ask for one first)
+
+**The Resume Protocol only fires when the user's request is ambiguous** — when they invoke `/aide` without specifying a phase, or describe what they want to do without naming a specific pipeline stage. In those cases, use file state to infer where to pick up.
+
 ## Resume Protocol
 
-The discover output tells you the current state. The file state IS the pipeline state:
+When the user's request does not map to a specific phase, the discover output tells you the current state. The file state IS the pipeline state:
 
 | State detected | Resume from |
 |----------------|-------------|
@@ -160,7 +174,7 @@ After the agent returns, present the completed spec to the user for review befor
    - Which numbered step to execute (quote it from the plan)
    - If the step has lettered sub-steps (2a, 2b, 2c), include ALL of them — the agent executes the entire numbered group in one session
 
-   **Do NOT include** instructions to consult the coding playbook, use the `study-playbook` skill, or load conventions from the brain. The architect already consulted the playbook and encoded its conventions into the plan — the implementor's job is to execute the plan, not re-derive conventions. The implementor has no brain access by design (see Pipeline Agents table). Adding playbook instructions wastes tokens and risks the implementor second-guessing plan decisions.
+   **Do NOT include** generic instructions to consult the coding playbook or load conventions from the brain. Each plan step already has a `Read:` list pointing the implementor to the specific playbook notes it needs — the implementor will load those notes itself. Do not duplicate or override the Read list in your delegation prompt.
 3. After the agent returns, verify the step's checkbox is checked
 4. Repeat from step 1 until all numbered steps are checked
 
