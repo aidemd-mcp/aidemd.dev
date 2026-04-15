@@ -1,18 +1,39 @@
 ---
 intent: >
-  The script runs after `next build` and before deploy in CI; it discovers
-  every canonical doc that was built, invokes the archive service for each
-  one, and exits nonzero if any archival fails — blocking the deploy.
+  The deploy workflow has three misalignments with the archive spec and
+  workflow spec: the archive job runs after deploy instead of before,
+  it does not commit results back to the repo, and the workflow spec
+  is still scoped to docs-only despite the archive service now handling
+  all content types.
 misalignment:
-  - test-gap
+  - spec-gap
+  - implementation-drift
+  - plan-gap
 ---
 
 ## Issues
 
-- [x] `src/service/docs/archiveDocs/index.test.ts:28` — `mockVersionsJson` double-casts a string to `Buffer` with `as unknown as Buffer`, which causes a TypeScript type error under `tsc --noEmit` (TS2345). The tests pass at runtime but the project fails a strict type-check.
-  Traces to: desired outcome 1 (the script exits nonzero if any archival fails — blocking the deploy; a CI pipeline that runs `tsc --noEmit` as a check step would treat this as a build failure unrelated to the archival logic itself).
-  Misalignment: test-gap
+- [ ] **`.github/workflows/deploy.yml:46-62`** — Archive job runs post-deploy (`needs: deploy`) but both the workflow spec and archive spec say archival must gate the deploy. The archive step should run between build and deploy so that archive failure blocks the deploy. Currently, if Wayback fails, the site is already live with unarchived pages.
+      Traces to: workflow spec `outcomes.desired[1]` ("runs after next build and before deploy") | Misalignment: `implementation-drift`
+
+- [ ] **`.github/workflows/deploy.yml:46-62`** — Archive job has no git commit/push step after `npm run archive-pages`. The archive service writes `build-manifest.json` and `public/feed.xml` to the CI runner's filesystem, but these files are never committed back to the repo. They are lost when the job ends. The archive spec says "the resulting archive URL is stored in build-manifest.json committed back to the repo."
+      Traces to: archive spec `outcomes.desired[1]` ("archive URL is stored in build-manifest.json committed back to the repo") | Misalignment: `plan-gap`
+
+- [ ] **`.github/workflows/.aide:3`** — Workflow spec scope and intent still reference "canonical docs" only. The archive service was broadened to handle docs, agents, commands, and skills. The workflow spec needs a matching revision so the intent tree stays aligned.
+      Traces to: archive spec intent ("every canonical page publish — docs, agents, commands, and skills") | Misalignment: `spec-gap`
+
+- [ ] **`.github/workflows/deploy.yml:8`** — Permissions are `contents: read` but the archive job needs `contents: write` to commit `build-manifest.json` and `feed.xml` back to the repo. Without write permission, the commit-back step will fail.
+      Traces to: archive spec `outcomes.desired[1]` ("committed back to the repo") | Misalignment: `plan-gap`
 
 ## Retro
 
-The type error would have been caught at the plan stage if the plan had explicitly listed `tsc --noEmit` as a verification step alongside `vitest run`. The plan describes the mocking strategy in detail but specifies `vi.mocked()` for type-safe mock access but does not specify that `mockReturnValue` must be called with a type-compatible value. A stronger plan step would have been: "run `tsc --noEmit` after writing tests; if the mock return type diverges from the `readFileSync` overload signature, use the overload that accepts `string` directly rather than casting."
+The archive job was scaffolded as a post-deploy step because the Wayback
+snapshot needs the page to be live before it can be captured. This creates
+a fundamental ordering tension: the spec says archive gates deploy, but
+Wayback needs the page deployed to snapshot it. This tension was never
+resolved in the original plan — it was deferred implicitly by placing the
+archive step after deploy. A proper resolution needs to either (a) accept
+post-deploy archival and revise the spec to match, or (b) use a two-phase
+deploy where a staging URL is archived first, then the production deploy
+proceeds. This is an architectural decision that should be made explicitly
+rather than inherited from an unexamined workflow ordering.

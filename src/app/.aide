@@ -25,7 +25,7 @@ outcomes:
     - The root docs index page renders a file tree mirroring a freshly bootstrapped project, showing the .aide/ folder (canonical docs plus the intent template) and the .claude/ folder (nine agents, twelve commands, two skills) with every leaf node linked to its own rendered page.
     - Every rendered page carries a unique, descriptive title tag and meta description that a searcher can read in a SERP snippet and understand what the artifact does without clicking; no two pages share the same title or description.
     - Every page declares a canonical URL via link rel="canonical" and matching Open Graph tags so that search engines and social platforms resolve to a single authoritative URL per artifact.
-    - Every artifact page carries JSON-LD structured data with accurate title, description, author (TetsuKodai Group LLC), publisher, and datePublished fields; the docs index carries WebSite and Organization schema.
+    - "Every page carries page-specific JSON-LD structured data: the homepage uses WebSite schema with publisher set to TetsuKodai Group LLC (https://tetsukod.ai); every doc, agent, command, and skill page uses TechArticle schema with headline, description, url, and datePublished pulled from that page's own metadata — no two pages emit the same JSON-LD blob."
     - "An llms.txt file at the site root provides a machine-readable inventory of every page in the scaffold tree — docs, agents, commands, and skills — so that LLMs can discover and accurately cite any AIDE artifact."
     - The sitemap.xml and robots.txt files reference every published page including all agent, command, and skill pages; no published page is excluded from the sitemap and no page is blocked by robots.txt.
   undesired:
@@ -36,6 +36,7 @@ outcomes:
     - Structured data that claims authorship, publication dates, or organizational affiliations not supported by the actual content — fabricated schema erodes trust with search engines and can trigger manual actions.
     - "An llms.txt that lists pages without describing their content, or that omits agent, command, and skill pages — an LLM retrieving this file should be able to answer 'what does the aide-architect agent do' from the description alone."
     - Metadata that drifts from the rendered content — a title or description that promises something the page does not deliver, or structured data fields that disagree with the visible page content.
+    - "A single generic JSON-LD block (e.g., Organization schema with only name and url) injected identically on every page — search engines gain no per-page understanding, rich results are impossible, and the structured data layer adds zero value beyond what a bare meta tag already provides."
 ---
 
 ## Context

@@ -1,277 +1,127 @@
 ---
 intent: >
-  Implementation plan for the SEO/discoverability infrastructure and scaffold
-  tree expansion. Adds rendered pages for all aide_init artifacts (agents,
-  commands, skills), updates metadata across every page, extends sitemap,
-  adds llms.txt, adds CanonicalTag, and replaces the docs index with a
-  scaffold-tree view.
+  Replace the generic, layout-level Organization JSON-LD blob with
+  page-specific structured data: WebSite schema on the homepage (with
+  publisher set to TetsuKodai Group LLC) and TechArticle schema on every
+  doc, agent, command, and skill page. No two pages emit the same JSON-LD.
 ---
 
 ## Plan
 
-### 1. [x] Define types for scaffold artifacts and page metadata
-
-Read:
-- `coding-playbook/workflow/type-system.md`
-- `coding-playbook/architecture/folder-structure.md`
-
-Create `src/types/scaffold.ts` with:
-- `ScaffoldArtifact` type: `{ slug: string; title: string; description: string; kind: "agent" | "command" | "skill"; contentHtml: string; sourceText: string; publishedAt: string }`. The `slug` is the URL segment (e.g., `aide-architect`), `title` is the display name (e.g., `AIDE Architect`), `description` is the 140-160 char meta description, `kind` discriminates the artifact category.
-- `ScaffoldTreeEntry` type: `{ filename: string; slug: string; title: string; kind: "doc" | "agent" | "command" | "skill" }`. Used by the docs index scaffold tree component.
-- `PageSeo` type: `{ title: string; description: string; canonicalUrl: string; ogType: "website" | "article"; jsonLd: Record<string, unknown> }`. Shared shape for per-page SEO metadata generation.
-
-No dependencies on other steps.
-
----
-
-### 2. [x] Create the scaffold artifact content service
-
-Read:
-- `coding-playbook/foundations/conventions.md` (progressive disclosure, JSDoc, naming)
-- `coding-playbook/architecture/folder-structure.md` (orchestrator/helper pattern)
-
-Create `src/service/scaffold/` with the orchestrator/helper pattern:
-
-- `src/service/scaffold/renderArtifact/index.ts` — default export `renderArtifact({ slug, kind }): Promise<ScaffoldArtifact>`. Reads the source markdown file from disk based on kind and slug mapping (agents from `.claude/agents/aide/{slug}.md`, commands from `.claude/commands/aide/{slug}.md` or `.claude/commands/aide.md` for the root aide command, skills from `.claude/skills/{slug}/SKILL.md`). Parses the markdown into HTML using the same `renderMarkdown` helper from `src/service/docs/renderCanonical/renderMarkdown/`. Returns the full `ScaffoldArtifact`.
-
-- `src/service/scaffold/renderArtifact/resolveSourcePath/index.ts` — default export `resolveSourcePath({ slug, kind }): string`. Maps a slug + kind to the filesystem path of the source markdown file. The slug-to-filename mapping for commands is: `aide` -> `aide.md` (at commands root), `aide-spec` -> `commands/aide/spec.md`, `aide-research` -> `commands/aide/research.md`, etc. (strip the `aide-` prefix to get the filename). Agents map directly: slug = filename. Skills: `study-playbook` -> `skills/study-playbook/SKILL.md`.
-
-- `src/service/scaffold/listArtifacts/index.ts` — default export `listArtifacts(): ScaffoldTreeEntry[]`. Returns the complete ordered list of all scaffold artifacts for the tree view. Hardcoded — all slugs are known at build time. Returns docs (from renderHub), then agents, then commands, then skills, each in the order defined in the spec's llms.txt section.
-
-- `src/service/scaffold/artifactMeta/index.ts` — default export `artifactMeta({ slug, kind }): PageSeo`. Returns the complete SEO metadata object for a given artifact. Contains the hardcoded title and description mappings for every artifact (the spec mandates unique, non-templated descriptions). Generates the TechArticle JSON-LD, canonical URL, and OG type. Every title follows the pattern `{Concept Name} -- AIDE: Autonomous Intent-Driven Engineering`. Every description is 140-160 chars, includes "AIDE", reads like a dictionary definition.
-
-The `artifactMeta` helper is the single source of truth for all per-page SEO data for agents, commands, and skills. The title/description pairs are hardcoded strings, not generated from templates, per the spec's undesired outcome about near-duplicate templated descriptions.
-
-Dependencies: Step 1 (types).
-
----
-
-### 3. [x] Create the CanonicalTag client component
-
-Read:
-- `coding-playbook/client/seo.md` (canonical tag pattern for static exports)
-- `coding-playbook/client/components.md` (component file structure)
-
-Create `src/components/shared/CanonicalTag/index.tsx`. This is a `"use client"` component that:
-- Reads `usePathname()` from `next/navigation`
-- In a `useEffect`, injects/updates a `<link rel="canonical" href="https://aidemd.dev{pathname}">` tag in the document head
-- Strips trailing slashes; uses `""` for the root path (so canonical is `https://aidemd.dev`, not `https://aidemd.dev/`)
-- Returns `null` (renders nothing)
-
-Then wire it into `src/app/layout.tsx` by importing and rendering `<CanonicalTag />` inside the `<body>` tag (it must be inside body since it's a client component using hooks). This is the confirmed pattern from the playbook for static exports — `alternates.canonical` in `generateMetadata` is unreliable with `output: "export"`.
-
-No dependencies on other steps (can run in parallel with step 2).
-
----
-
-### 4. [x] Update existing page metadata (homepage, docs hub, doc pages)
-
-Read:
-- `coding-playbook/client/seo.md` (generateMetadata, OG tags, JSON-LD)
-- `coding-playbook/foundations/conventions.md` (naming)
-
-Update three existing files to align titles, descriptions, OG tags, and JSON-LD with the spec:
-
-**4a. `src/app/page.tsx`** — Update the `metadata` constant:
-- Title: `AIDE: Autonomous Intent-Driven Engineering -- Code is ephemeral. Intent is law.`
-- Description: the spec's homepage description (140-160 chars, starts with "AIDE (Autonomous Intent-Driven Engineering)...")
-- OG tags: title, description, url (`https://aidemd.dev`), siteName (`AIDE`), type (`website`)
-
-**4b. `src/app/docs/page.tsx`** — Update the `metadata` constant:
-- Title: `Scaffold Tree -- AIDE: Autonomous Intent-Driven Engineering`
-- Description: a unique description describing the scaffold tree index (not the old "byte-faithful" description which now belongs on individual doc pages)
-- OG tags: matching title/description, url (`https://aidemd.dev/docs`), siteName (`AIDE`), type (`website`)
-
-**4c. `src/app/docs/[slug]/page.tsx`** — Update `generateMetadata` to:
-- Use title pattern `{doc.title} -- AIDE: Autonomous Intent-Driven Engineering`
-- Write unique descriptions per doc. Create a `docMeta` lookup (similar to `artifactMeta` in step 2) inside a new helper `src/service/docs/docMeta/index.ts` that maps each doc slug to its specific title and description. The spec provides example descriptions for the Spec page, Progressive Disclosure page, etc. Every doc gets a unique 140-160 char description.
-- Set OG type to `article`
-- Add TechArticle JSON-LD to the page component (not in generateMetadata). Use `dangerouslySetInnerHTML` with a unique `id` attribute like `id="ld-doc-{slug}"`. Schema fields: headline, description, url, datePublished (from `citationMeta.publishedAt`), author (TetsuKodai Group LLC org), publisher (TetsuKodai Group LLC with url).
-
-Dependencies: None (existing files, existing service layer).
-
----
-
-### 5. [x] Create agent dynamic route pages
-
-Read:
-- `coding-playbook/client/seo.md` (generateMetadata, generateStaticParams, JSON-LD)
-- `coding-playbook/architecture/folder-structure.md`
-
-Create `src/app/agents/[slug]/page.tsx`:
-
-- `generateStaticParams()` — returns hardcoded array of all agent slugs: `aide-spec-writer`, `aide-domain-expert`, `aide-strategist`, `aide-architect`, `aide-implementor`, `aide-qa`, `aide-aligner`, `aide-auditor`, `aide-explorer`. Note: `aide-researcher` exists on disk but is NOT in the spec's artifact inventory. Exclude it unless the spec is updated.
-- `generateMetadata({ params })` — calls `artifactMeta({ slug, kind: "agent" })` from step 2. Returns title, description, and openGraph (title, description, url, siteName `AIDE`, type `article`).
-- Default export renders the artifact page. Calls `renderArtifact({ slug, kind: "agent" })`. Renders inside an `<article>` element with the content HTML. Includes TechArticle JSON-LD script tag with unique `id="ld-agent-{slug}"`.
-- Reuse `DocLayout` and `InstallFooter` from existing components for consistent page structure.
-
-Create a page component `src/components/ArtifactPage/index.tsx` that is shared across agent, command, and skill pages. It receives `ScaffoldArtifact` + `PageSeo` and renders:
-- `<article>` wrapper
-- Title as `<h1>`
-- Rendered content HTML
-- JSON-LD script tag
-- `InstallFooter`
-
-Dependencies: Steps 1, 2.
-
----
-
-### 6. [x] Create command dynamic route pages
-
-Read:
-- `coding-playbook/client/seo.md` (generateStaticParams hardcoded-list variant)
-- `coding-playbook/client/components.md`
-
-Create `src/app/commands/[slug]/page.tsx`:
-
-- `generateStaticParams()` — hardcoded array of all command slugs: `aide`, `aide-spec`, `aide-research`, `aide-synthesize`, `aide-plan`, `aide-build`, `aide-qa`, `aide-fix`, `aide-refactor`, `aide-align`, `aide-init`, `aide-upgrade`, `aide-update-playbook`.
-- `generateMetadata({ params })` — calls `artifactMeta({ slug, kind: "command" })`.
-- Default export calls `renderArtifact({ slug, kind: "command" })` and renders via the shared `ArtifactPage` component from step 5.
-
-Dependencies: Steps 1, 2, 5 (shared component).
-
----
-
-### 7. [x] Create skill dynamic route pages
-
-Read:
-- `coding-playbook/client/seo.md`
-- `coding-playbook/client/components.md`
-
-Create `src/app/skills/[slug]/page.tsx`:
-
-- `generateStaticParams()` — `[{ slug: "study-playbook" }, { slug: "brain" }]`.
-- `generateMetadata({ params })` — calls `artifactMeta({ slug, kind: "skill" })`.
-- Default export calls `renderArtifact({ slug, kind: "skill" })` and renders via the shared `ArtifactPage` component.
-
-Dependencies: Steps 1, 2, 5 (shared component).
-
----
-
-### 8. [x] Replace docs hub with scaffold tree view
-
-Read:
-- `coding-playbook/client/components.md` (component architecture, semantic HTML)
-- `coding-playbook/client/seo.md` (semantic HTML, ARIA)
-
-Replace `src/components/DocsPage/DocHub/index.tsx` content with a scaffold tree view:
-
-- Accepts `ScaffoldTreeEntry[]` as props (from `listArtifacts()` in step 2).
-- Renders two top-level folders: `.aide/` and `.claude/` using nested `<ul>` lists inside `<nav aria-label="Scaffold tree">`.
-- Under `.aide/`: list all doc entries with links to `/docs/{slug}`.
-- Under `.claude/`: three subfolders — `agents/aide/` (agent entries linking to `/agents/{slug}`), `commands/aide/` (command entries linking to `/commands/{slug}`), `skills/` (skill entries linking to `/skills/{slug}`).
-- Every leaf node is a `<Link>` to its rendered page.
-- File tree uses monospaced font and indentation to mimic a filesystem listing.
-- No `.zed/` folder anywhere.
-
-Update `src/app/docs/page.tsx` to call `listArtifacts()` instead of (or in addition to) `renderHub()`, and pass the result to the updated `DocHub` component.
-
-Dependencies: Steps 1, 2.
-
----
-
-### 9. [x] Extend sitemap with all new routes
-
-Read:
-- `coding-playbook/client/seo.md` (sitemap pattern)
-
-Update `src/app/sitemap.ts`:
-
-- Import `listArtifacts` from `src/service/scaffold/listArtifacts`.
-- Add entries for all agent pages (`/agents/{slug}`), command pages (`/commands/{slug}`), and skill pages (`/skills/{slug}`) with `lastModified` date and appropriate priority (0.7 for agents/commands/skills).
-- Keep existing homepage, docs hub, and doc page entries.
-- Verify no page is omitted — the total sitemap should include: 1 homepage + 1 docs hub + N doc pages + 9 agent pages + 13 command pages + 2 skill pages.
-
-Dependencies: Step 2 (listArtifacts).
-
----
-
-### 10. [x] Create llms.txt route handler
-
-Read:
-- `coding-playbook/client/seo.md`
-- `coding-playbook/architecture/folder-structure.md`
-
-Create `src/app/llms.txt/route.ts`:
-
-- Export `const dynamic = "force-static"` (same pattern as robots.ts and sitemap.ts).
-- Default export a `GET` function that returns a `new Response(content, { headers: { "Content-Type": "text/plain" } })`.
-- The content is the exact llms.txt body specified in the spec's Strategy section, with descriptions after each URL. Every agent, command, and skill entry includes a brief inline description (following ` -- `) so an LLM can answer "what does X do?" from the file alone.
-- Hardcode the content string. All entries are known at build time and the spec provides the exact structure.
-
-Dependencies: None (standalone route handler).
-
----
-
-### 11. [x] Update root layout JSON-LD and add id attributes
-
-Read:
-- `coding-playbook/client/seo.md` (JSON-LD patterns, unique id attributes)
-
-Update `src/app/layout.tsx`:
-
-- Add `id="ld-org"` to the Organization schema script tag.
-- Add `id="ld-website"` to the WebSite schema script tag.
-- These `id` attributes prevent duplicate injection, matching the playbook pattern.
-- No other changes to the root layout JSON-LD — Organization and WebSite schemas are already correct.
-
-Dependencies: None (can run anytime).
-
----
-
-### 12. [x] Build verification and audit
-
-Read:
-- `coding-playbook/workflow/feature-checklist.md`
-- `coding-playbook/client/seo.md` (ARIA, semantic HTML checklist)
-
-Run `npm run build` (or equivalent) to verify:
-- All `generateStaticParams` produce valid pages (no build errors).
-- The sitemap includes every page.
-- The llms.txt route renders correctly.
-- No duplicate `id` attributes on JSON-LD script tags.
-
-Audit checklist:
-- [x] Every page has a unique title tag (no two pages share a title).
-- [x] Every page has a unique meta description (no near-duplicates).
-- [x] Every page declares canonical URL via CanonicalTag.
-- [x] Every page has correct OG tags (title, description, url, type, siteName).
-- [x] Every artifact page has TechArticle JSON-LD with real data (no fabricated dates or authors).
-- [x] Sitemap includes all pages (homepage + docs hub + 8 docs + 9 agents + 13 commands + 2 skills = 34 entries).
-- [x] llms.txt includes every page with descriptions.
-- [x] No `.zed/` artifacts appear in the scaffold tree.
-- [x] Semantic HTML: `<article>` for content pages, `<nav>` for scaffold tree, `<section>` with `aria-label` for thematic groupings.
-
-Dependencies: All previous steps.
+- [x] **1. Remove generic JSON-LD from root layout and add WebSite schema to homepage**
+
+  Read: `coding-playbook/client/seo` (Schema.org ld+json section -- root layout vs per-page placement)
+
+  Currently `src/app/layout.tsx` injects two JSON-LD script tags on every page:
+  an Organization schema (`{"@type":"Organization","name":"AIDEMD","url":"https://aidemd.dev"}`)
+  and a WebSite schema (`{"@type":"WebSite","name":"AIDEMD","url":"https://aidemd.dev"}`).
+  This is the "single generic JSON-LD block injected identically on every page"
+  the spec explicitly names as undesired.
+
+  **1a. Remove both JSON-LD script blocks from `src/app/layout.tsx`.**
+  Delete the `organizationSchema` const, the `websiteSchema` const, and both
+  `<script id="ld-org" .../>` and `<script id="ld-website" .../>` elements
+  from the `<head>`. Leave everything else (fonts, CanonicalTag, metadata
+  export) untouched.
+
+  **1b. Add a page-specific WebSite JSON-LD script to `src/app/page.tsx`.**
+  Inside the `Home` component, wrap `<LandingPage />` in a fragment and add a
+  `<script id="ld-website" type="application/ld+json">` tag containing:
+
+  ```
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "AIDE",
+    "url": "https://aidemd.dev",
+    "description": <pull from the existing metadata.description constant on the same page>,
+    "publisher": {
+      "@type": "Organization",
+      "name": "TetsuKodai Group LLC",
+      "url": "https://tetsukod.ai"
+    }
+  }
+  ```
+
+  Use `dangerouslySetInnerHTML` with `JSON.stringify`, same pattern as the
+  existing doc and artifact pages.
+
+  **Verify:** Run `rtk next build`. Confirm build succeeds. Grep the built
+  output for `ld-org` -- it must not appear anywhere. Grep for `ld-website` --
+  it must appear only in the homepage output, not in doc/agent/command/skill
+  pages.
+
+- [x] **2. Verify existing per-page TechArticle JSON-LD is correct**
+
+  Read: `coding-playbook/client/seo` (per-page schemas section)
+
+  No code changes in this step. This is a verification-only step to confirm
+  that the existing TechArticle JSON-LD on doc, agent, command, and skill
+  pages already satisfies the spec. The implementor must check:
+
+  a. `src/service/docs/docMeta/index.ts` -- confirm every doc slug has a
+     TechArticle JSON-LD with headline, description, url, datePublished,
+     author (TetsuKodai Group LLC), and publisher (TetsuKodai Group LLC,
+     https://tetsukod.ai). **Already confirmed correct** per codebase read.
+
+  b. `src/service/scaffold/artifactMeta/index.ts` -- confirm every agent,
+     command, and skill slug has a TechArticle JSON-LD with headline,
+     description, url, author, and publisher. **Already confirmed correct.**
+     Note: `datePublished` is intentionally omitted here and added at the
+     component level by `ArtifactPage` (line 28-31), which merges
+     `artifact.publishedAt` into the JSON-LD. This is correct.
+
+  c. `src/components/ArtifactPage/index.tsx` -- confirm the `jsonLdWithDate`
+     merge adds `datePublished` from the artifact's `publishedAt` field.
+     **Already confirmed correct.**
+
+  d. `src/app/docs/[slug]/page.tsx` -- confirm the doc page injects JSON-LD
+     with a unique `id` per slug (`ld-doc-${slug}`). **Already confirmed.**
+
+  e. Agent, command, and skill pages -- confirm each passes a unique
+     `jsonLdId` to `ArtifactPage`. **Already confirmed:**
+     - agents: `ld-agent-${slug}`
+     - commands: `ld-command-${slug}`
+     - skills: `ld-skill-${slug}`
+
+  If any of the above are not correct, fix them in this step. Based on the
+  codebase read, all are already correct and no changes are needed.
+
+  **Verify:** `rtk next build` succeeds. Spot-check two built pages (one doc,
+  one agent) to confirm they contain TechArticle JSON-LD with all required
+  fields and do NOT contain Organization JSON-LD.
 
 ## Decisions
 
-### 1. Shared ArtifactPage component over three separate page components
-Agents, commands, and skills render identically — title, rendered markdown, JSON-LD, install footer. A single `ArtifactPage` component in `src/components/ArtifactPage/` avoids three near-identical component trees. The route pages (`agents/[slug]`, `commands/[slug]`, `skills/[slug]`) remain separate because their `generateStaticParams` and `generateMetadata` differ by kind, but the rendered output delegates to the shared component.
+1. **Remove layout-level JSON-LD entirely rather than keeping Organization
+   schema.** The spec's undesired outcome explicitly names "Organization
+   schema with only name and url injected identically on every page." The
+   Organization entity (AIDEMD) is not a real organization in the schema.org
+   sense -- TetsuKodai Group LLC is the publisher, and it already appears as
+   `publisher` in every TechArticle and in the homepage WebSite schema. A
+   standalone Organization block for "AIDEMD" adds no value and matches the
+   exact anti-pattern the spec prohibits.
 
-### 2. Hardcoded title/description maps over template generation
-The spec explicitly prohibits "generic or templated meta descriptions that repeat the same sentence structure across pages, differing only by the artifact name." Every artifact's title and description is a handwritten string stored in `artifactMeta`. This is more work upfront but directly satisfies the spec's undesired outcomes. The implementor must write all ~24 unique descriptions.
+2. **WebSite schema on homepage only, not in layout.** The spec says "the
+   homepage uses WebSite schema." Moving it from layout to homepage makes it
+   page-specific. Content pages get TechArticle instead. This satisfies
+   "no two pages emit the same JSON-LD blob" -- the homepage emits WebSite,
+   each content page emits a unique TechArticle.
 
-### 3. artifactMeta as a service helper over metadata in page files
-Centralizing SEO metadata in `src/service/scaffold/artifactMeta/` keeps the page files clean (they just call the helper) and makes the sitemap and llms.txt route handler share the same source of truth. This follows the playbook's "no business logic in pages" rule from `coding-playbook/architecture/folder-structure.md`.
+3. **No new helper or service module for homepage JSON-LD.** The homepage
+   schema is a single static object with one field pulled from the existing
+   `metadata.description` constant on the same page. Creating a service
+   module for this would be over-engineering for a single static page. If the
+   site later gains additional index pages needing WebSite schemas, this can
+   be extracted then.
 
-### 4. CanonicalTag client component over generateMetadata alternates
-The spec and research explicitly confirm that `alternates.canonical` in `generateMetadata` is unreliable for `output: "export"` static builds. The client-side `CanonicalTag` component using `usePathname()` + `useEffect` is the confirmed pattern from the playbook's SEO notes (`coding-playbook/client/seo.md`).
+4. **Step 2 is verification-only.** The TechArticle infrastructure already
+   works correctly for all 32 content pages (8 docs, 9 agents, 13 commands,
+   2 skills). The plan does not modify working code. The only change is in
+   step 1: removing layout-level generic schemas and adding the homepage
+   WebSite schema.
 
-### 5. TechArticle over SoftwareApplication for JSON-LD type
-The spec mandates TechArticle because these pages document concepts and processes, not downloadable tools. This is the correct schema.org type for technical documentation.
-
-### 6. Reuse renderMarkdown from docs pipeline
-Agent, command, and skill source files are markdown. The existing `renderMarkdown` helper in `src/service/docs/renderCanonical/renderMarkdown/` already handles markdown-to-HTML conversion. Rather than duplicating this, the new `renderArtifact` service imports it. This follows the playbook's shared submodule escalation path — since both `docs/` and `scaffold/` services use it, it should ideally live in a shared location. However, moving it now would expand scope beyond the spec. The implementor should import it from its current location and, if the import feels wrong, note it for a future refactor.
-
-### 7. Agent count discrepancy: 10 on disk, 9 in spec
-The disk has `aide-researcher.md` which does not appear in the spec's artifact inventory. The spec lists `aide-domain-expert` in its place. The plan follows the spec's inventory (9 agents) and excludes `aide-researcher`. If the spec owner wants `aide-researcher` included, the spec should be updated first.
-
-### 8. Command count: 13 in llms.txt, spec body says "twelve"
-The spec body mentions "twelve commands" but the llms.txt section in the Strategy lists 13 (including `/aide:update-playbook`). The plan follows the llms.txt listing as the more specific source of truth, producing 13 command pages.
-
-### 9. llms.txt as hardcoded string over dynamic generation
-The spec provides the exact llms.txt content structure. Since all entries are known at build time and the descriptions must be handcrafted (not generated), the route handler contains a hardcoded content string. This is simpler and more reliable than dynamically assembling it from artifact metadata.
-
-### 10. docMeta helper for per-doc unique descriptions
-Existing doc pages use a generic template description (`Canonical AIDE methodology document: {title}`). The spec requires unique, non-templated descriptions. A new `src/service/docs/docMeta/index.ts` helper provides the slug-to-description mapping for all 8 docs, matching the same pattern as `artifactMeta` for scaffold artifacts.
+5. **Publisher is TetsuKodai Group LLC per spec.** The spec explicitly names
+   the publisher as `TetsuKodai Group LLC` with URL `https://tetsukod.ai`.
+   This matches what `docMeta` and `artifactMeta` already use. The homepage
+   WebSite schema uses the same publisher object for consistency.
