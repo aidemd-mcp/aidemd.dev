@@ -1,4 +1,5 @@
 ---
+description: QA findings for deploy workflow — archive job ordering, missing commit-back step, and stale spec scope.
 intent: >
   The deploy workflow has three misalignments with the archive spec and
   workflow spec: the archive job runs after deploy instead of before,

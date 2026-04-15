@@ -1,4 +1,5 @@
 ---
+description: Plan to build the IntentTreeSection component and wire it into the LandingPage as the intent-tree visual beat.
 intent: >
   Build the IntentTreeSection component — a static monospace folder-tree
   diagram with inline annotations showing how .aide specs cascade through

@@ -1,5 +1,6 @@
 ---
 scope: deploy/
+description: Deploy aidemd.dev as a zero-runtime static export to GitHub Pages with a custom domain, triggered on push to master.
 intent: >
   Deploy aidemd.dev to GitHub Pages as a fully static site. The build
   produces a zero-runtime export (next export) served from GitHub Pages

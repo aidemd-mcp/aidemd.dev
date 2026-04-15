@@ -1,6 +1,5 @@
-# todo spec
-
 ---
+description: QA findings for silent fallback on unknown markdown syntax, weak diff normalization, and stale strategy text in renderCanonical.
 intent: >
   Re-align the renderCanonical implementation against two violated desired
   outcomes: (1) the build must fail loudly on unrecognized markdown syntax

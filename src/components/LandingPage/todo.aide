@@ -1,4 +1,5 @@
 ---
+description: QA findings for propagating the corrected eight-agent roster and removing the deprecated "researcher" agent name.
 intent: >
   Multiple components and meta tags still reference six agents and carry the
   deprecated "researcher" agent name — the corrected spec requires eight named

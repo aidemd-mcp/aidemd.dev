@@ -1,4 +1,5 @@
 ---
+description: Plan to replace layout-level generic JSON-LD with page-specific WebSite and TechArticle structured data schemas.
 intent: >
   Replace the generic, layout-level Organization JSON-LD blob with
   page-specific structured data: WebSite schema on the homepage (with

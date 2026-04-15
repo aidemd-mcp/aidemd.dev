@@ -1,4 +1,5 @@
 ---
+description: Plan to configure Next.js static export and GitHub Actions deploy workflow targeting GitHub Pages.
 intent: >
   Configure Next.js static export and GitHub Actions workflow to deploy
   aidemd.dev to GitHub Pages on every push to master.

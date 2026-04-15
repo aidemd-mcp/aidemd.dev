@@ -1,4 +1,5 @@
 ---
+description: Plan for the GitHub repository presence — dark/light SVG banners and a README with responsive picture element and signpost body.
 intent: >
   Deliver the GitHub repository presence: two SVG banner variants
   (dark/light) in .github/ and a README.md with the picture element

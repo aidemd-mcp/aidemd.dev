@@ -1,4 +1,5 @@
 ---
+description: Plan to rewrite extractCitationMeta to use versions.json and fix the errata display logic in DocHeader.
 intent: >
   Rewrite extractCitationMeta to read `.aide/docs/versions.json` (shipped
   by the MCP during aide_upgrade) instead of local git history, fix the

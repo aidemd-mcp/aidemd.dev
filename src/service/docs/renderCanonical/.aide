@@ -1,5 +1,6 @@
 ---
 scope: src/service/docs/renderCanonical/
+description: Byte-faithful rendering of canonical AIDE markdown sources into HTML with citation metadata and post-render diff check.
 intent: >
   Transform each canonical `.aide/*.md` source file into a rendered HTML
   page without introducing a single byte of content drift, and emit
@@ -22,7 +23,7 @@ outcomes:
     - The pipeline is a pure function of the git tree plus the upstream commit history: the same repo state and upstream state always produce the same rendered output, including the same citation metadata values.
     - A post-render diff check hashes the source file's text content, hashes the rendered page's content-region text, and fails the build if they diverge.
   undesired:
-    - Any transformation that rewrites content: "modernize tone," "fix typos," "add callouts," "inject related links," "soften the agent-facing language for humans." If the source has a typo, the output has the typo.
+    - 'Any transformation that rewrites content: "modernize tone," "fix typos," "add callouts," "inject related links," "soften the agent-facing language for humans." If the source has a typo, the output has the typo.'
     - MDX, JSX-in-markdown, or any plugin middleware that allows components to be embedded inside canonical content. The renderer is strict markdown-to-HTML only — a fixed plugin set (gfm tables, code fences, frontmatter extraction) and nothing else.
     - Silent fallback on unrecognized syntax. If a new markdown extension appears in the source and the renderer's plugin set does not know it, the build errors with the source file name and the line number of the offending construct. Silent fallback ships partially-broken canonical docs.
     - Local git history used as the source for citation dates or version URLs. Local commits track sync operations (when files were copied from upstream), not document revisions — using them produces misleading publication dates that undermine the priority-date claim.

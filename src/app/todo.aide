@@ -1,4 +1,5 @@
 ---
+description: QA findings for page-specific JSON-LD structured data and title tag conformance across all pages.
 intent:
   - "Every page carries page-specific JSON-LD structured data: the homepage uses WebSite schema with publisher set to TetsuKodai Group LLC (https://tetsukod.ai); every doc, agent, command, and skill page uses TechArticle schema with headline, description, url, and datePublished pulled from that page's own metadata — no two pages emit the same JSON-LD blob."
   - "Every rendered page carries a unique, descriptive title tag and meta description that a searcher can read in a SERP snippet; no two pages share the same title or description."

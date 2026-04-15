@@ -1,5 +1,6 @@
 ---
 scope: src/components/DocsPage/
+description: Byte-faithful, citable renderer for AIDE canonical docs with versioned URLs and citation metadata.
 intent: >
   The docs surface composes the byte-faithful, timestamped, archivable
   canonical record of the AIDE methodology — the single web address

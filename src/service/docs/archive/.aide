@@ -1,5 +1,6 @@
 ---
 scope: src/service/docs/archive/
+description: Archive every canonical page publish to Wayback Machine and emit an RSS/Atom feed entry as a durable append-only record.
 intent: >
   On every canonical page publish — docs, agents, commands, and skills —
   guarantee that (a) a Wayback Machine Save Page Now snapshot exists and

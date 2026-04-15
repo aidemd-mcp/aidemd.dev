@@ -1,5 +1,6 @@
 ---
 scope: src/service/install/buildInstallConfig/
+description: Generate the typed MCP config JSON and install command sequence rendered in the landing page's install block for Claude Code.
 intent: >
   Generate the exact MCP config JSON block and the `aide_init` command
   string the landing page's install block renders, targeting Claude Code

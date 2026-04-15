@@ -1,6 +1,5 @@
-# Alignment Re-check
-
 ---
+description: QA findings for stale agent count and pipeline descriptions in the src-level AIDE spec.
 intent: >
   The src/.aide spec makes claims about the AIDE agent pipeline that
   contradict the canonical methodology docs upgraded in `.aide/docs/`.

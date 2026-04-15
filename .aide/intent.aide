@@ -1,6 +1,7 @@
 ---
 status: current
 scope: src/
+description: Root intent spec for aidemd.dev — a public landing and canonical docs site that converts visitors into AIDE installers and establishes archivable methodology priority.
 intent: >
   aidemd.dev is the public face and canonical record of the AIDE methodology.
   It does two jobs at once: it converts a first-time visitor — whether a
