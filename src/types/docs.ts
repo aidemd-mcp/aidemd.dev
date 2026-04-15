@@ -1,3 +1,5 @@
+export type ContentType = "docs" | "agents" | "commands" | "skills";
+
 export type CitationMeta = {
   publishedAt: string;
   sourceCommit: string;

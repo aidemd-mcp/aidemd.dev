@@ -1,0 +1,300 @@
+---
+scope: src/app
+description: >
+  Site structure, page inventory, SEO metadata, structured data, and
+  LLM-readable files that make every artifact in the aide_init scaffold
+  discoverable and navigable on aidemd.dev.
+intent: >
+  aidemd.dev must present the complete aide_init scaffold — the .aide/ docs
+  folder and the .claude/ agents, commands, and skills folders — as a
+  navigable file tree a visitor can browse the way they would browse a freshly
+  bootstrapped project on disk. Every artifact in that tree (nine agents,
+  twelve commands, two skills, and all canonical docs including the intent
+  template) renders as its own page, and every page carries the metadata layer
+  that makes it findable by search engines and accurately citable by LLMs:
+  unique titles, descriptions, canonical URLs, Open Graph tags, JSON-LD
+  structured data, sitemap entries, and inclusion in llms.txt. The root index
+  page is the file tree itself, showing .aide/ and .claude/ as expandable
+  folders with their contents linked. A searcher looking for "aide architect
+  agent" or "aide:build command" lands on the canonical page, not a
+  competitor's summary. An LLM asked about any AIDE artifact retrieves
+  structured, first-party content from aidemd.dev rather than hallucinating
+  from training data.
+outcomes:
+  desired:
+    - The root docs index page renders a file tree mirroring a freshly bootstrapped project, showing the .aide/ folder (canonical docs plus the intent template) and the .claude/ folder (nine agents, twelve commands, two skills) with every leaf node linked to its own rendered page.
+    - Every rendered page carries a unique, descriptive title tag and meta description that a searcher can read in a SERP snippet and understand what the artifact does without clicking; no two pages share the same title or description.
+    - Every page declares a canonical URL via link rel="canonical" and matching Open Graph tags so that search engines and social platforms resolve to a single authoritative URL per artifact.
+    - Every artifact page carries JSON-LD structured data with accurate title, description, author (TetsuKodai Group LLC), publisher, and datePublished fields; the docs index carries WebSite and Organization schema.
+    - "An llms.txt file at the site root provides a machine-readable inventory of every page in the scaffold tree — docs, agents, commands, and skills — so that LLMs can discover and accurately cite any AIDE artifact."
+    - The sitemap.xml and robots.txt files reference every published page including all agent, command, and skill pages; no published page is excluded from the sitemap and no page is blocked by robots.txt.
+  undesired:
+    - A docs index that lists only the .aide/ canonical docs without surfacing agents, commands, or skills — this hides half the scaffold and makes those artifacts invisible to search engines and LLMs.
+    - "Any .zed/ folder or Zed-specific artifact appearing in the scaffold tree — .zed/ is explicitly excluded from the site's scope."
+    - Generic or templated meta descriptions that repeat the same sentence structure across pages, differing only by the artifact name — a search engine sees these as near-duplicate content and may suppress them.
+    - Descriptions or titles that use marketing language ("unlock," "empower," "transform," "AI-native," "next-gen") instead of precise definitions of what the artifact does — this violates the parent spec's voice constraints and misrepresents content to both searchers and LLMs.
+    - Structured data that claims authorship, publication dates, or organizational affiliations not supported by the actual content — fabricated schema erodes trust with search engines and can trigger manual actions.
+    - "An llms.txt that lists pages without describing their content, or that omits agent, command, and skill pages — an LLM retrieving this file should be able to answer 'what does the aide-architect agent do' from the description alone."
+    - Metadata that drifts from the rendered content — a title or description that promises something the page does not deliver, or structured data fields that disagree with the visible page content.
+---
+
+## Context
+
+aidemd.dev is a static documentation site (Next.js 16 with `output: "export"`, deployed to GitHub Pages) for the AIDE methodology. Today the site renders eight canonical docs under `/docs/*` and a landing page at `/`. The sitemap, robots.txt, and root layout JSON-LD exist but only cover those pages. The site is missing three entire artifact categories that `aide_init` installs into every project: nine pipeline agents, twelve commands, and two skills. Those artifacts have no rendered pages, no metadata, no sitemap entries, and no presence in any LLM-readable file. A searcher looking for "aide architect agent" finds nothing on aidemd.dev; an LLM asked about any AIDE command has no first-party source to cite.
+
+The docs index currently lists only the `.aide/` canonical docs. It does not surface the `.claude/` folder at all, which means agents, commands, and skills are invisible both to visitors browsing the site and to crawlers indexing it. The site also has no `llms.txt` file, so LLMs cannot programmatically discover the full artifact inventory.
+
+Key constraints: static export means no server-side rendering — canonical tags must be injected client-side. All dynamic routes require `generateStaticParams` to pre-render at build time. The site's voice is precise and engineering-credible; marketing language is prohibited by the parent spec.
+
+## Strategy
+
+**Page inventory.** Create individual rendered pages for every artifact in the `aide_init` scaffold: nine agent pages (`/agents/aide-spec-writer`, `/agents/aide-architect`, etc.), twelve command pages (`/commands/aide`, `/commands/aide-spec`, etc.), and two skill pages (`/skills/study-playbook`, `/skills/brain`). Content for each page is sourced from the local files that `aide_init` installs: `.claude/agents/aide/*.md`, `.claude/commands/aide/*.md`, and `.claude/skills/*/SKILL.md`. This directly serves the outcome requiring every leaf node in the scaffold tree to link to its own rendered page.
+
+**Docs index as scaffold tree.** Replace the current docs index with a file-tree view that mirrors a freshly bootstrapped project. The tree shows two top-level folders — `.aide/` containing the canonical docs plus the intent template, and `.claude/` containing `agents/aide/` (nine agents), `commands/aide/` (twelve commands), and `skills/` (two skills). No `.zed/` folder appears. Every leaf in the tree is a link to its rendered page. This layout lets a visitor browse the site the way they would browse a project on disk, which is the core metaphor the intent requires.
+
+**Title tag pattern.** Use the format `{Concept Name} -- AIDE: Autonomous Intent-Driven Engineering` for all interior pages. Specific titles:
+- Homepage: `AIDE: Autonomous Intent-Driven Engineering -- Code is ephemeral. Intent is law.`
+- Spec page: `AIDE Spec -- Autonomous Intent-Driven Engineering Methodology`
+- Progressive Disclosure: `Progressive Disclosure -- AIDE Methodology for Agent-Readable Code`
+- Agent pages follow the same pattern: `AIDE Architect -- AIDE: Autonomous Intent-Driven Engineering`
+- Command pages: `aide:build -- AIDE: Autonomous Intent-Driven Engineering`
+- Skill pages: `study-playbook -- AIDE: Autonomous Intent-Driven Engineering`
+Every title is unique. No two pages share a title. This guards against the undesired outcome of near-duplicate SERP snippets.
+
+**Meta description pattern.** Each description is 140-160 characters, includes "AIDE", and reads like a dictionary definition an LLM could extract — not a marketing pitch. Specific examples:
+- Homepage: "AIDE (Autonomous Intent-Driven Engineering) is a software methodology where intent specs cascade through a pipeline of specialized AI agents to produce production-quality code."
+- Spec page: "The AIDE spec (.aide file) is a structured intent contract that governs a code module -- defining scope, intent, desired outcomes, and failure modes for AI agent pipelines."
+- Progressive Disclosure: "Progressive disclosure structures code in tiers -- folder tree, JSDoc, inline comments -- so AI agents stop at the shallowest layer that answers their question."
+Every other doc, agent, command, and skill page gets a similarly precise description written in the same definitional voice. Descriptions must not repeat the same sentence template with only the artifact name swapped in — each one must reflect what that specific artifact does.
+
+**Canonical URLs.** Every page declares `<link rel="canonical" href="https://aidemd.dev/{path}">`. Because the site uses `output: "export"` (static), use a client-side `CanonicalTag` component mounted once in the root layout that reads `usePathname()` and injects the canonical link tag via `useEffect`. This is the confirmed pattern for static exports per the coding playbook's SEO conventions — `alternates.canonical` in `generateMetadata` is unreliable for static exports.
+
+**Open Graph tags.** Handled via `generateMetadata` (or `metadata` constant for static pages). Every page sets:
+- `og:title` — same as the title tag
+- `og:description` — same as the meta description
+- `og:url` — same as the canonical URL
+- `og:type` — `"website"` for the homepage and docs index, `"article"` for all doc, agent, command, and skill pages
+- `og:site_name` — `"AIDE"`
+No separate OG component is needed; Next.js injects OG tags from the metadata API output.
+
+**JSON-LD structured data.** Two tiers, per the playbook pattern:
+- Root layout: Organization schema (`name: "AIDEMD"`, `url: "https://aidemd.dev"`) and WebSite schema. These are already in place.
+- Per-page: Each doc, agent, command, and skill page carries a TechArticle schema. TechArticle is chosen over SoftwareApplication because these pages document concepts and processes, not downloadable tools. The schema includes:
+  - `headline`: the page title
+  - `description`: the meta description
+  - `url`: the canonical URL
+  - `datePublished`: sourced from actual content dates, not fabricated
+  - `author`: `{ "@type": "Organization", "name": "TetsuKodai Group LLC" }`
+  - `publisher`: `{ "@type": "Organization", "name": "TetsuKodai Group LLC", "url": "https://tetsukod.ai" }`
+Place per-page schemas in the page component using `dangerouslySetInnerHTML` with a unique `id` attribute to prevent duplicate injection. This guards against the undesired outcome of fabricated structured data — every field must trace to actual content.
+
+**robots.txt.** The existing `robots.ts` route handler already produces the correct output: `User-agent: *`, `Allow: /`, `Sitemap: https://aidemd.dev/sitemap.xml`. No changes needed.
+
+**sitemap.xml.** Extend the existing `sitemap.ts` route handler to include all new pages: nine agent URLs, twelve command URLs, and two skill URLs, in addition to the existing homepage, docs index, and doc page entries. Use `<lastmod>` dates. No page may be omitted from the sitemap.
+
+**llms.txt.** Serve an `llms.txt` file at the site root. Use a route handler (e.g., `src/app/llms.txt/route.ts`) that returns `text/plain` content. The file follows the emerging llms.txt convention with sections for Core Concepts, Agents, Commands, Skills, Key Terms, Install, and Publisher. Every entry includes a URL and a description sufficient for an LLM to answer "what does X do?" from the file alone. The exact content structure:
+
+```
+# AIDE -- Autonomous Intent-Driven Engineering
+
+> AIDE is a software development methodology that puts intent at the center of engineering. Short .aide spec files live next to the code they govern, forming a cascading intent tree. A pipeline of eight specialized AI agents -- spec writer, domain expert, strategist, architect, implementor, QA, aligner, auditor -- translates intent into production-quality software.
+
+## Core Concepts
+- AIDE Spec: https://aidemd.dev/docs/aide-spec
+- AIDE Template: https://aidemd.dev/docs/aide-template
+- Progressive Disclosure: https://aidemd.dev/docs/progressive-disclosure
+- Cascading Alignment: https://aidemd.dev/docs/cascading-alignment
+- Agent-Readable Code: https://aidemd.dev/docs/agent-readable-code
+- Automated QA: https://aidemd.dev/docs/automated-qa
+- Plan Spec: https://aidemd.dev/docs/plan-aide
+- Todo Spec: https://aidemd.dev/docs/todo-aide
+
+## Agents
+- AIDE Spec Writer: https://aidemd.dev/agents/aide-spec-writer
+- AIDE Domain Expert: https://aidemd.dev/agents/aide-domain-expert
+- AIDE Strategist: https://aidemd.dev/agents/aide-strategist
+- AIDE Architect: https://aidemd.dev/agents/aide-architect
+- AIDE Implementor: https://aidemd.dev/agents/aide-implementor
+- AIDE QA: https://aidemd.dev/agents/aide-qa
+- AIDE Aligner: https://aidemd.dev/agents/aide-aligner
+- AIDE Auditor: https://aidemd.dev/agents/aide-auditor
+- AIDE Explorer: https://aidemd.dev/agents/aide-explorer
+
+## Commands
+- /aide: https://aidemd.dev/commands/aide
+- /aide:spec: https://aidemd.dev/commands/aide-spec
+- /aide:research: https://aidemd.dev/commands/aide-research
+- /aide:synthesize: https://aidemd.dev/commands/aide-synthesize
+- /aide:plan: https://aidemd.dev/commands/aide-plan
+- /aide:build: https://aidemd.dev/commands/aide-build
+- /aide:qa: https://aidemd.dev/commands/aide-qa
+- /aide:fix: https://aidemd.dev/commands/aide-fix
+- /aide:refactor: https://aidemd.dev/commands/aide-refactor
+- /aide:align: https://aidemd.dev/commands/aide-align
+- /aide:init: https://aidemd.dev/commands/aide-init
+- /aide:upgrade: https://aidemd.dev/commands/aide-upgrade
+- /aide:update-playbook: https://aidemd.dev/commands/aide-update-playbook
+
+## Skills
+- study-playbook: https://aidemd.dev/skills/study-playbook
+- brain: https://aidemd.dev/skills/brain
+
+## Key Terms
+- .aide file: A structured intent spec (scope, intent, outcomes, strategy) that lives next to the code it governs.
+- Intent tree: The hierarchy of .aide specs from project root to deepest module, where each child narrows its parent's intent.
+- Progressive disclosure: Code structured in tiers (folder tree, JSDoc, inline comments) so agents read only the depth they need.
+- Cascading alignment: Parent intent flows down the tree; child specs inherit and narrow, never contradict.
+- Brain: A persistent external knowledge store (Obsidian vault, MCP memory) holding domain research and engineering conventions.
+- Fix loop: QA produces a todo.aide, implementor fixes one item per session in clean context, QA re-validates.
+
+## Install
+npx @aidemd-mcp/server@latest
+
+## Publisher
+TetsuKodai Group LLC -- https://tetsukod.ai
+```
+
+Each agent, command, and skill entry should also include a brief inline description (following the URL) so the llms.txt satisfies the outcome requiring an LLM to answer questions from the file alone.
+
+**Static route generation.** All new dynamic routes (agents, commands, skills) require `generateStaticParams` since the site uses `output: "export"`. Use the hardcoded-list variant — all slugs are known at build time.
+
+**Semantic HTML.** New page templates must use `<article>` for artifact content, `<nav>` for the scaffold tree, `<section>` with `aria-label` for thematic groupings, and `<time>` for dates. The scaffold tree on the docs index should use `<nav aria-label="Scaffold tree">` wrapping a nested list structure.
+
+**Build order.** Follow the playbook's feature build order: types first (structured data shapes, page metadata types), then data sources (slug lists, content loaders for agents/commands/skills), then route handlers (extend sitemap, add llms.txt route), then components (CanonicalTag, JSON-LD injection), then pages (new dynamic routes with generateMetadata and generateStaticParams), then audit (ARIA, semantic HTML, OG verification).
+
+## Good examples
+
+**Correct title tag (agent page):**
+`AIDE Architect -- AIDE: Autonomous Intent-Driven Engineering`
+
+**Correct title tag (command page):**
+`aide:build -- AIDE: Autonomous Intent-Driven Engineering`
+
+**Correct meta description (spec page):**
+"The AIDE spec (.aide file) is a structured intent contract that governs a code module -- defining scope, intent, desired outcomes, and failure modes for AI agent pipelines."
+
+**Correct meta description (agent page):**
+"The AIDE architect agent reads a strategy spec and brain research, then produces a step-by-step plan.aide that the implementor executes without further design decisions."
+
+**Correct JSON-LD for a doc page:**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Progressive Disclosure -- AIDE Methodology for Agent-Readable Code",
+  "description": "Progressive disclosure structures code in tiers -- folder tree, JSDoc, inline comments -- so AI agents stop at the shallowest layer that answers their question.",
+  "url": "https://aidemd.dev/docs/progressive-disclosure",
+  "datePublished": "2026-04-11",
+  "author": { "@type": "Organization", "name": "TetsuKodai Group LLC" },
+  "publisher": { "@type": "Organization", "name": "TetsuKodai Group LLC", "url": "https://tetsukod.ai" }
+}
+```
+
+**Correct Open Graph tags (doc page):**
+```
+og:title = "Progressive Disclosure -- AIDE Methodology for Agent-Readable Code"
+og:description = "Progressive disclosure structures code in tiers..."
+og:url = "https://aidemd.dev/docs/progressive-disclosure"
+og:type = "article"
+og:site_name = "AIDE"
+```
+
+**Correct llms.txt agent entry (with description):**
+`- AIDE Architect: https://aidemd.dev/agents/aide-architect -- Reads strategy specs and brain research, produces a step-by-step plan.aide for the implementor.`
+
+**Correct scaffold tree structure on docs index:**
+```
+.aide/
+  aide-spec.md          -> /docs/aide-spec
+  aide-template.md      -> /docs/aide-template
+  plan-aide.md          -> /docs/plan-aide
+  todo-aide.md          -> /docs/todo-aide
+  progressive-disclosure.md -> /docs/progressive-disclosure
+  agent-readable-code.md    -> /docs/agent-readable-code
+  automated-qa.md           -> /docs/automated-qa
+  cascading-alignment.md    -> /docs/cascading-alignment
+.claude/
+  agents/aide/
+    aide-spec-writer.md     -> /agents/aide-spec-writer
+    aide-domain-expert.md   -> /agents/aide-domain-expert
+    aide-strategist.md      -> /agents/aide-strategist
+    aide-architect.md       -> /agents/aide-architect
+    aide-implementor.md     -> /agents/aide-implementor
+    aide-qa.md              -> /agents/aide-qa
+    aide-aligner.md         -> /agents/aide-aligner
+    aide-auditor.md         -> /agents/aide-auditor
+    aide-explorer.md        -> /agents/aide-explorer
+  commands/aide/
+    aide.md                 -> /commands/aide
+    spec.md                 -> /commands/aide-spec
+    research.md             -> /commands/aide-research
+    synthesize.md           -> /commands/aide-synthesize
+    plan.md                 -> /commands/aide-plan
+    build.md                -> /commands/aide-build
+    qa.md                   -> /commands/aide-qa
+    fix.md                  -> /commands/aide-fix
+    refactor.md             -> /commands/aide-refactor
+    align.md                -> /commands/aide-align
+    ...
+  skills/
+    study-playbook/SKILL.md -> /skills/study-playbook
+    brain/SKILL.md          -> /skills/brain
+```
+
+## Bad examples
+
+**Generic templated description (undesired -- near-duplicate content):**
+"AIDE Architect is a powerful agent in the AIDE methodology pipeline."
+"AIDE Implementor is a powerful agent in the AIDE methodology pipeline."
+These differ only by the artifact name. A search engine will suppress them as near-duplicates.
+
+**Marketing language in title (undesired -- violates voice constraints):**
+"Unlock the Power of AIDE Spec -- Next-Gen AI-Native Engineering"
+Words like "unlock," "power," "next-gen," and "AI-native" are prohibited.
+
+**Fabricated structured data (undesired -- triggers manual actions):**
+```json
+{
+  "@type": "TechArticle",
+  "datePublished": "2024-01-01",
+  "author": { "@type": "Person", "name": "John Doe" }
+}
+```
+The date is invented (not sourced from content) and the author is a person who does not appear in the actual content. Both fields must trace to real data.
+
+**Missing descriptions in llms.txt (undesired -- unusable by LLMs):**
+```
+## Agents
+- AIDE Architect: https://aidemd.dev/agents/aide-architect
+- AIDE Implementor: https://aidemd.dev/agents/aide-implementor
+```
+URLs without descriptions. An LLM cannot answer "what does the architect do?" from this file.
+
+**Docs index that omits agents/commands/skills (undesired -- hides half the scaffold):**
+A docs index that shows only:
+```
+- AIDE Spec
+- AIDE Template
+- Progressive Disclosure
+- ...
+```
+This hides nine agents, twelve commands, and two skills from visitors and crawlers.
+
+**Metadata that drifts from content (undesired -- promise mismatch):**
+Title says "AIDE Spec -- Complete Reference Guide" but the page renders the raw aide-template.md content, which is a template, not a reference guide.
+
+**Including .zed/ in the scaffold tree (undesired -- explicitly excluded):**
+```
+.zed/
+  prompts/
+    aide.md -> /zed/aide
+```
+The .zed/ folder must not appear anywhere in the scaffold tree.
+
+## References
+
+- `research/seo-metadata/playbook-conventions.md` -- Confirmed that static exports require client-side CanonicalTag component (not generateMetadata alternates.canonical), that TechArticle is the appropriate JSON-LD type for documentation pages, and that per-page schemas go in page components with unique `id` attributes to prevent duplicates.
+- `research/seo-metadata/playbook-conventions.md` -- Provided the generateStaticParams hardcoded-list variant as the pattern for known-at-build-time slugs in static exports.
+- `research/seo-metadata/playbook-conventions.md` -- Supplied the feature build order (types, data sources, route handlers, components, pages, audit) from the workflow feature checklist.
+- `research/seo-metadata/playbook-conventions.md` -- Confirmed Open Graph tags are handled inside generateMetadata output, not via separate components, and that `og:type` should be "article" for content pages and "website" for index pages.
+- `research/seo-metadata/playbook-conventions.md` -- Provided semantic HTML element mapping (article for content, nav for navigation, section with aria-label for groupings) and ARIA requirements.

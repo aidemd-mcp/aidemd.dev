@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import CanonicalTag from "@/components/shared/CanonicalTag";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,19 +45,24 @@ export default function RootLayout({
     >
       <head>
         <script
+          id="ld-org"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(organizationSchema),
           }}
         />
         <script
+          id="ld-website"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(websiteSchema),
           }}
         />
       </head>
-      <body className="min-h-full bg-zinc-950 text-zinc-100">{children}</body>
+      <body className="min-h-full bg-zinc-950 text-zinc-100">
+        <CanonicalTag />
+        {children}
+      </body>
     </html>
   );
 }

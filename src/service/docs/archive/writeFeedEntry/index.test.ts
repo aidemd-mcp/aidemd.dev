@@ -51,6 +51,17 @@ describe("writeFeedEntry", () => {
     expect(xml).toContain("<summary>");
   });
 
+  it("feed envelope uses unified title and ID for all content types", async () => {
+    const notFoundError = Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    mockReadFile.mockRejectedValue(notFoundError);
+
+    await writeFeedEntry(SAMPLE_ENTRY);
+
+    const [, xml] = mockWriteFile.mock.calls[0] as [string, string, string];
+    expect(xml).toContain("<id>https://aidemd.dev/feed</id>");
+    expect(xml).toContain("<title>aidemd.dev canonical pages</title>");
+  });
+
   it("GUID/id is the versioned URL", async () => {
     const notFoundError = Object.assign(new Error("ENOENT"), { code: "ENOENT" });
     mockReadFile.mockRejectedValue(notFoundError);
@@ -94,8 +105,8 @@ describe("writeFeedEntry", () => {
     const existingFeed = [
       `<?xml version="1.0" encoding="utf-8"?>`,
       `<feed xmlns="http://www.w3.org/2005/Atom">`,
-      `  <id>https://aidemd.dev/docs/feed</id>`,
-      `  <title>aidemd.dev docs</title>`,
+      `  <id>https://aidemd.dev/feed</id>`,
+      `  <title>aidemd.dev canonical pages</title>`,
       `  <updated>2025-12-01T00:00:00.000Z</updated>`,
       `  <entry>`,
       `    <title>old-doc.md</title>`,

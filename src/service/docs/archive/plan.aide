@@ -1,0 +1,67 @@
+---
+intent: >
+  Generalize the archive caller (archiveDocs) and the feed summary template
+  so that docs, agents, commands, and skills all get Wayback snapshots and
+  RSS entries on publish — without changing the archive/ submodule itself.
+---
+
+## Plan
+
+### 1. Define the ContentType union and add a `contentType` field to ArchiveDocInput
+
+Read: `coding-playbook/workflow/type-system`, `coding-playbook/architecture/data-flow`
+
+- [x] In `src/types/docs.ts`, add a string literal union type `ContentType = "docs" | "agents" | "commands" | "skills"`.
+- [x] In `src/service/docs/archive/index.ts`, add `contentType: ContentType` to the `ArchiveDocInput` type. Import `ContentType` from `@/types/docs`.
+- [x] Update the feed summary template string in `archiveDoc` to use the `contentType` field instead of the hardcoded `"docs"` literal. The template becomes: `aidemd.dev ${contentType}: ${file} updated. Source commit ${sourceCommit}. Live: ${versionedUrl}. Archived: ${waybackUrl}.`
+- [x] Update existing tests in `src/service/docs/archive/index.test.ts`: add `contentType: "docs"` to `BASE_INPUT`, and add a new test case that passes `contentType: "agents"` and asserts the summary contains `"aidemd.dev agents:"` instead of `"aidemd.dev docs:"`.
+
+### 2. Update writeFeedEntry to parameterize the feed title and ID
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/services/service-layer`
+
+- [x] The `writeFeedEntry` helper currently hardcodes `FEED_TITLE = "aidemd.dev docs"` and `FEED_ID = "https://aidemd.dev/docs/feed"`. These are docs-specific. Since all content types share a single `feed.xml`, generalize these constants to cover all content types: change `FEED_TITLE` to `"aidemd.dev canonical pages"` and `FEED_ID` to `"https://aidemd.dev/feed"`. No new parameters needed — the feed is a single unified feed for all content types; the per-entry `summary` field (parameterized in step 1) already distinguishes content types.
+- [x] Update `src/service/docs/archive/writeFeedEntry/index.test.ts` to reflect the new feed title and ID values in any assertions that check the feed XML envelope.
+
+### 3. Create version manifest files for agents, commands, and skills
+
+Read: `coding-playbook/architecture/folder-structure`, `coding-playbook/foundations/conventions`
+
+- [x] Create `.aide/agents/versions.json`, `.aide/commands/versions.json`, and `.aide/skills/versions.json` as empty JSON objects (`{}`). These follow the same schema as `.aide/docs/versions.json` — keys are slugs, values are `{ publishedAt, sourceCommit, previousCommit }`.
+- [x] These files are data, not code — no tests needed. They will be populated by future publish workflows.
+
+### 4. Rename archiveDocs to archivePages and generalize to accept content type + URL prefix
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`, `coding-playbook/services/service-layer`
+
+- [x] 4a. Rename the folder `src/service/docs/archiveDocs/` to `src/service/docs/archivePages/`. The function inside becomes `archivePages`. Update its signature to accept a single input object: `{ contentType: ContentType; urlPrefix: string; versionsPath: string }`. `urlPrefix` is the URL path prefix (e.g. `/docs`, `/agents`). `versionsPath` is the absolute path to the versions.json file for this content type.
+- [x] 4b. Remove the hardcoded `versions.json` path, the hardcoded `/docs/` URL prefix, and the hardcoded `"archive-docs:"` log prefix. Replace with the parameterized values. The `docPath` derivation (`slug === "index" ? urlPrefix : \`${urlPrefix}/${slug}\``) stays the same pattern but uses the passed `urlPrefix`. Pass `contentType` through to `archiveDoc` in each call. Update the log prefix to `"archive-pages [${contentType}]:"`.
+- [x] 4c. Update `src/service/docs/archivePages/run.ts` to call `archivePages` four times — once per content type — with the correct `versionsPath` and `urlPrefix` for each. The four calls: `{ contentType: "docs", urlPrefix: "/docs", versionsPath: "<cwd>/.aide/docs/versions.json" }`, then agents (`/agents`), commands (`/commands`), skills (`/skills`). Fail fast: if any content type's archival fails, abort without attempting the rest.
+- [x] 4d. Rewrite `src/service/docs/archivePages/index.test.ts` to test the generalized function. Port all existing test cases but pass the new input shape. Add a test that verifies `contentType` is forwarded to `archiveDoc` in each call. Add a test with `urlPrefix: "/agents"` to confirm the versionedUrl uses the correct prefix.
+
+### 5. Update the package.json script and GitHub Actions workflow
+
+Read: `coding-playbook/foundations/conventions`
+
+- [x] In `package.json`, rename the `archive-docs` script to `archive-pages` and update the path to `tsx src/service/docs/archivePages/run.ts`.
+- [x] In `.github/workflows/deploy.yml`, update the `run: npm run archive-docs` line to `run: npm run archive-pages`.
+
+### 6. Verify all tests pass
+
+Read: `coding-playbook/workflow/testing`
+
+- [x] Run `npx vitest run` and confirm all existing and new tests pass. Fix any import path breakages from the rename in step 4.
+
+## Decisions
+
+**ContentType as a string literal union, not an enum.** String literal unions are simpler, tree-shake better, and align with the playbook's preference for plain data types. The union lives in `src/types/docs.ts` because it extends the existing docs domain types and the archive system lives under `src/service/docs/`.
+
+**Single unified feed.xml, not per-type feeds.** The spec says "an RSS/Atom feed entry has been written naming the change" — singular feed. Splitting into four feeds would fragment the legal-artifact trail. The per-entry summary template already distinguishes content types (`aidemd.dev docs:` vs `aidemd.dev agents:`), so a single feed gives consumers one subscription for all canonical page changes.
+
+**Parameterize the caller, not the archive submodule.** The user constraint is explicit: `archive/` (saveToWayback, updateManifest, writeFeedEntry) should not change structurally. The only archive-level change is adding `contentType` to the input type and using it in the summary template. The caller (`archiveDocs` -> `archivePages`) absorbs all the generalization work.
+
+**Rename archiveDocs to archivePages.** The function no longer archives only docs — it archives any canonical page type. The name must reflect the broadened scope. This follows the playbook rule "name functions by what they DO."
+
+**Separate versions.json per content type, not a unified registry.** Each content type's versions.json lives next to its source files (`.aide/docs/versions.json`, `.aide/agents/versions.json`, etc.). This preserves the existing progressive-disclosure structure — an agent looking at `.aide/agents/` sees everything about agents without reading the docs directory. A unified registry would violate cascading domain structure.
+
+**run.ts orchestrates the four content types sequentially with fail-fast.** The spec requires "archive failures block the publish" — if agents fail, commands and skills should not be attempted. Sequential execution with fail-fast matches the existing pattern in the current `archiveDocs` and preserves the atomic publish guarantee.

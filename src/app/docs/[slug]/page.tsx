@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import renderHub from "@/service/docs/renderHub";
 import renderCanonical from "@/service/docs/renderCanonical";
+import docMeta from "@/service/docs/docMeta";
 import DocsPage from "@/components/DocsPage";
 
 type Props = {
@@ -15,15 +16,16 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const doc = await renderCanonical({ slug });
+  const meta = docMeta(slug, doc.citationMeta.publishedAt);
 
   return {
-    title: `${doc.title} — AIDE`,
-    description: `Canonical AIDE methodology document: ${doc.title}`,
+    title: meta.title,
+    description: meta.description,
     openGraph: {
-      title: `${doc.title} — AIDE`,
-      description: `Canonical AIDE methodology document: ${doc.title}`,
-      url: `https://aidemd.dev/docs/${slug}`,
-      siteName: "AIDE",
+      title: meta.title,
+      description: meta.description,
+      url: meta.canonicalUrl,
+      siteName: meta.siteName,
       type: "article",
     },
   };
@@ -32,5 +34,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DocPage({ params }: Props) {
   const { slug } = await params;
   const doc = await renderCanonical({ slug });
-  return <DocsPage doc={doc} />;
+  const meta = docMeta(slug, doc.citationMeta.publishedAt);
+
+  return (
+    <>
+      <script
+        id={`ld-doc-${slug}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(meta.jsonLd) }}
+      />
+      <DocsPage doc={doc} />
+    </>
+  );
 }

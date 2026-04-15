@@ -1,4 +1,4 @@
-import type { BuildManifestEntry } from "@/types/docs";
+import type { BuildManifestEntry, ContentType } from "@/types/docs";
 import type { FeedEntry } from "@/types/feed";
 import saveToWayback from "./saveToWayback";
 import updateManifest from "./updateManifest";
@@ -9,6 +9,7 @@ export type ArchiveDocInput = {
   slug: string;
   sourceCommit: string;
   publishedAt: string;
+  contentType: ContentType;
 };
 
 /**
@@ -27,7 +28,7 @@ export type ArchiveDocInput = {
 export default async function archiveDoc(
   input: ArchiveDocInput
 ): Promise<BuildManifestEntry> {
-  const { versionedUrl, slug, sourceCommit, publishedAt } = input;
+  const { versionedUrl, slug, sourceCommit, publishedAt, contentType } = input;
 
   // Step 1: Submit to Wayback — throws on 4th failure, blocking the publish
   const waybackUrl = await saveToWayback(versionedUrl);
@@ -44,7 +45,7 @@ export default async function archiveDoc(
   // Step 3: Append to public/feed.xml
   const file = slug.includes("@") ? `${slug.split("@")[0]}.md` : `${slug}.md`;
   const summary =
-    `aidemd.dev docs: ${file} updated. ` +
+    `aidemd.dev ${contentType}: ${file} updated. ` +
     `Source commit ${sourceCommit}. ` +
     `Live: ${versionedUrl}. ` +
     `Archived: ${waybackUrl}.`;

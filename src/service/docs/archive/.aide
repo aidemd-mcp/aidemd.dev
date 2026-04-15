@@ -1,19 +1,19 @@
 ---
 scope: src/service/docs/archive/
 intent: >
-  On every canonical doc publish, guarantee that (a) a Wayback Machine
-  Save Page Now snapshot exists and its URL is committed back to the
-  build manifest so the next build can render it in the page header,
-  and (b) an RSS/Atom feed entry has been written naming the change
-  and linking to both the live and archived URLs. This makes every
-  version of every canonical doc citable from outside aidemd.dev
-  itself, which is the forcing function behind the site's claim to
-  be a durable canonical record. ActivityPub / Fediverse fan-out is
-  deferred to v1.1.
+  On every canonical page publish — docs, agents, commands, and skills —
+  guarantee that (a) a Wayback Machine Save Page Now snapshot exists and
+  its URL is committed back to the build manifest so the next build can
+  render it in the page header, and (b) an RSS/Atom feed entry has been
+  written naming the change and linking to both the live and archived
+  URLs. This makes every version of every canonical page citable from
+  outside aidemd.dev itself, which is the forcing function behind the
+  site's claim to be a durable canonical record. ActivityPub / Fediverse
+  fan-out is deferred to v1.1.
 outcomes:
   desired:
-    - Every canonical doc publish triggers a Wayback Save Page Now call; the resulting archive URL is stored in `build-manifest.json` committed back to the repo, and the next build reads the manifest and renders the archive URL in the page header.
-    - Every publish writes an RSS/Atom feed entry with a fixed template: "aidemd.dev docs: <file> updated. Source commit <sha>. Live: <url>. Archived: <wayback-url>."
+    - Every canonical page publish triggers a Wayback Save Page Now call; the resulting archive URL is stored in `build-manifest.json` committed back to the repo, and the next build reads the manifest and renders the archive URL in the page header.
+    - "Every publish writes an RSS/Atom feed entry with a fixed template: aidemd.dev <type>: <file> updated. Source commit <sha>. Live: <url>. Archived: <wayback-url>. where <type> is one of docs, agents, commands, or skills."
     - Archive failures block the publish. Three retries on Wayback errors with exponential backoff; if retries exhaust, the publish aborts and the build reports the failure explicitly.
     - The RSS feed file at `/public/feed.xml` validates against the Atom or RSS 2.0 specification (required elements present, valid dates, stable GUIDs tied to versioned URLs).
     - The previous-version snapshot remains citable after a new version publishes; the manifest is append-only for published versions, and the feed entries are append-only.

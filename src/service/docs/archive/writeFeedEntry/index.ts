@@ -4,8 +4,8 @@ import type { FeedEntry } from "@/types/feed";
 
 const FEED_PATH = path.resolve(process.cwd(), "public/feed.xml");
 
-const FEED_ID = "https://aidemd.dev/docs/feed";
-const FEED_TITLE = "aidemd.dev docs";
+const FEED_ID = "https://aidemd.dev/feed";
+const FEED_TITLE = "aidemd.dev canonical pages";
 const ATOM_NS = "http://www.w3.org/2005/Atom";
 
 /**

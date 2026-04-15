@@ -2,15 +2,17 @@ import type { Metadata } from "next";
 import LandingPage from "@/components/LandingPage";
 
 export const metadata: Metadata = {
-  title: "AIDEMD — Code is ephemeral. Intent is law.",
+  title:
+    "AIDE: Autonomous Intent-Driven Engineering — Code is ephemeral. Intent is law.",
   description:
-    "Intent in, working code out. Eight specialized agents and a persistent brain turn what you describe into what you ship. Self-serve install via npx.",
+    "AIDE (Autonomous Intent-Driven Engineering) is a software methodology where intent specs cascade through a pipeline of specialized AI agents to produce production-quality code.",
   openGraph: {
-    title: "AIDEMD — Code is ephemeral. Intent is law.",
+    title:
+      "AIDE: Autonomous Intent-Driven Engineering — Code is ephemeral. Intent is law.",
     description:
-      "Intent in, working code out. Eight specialized agents and a persistent brain turn what you describe into what you ship. Self-serve install via npx.",
+      "AIDE (Autonomous Intent-Driven Engineering) is a software methodology where intent specs cascade through a pipeline of specialized AI agents to produce production-quality code.",
     url: "https://aidemd.dev",
-    siteName: "AIDEMD",
+    siteName: "AIDE",
     type: "website",
   },
 };

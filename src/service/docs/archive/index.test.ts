@@ -26,6 +26,7 @@ const BASE_INPUT = {
   slug: "aide-spec",
   sourceCommit: "abc1234",
   publishedAt: "2026-01-01T00:00:00.000Z",
+  contentType: "docs" as const,
 };
 
 const WAYBACK_URL =
@@ -115,5 +116,20 @@ describe("archiveDoc", () => {
 
     await archiveDoc(BASE_INPUT);
     expect(callOrder).toEqual(["saveToWayback", "updateManifest", "writeFeedEntry"]);
+  });
+
+  it("contentType is reflected in feed summary: agents produces 'aidemd.dev agents:'", async () => {
+    const agentsInput = {
+      ...BASE_INPUT,
+      versionedUrl: "/agents/aide-architect?v=abc1234",
+      slug: "aide-architect",
+      contentType: "agents" as const,
+    };
+
+    await archiveDoc(agentsInput);
+
+    const [feedEntry] = mockWriteFeedEntry.mock.calls[0];
+    expect(feedEntry.summary).toMatch(/aidemd\.dev agents:/);
+    expect(feedEntry.summary).not.toMatch(/aidemd\.dev docs:/);
   });
 });
