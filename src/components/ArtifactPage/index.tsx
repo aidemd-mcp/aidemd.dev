@@ -41,7 +41,9 @@ const ArtifactPage = ({ artifact, seo, jsonLdId }: ArtifactPageProps) => {
           <dl className="flex flex-col gap-2 text-sm font-mono text-zinc-400">
             <div className="flex gap-3">
               <dt className="text-zinc-500 flex-none">Published</dt>
-              <dd>{publishedAt}</dd>
+              <dd>
+                <time dateTime={publishedAt}>{publishedAt}</time>
+              </dd>
             </div>
 
             {commitSha && (

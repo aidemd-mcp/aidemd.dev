@@ -1,0 +1,30 @@
+---
+intent:
+  - "Every rendered page carries a unique, descriptive title tag and meta description that a searcher can read in a SERP snippet and understand what the artifact does without clicking; no two pages share the same title or description."
+  - "Every artifact page carries JSON-LD structured data with accurate title, description, author (TetsuKodai Group LLC), publisher, and datePublished fields; the docs index carries WebSite and Organization schema."
+  - "Every publish writes an RSS/Atom feed entry with a fixed template: aidemd.dev <type>: <file> updated. Source commit <sha>. Live: <url>. Archived: <wayback-url>. where <type> is one of docs, agents, commands, or skills."
+misalignment:
+  - implementation-drift
+---
+
+## Issues
+
+- [x] `src/service/docs/docMeta/index.ts` (all title strings) and `src/service/scaffold/artifactMeta/index.ts` (all title strings) — Every page title uses an em dash `—` as the separator, but the spec's strategy and good examples explicitly specify double dash `--` (e.g., `AIDE Architect -- AIDE: Autonomous Intent-Driven Engineering`). The pattern is applied consistently across all 34 pages so no title is near-duplicate, but every title deviates from the specified format.
+  Traces to: desired outcome — "unique, descriptive title tag" (the format pattern is defined in the spec strategy and good examples as `--`)
+  Misalignment: implementation-drift
+
+- [x] `src/components/ArtifactPage/index.tsx` (line 44) — The `publishedAt` date string is rendered in a bare `<dd>` element. The spec strategy explicitly lists `<time>` as the required HTML element for dates (`<time>` for dates). The ISO 8601 string from git history is well-suited for a `datetime` attribute; omitting `<time>` makes the date machine-unreadable to screen readers and crawlers.
+  Traces to: desired outcome — JSON-LD structured data with accurate datePublished (semantic HTML contract, spec strategy semantic HTML section)
+  Misalignment: implementation-drift
+
+- [x] `src/service/docs/archive/writeFeedEntry/index.ts` (line 20, JSDoc) — The JSDoc summary template reads `"aidemd.dev docs: <file> updated..."` with "docs" hardcoded, but `writeFeedEntry` does not construct the summary — the caller (`archiveDoc`) does, using the parameterized `contentType` field. The spec outcome names the `<type>` placeholder explicitly as a requirement. The JSDoc misrepresents the function contract, implying the template is docs-only and fixed to "docs", which contradicts both the spec and the actual behavior verified by the `contentType is reflected in feed summary` test.
+  Traces to: desired outcome (archive spec) — "Every publish writes an RSS/Atom feed entry with a fixed template: aidemd.dev <type>: <file> updated..."
+  Misalignment: implementation-drift
+
+## Retro
+
+All three issues are documentation/format drift that passed tests because tests do not assert the `--` vs `—` separator character, do not assert `<time>` element presence, and the JSDoc in `writeFeedEntry` is not tested at all. Two patterns would have caught these earlier:
+
+1. **Spec-vs-implementation character-level diffing at plan stage.** The plan faithfully reproduced the `--` separator in its step text (step 4a, step 41 of the scaffold service description) but the implementor silently substituted `—`. A plan-stage note explicitly flagging "use literal double-hyphen, not em dash" would have made this unambiguous. This is a recurring pattern where typography choices get silently upgraded during implementation — the plan stage should annotate non-obvious literal constraints.
+
+2. **Semantic HTML checklist gap.** The plan's audit checklist (step 12) checked `<article>`, `<nav>`, `<section>` but omitted `<time>` for dates, even though the spec strategy named it. When the plan's checklist is derived from the strategy, every semantic HTML element named in the strategy must appear in the checklist. The aligner should catch omissions between strategy and plan checklists.

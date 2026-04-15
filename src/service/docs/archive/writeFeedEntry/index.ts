@@ -16,12 +16,14 @@ const ATOM_NS = "http://www.w3.org/2005/Atom";
  * If the file exists, inserts the new entry before the closing </feed> tag.
  * The feed and its entries are append-only — existing entries are never mutated.
  *
- * Summary template (fixed, no variation):
- *   "aidemd.dev docs: <file> updated. Source commit <sha>. Live: <url>. Archived: <wayback-url>."
+ * The caller is responsible for constructing `entry.summary` before passing it
+ * in. The expected template (enforced by the caller, not this function) is:
+ *   "aidemd.dev <type>: <file> updated. Source commit <sha>. Live: <url>. Archived: <wayback-url>."
+ * where <type> is one of: docs, agents, commands, or skills.
  *
  * GUID is the versioned URL (stable and unique per published version).
  *
- * @param entry - The feed entry to append
+ * @param entry - The feed entry to append, including a pre-constructed summary
  */
 export default async function writeFeedEntry(entry: FeedEntry): Promise<void> {
   const entryXml = renderEntry(entry);
