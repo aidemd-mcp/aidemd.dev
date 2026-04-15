@@ -1,8 +1,8 @@
 {
   "index": {
-    "publishedAt": "2026-04-13T17:15:54-07:00",
-    "sourceCommit": "027f166",
-    "previousCommit": "b859854"
+    "publishedAt": "2026-04-14T13:57:05-07:00",
+    "sourceCommit": "164d27e",
+    "previousCommit": "027f166"
   },
   "aide-spec": {
     "publishedAt": "2026-04-13T13:47:06-07:00",
@@ -30,9 +30,9 @@
     "previousCommit": "2d6ecdd"
   },
   "plan-aide": {
-    "publishedAt": "2026-04-13T17:15:54-07:00",
-    "sourceCommit": "027f166",
-    "previousCommit": "a1606e0"
+    "publishedAt": "2026-04-13T17:55:11-07:00",
+    "sourceCommit": "c450780",
+    "previousCommit": "027f166"
   },
   "todo-aide": {
     "publishedAt": "2026-04-13T13:47:06-07:00",

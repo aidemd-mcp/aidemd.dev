@@ -11,7 +11,12 @@
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_resize",
       "mcp__aide__aide_validate",
-      "mcp__aide__aide_scaffold"
+      "mcp__aide__aide_scaffold",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_run_code",
+      "mcp__playwright__browser_press_key",
+      "WebFetch(domain:archive.org)",
+      "mcp__aide__aide_upgrade"
     ]
   }
 }
