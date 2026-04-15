@@ -7,14 +7,17 @@ const InstallFooter = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-2">
             <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2">
-              <code className="text-sm text-zinc-200 font-mono">npx @aidemd-mcp/server@latest init</code>
+              <code className="text-sm text-zinc-200 font-mono">
+                npx @aidemd-mcp/server@latest init
+              </code>
             </div>
-            <Link
-              href="/#install"
+            <a
+              target="_blank"
+              href="https://www.npmjs.com/package/@aidemd-mcp/server"
               className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               See full install instructions
-            </Link>
+            </a>
           </div>
           <Link
             href="/docs"
