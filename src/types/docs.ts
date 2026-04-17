@@ -4,6 +4,8 @@ export type CitationMeta = {
   publishedAt: string;
   sourceCommit: string;
   versionedUrl: string;
+  /** Short SHA of the prior version from `.aide/versions.json` upstream canonical history. */
+  previousCommit?: string;
   waybackUrl?: string;
 };
 

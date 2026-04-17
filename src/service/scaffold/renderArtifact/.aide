@@ -1,0 +1,121 @@
+---
+scope: src/service/scaffold/renderArtifact/
+description: Rendering pipeline for scaffold artifact pages (commands, agents, skills) with citation metadata sourced from upstream canonical history in versions.json.
+intent: >
+  Transform each scaffold artifact source file (command, agent, or skill
+  shipped by the MCP server during aide_upgrade) into a rendered HTML page
+  with citation metadata — publication date, source-commit SHA, stable
+  versioned URL — derived exclusively from `.aide/versions.json`, the
+  upstream canonical repo's commit history baked into a local file at
+  upgrade time. The local repo is a display layer that renders synced
+  copies; the canonical repo is the authority for version history and
+  citation dates. A reader citing an artifact page must be able to trust
+  that the displayed publication date reflects when the artifact was
+  authored or revised upstream, not when it was synced into this repo.
+outcomes:
+  desired:
+    - "Every rendered artifact page receives citation metadata where `publishedAt`, `sourceCommit`, and previous-version URL are derived from the `versions.json` entry keyed by the artifact's category-prefixed path — not from local git history, filesystem mtime, or any other source that tracks sync operations rather than upstream authorship."
+    - "The key lookup maps the artifact's kind and slug to the correct `versions.json` key using the category prefix convention (`commands/`, `agents/`, `skills/`) matching the file's location relative to `.claude/`."
+    - "The build fails loudly with the artifact key name and a diagnostic message if `versions.json` is missing or contains no entry for the artifact being rendered — a missing entry means `aide_upgrade` was not run or the artifact is untracked upstream, and both are build-blocking errors."
+    - The markdown rendering pipeline reuses the same strict renderer the docs service uses, applying the same fixed plugin set with no artifact-specific extensions or content injection.
+    - The pipeline runs at build time only — no runtime fetch, no network call, no external dependency beyond the local filesystem.
+  undesired:
+    - "Local git history (`git log`, `git blame`) used as the source for citation dates or commit SHAs. Local commits track `aide_upgrade` sync operations, not artifact authorship — using them produces publication dates that reset to the sync date every time `aide_upgrade` runs, making it impossible to establish when the artifact was originally published or last revised upstream."
+    - A silent fallback when versions.json is missing or lacks an entry — rendering the page with empty or placeholder citation metadata, or falling back to local git history as a best effort. The fallback masks a broken upgrade pipeline and ships misleading citation data.
+    - A key-mapping scheme that diverges from the convention used by the sibling docs rendering service. Both services consume the same versions.json file; if the key derivation logic differs between them, one will silently fail to find entries the other resolves correctly.
+    - "Runtime reads or network calls for citation metadata. The `versions.json` file is a local artifact shipped by the MCP; the build must work fully offline."
+---
+
+## Context
+
+This module is the scaffold counterpart to `src/service/docs/renderCanonical/`.
+Both services render content shipped by the MCP server during `aide_upgrade` and
+both derive citation metadata from the same `.aide/versions.json` file — upstream
+canonical repo commit history baked into a local artifact at upgrade time. The
+docs service renders canonical methodology documentation (`.aide/docs/*.md`); this
+service renders the three scaffold artifact types — commands, agents, and skills —
+that `aide_init` installs into a project's `.claude/` directory.
+
+The bug that drove this spec: `extractArtifactCitationMeta` used `git log` against
+the local source file to derive `publishedAt` and `sourceCommit`. Local git history
+only records when `aide_upgrade` synced the file, not when the artifact was authored
+or revised upstream. The result: every artifact page displayed the sync date as the
+publication date, and every `aide_upgrade` run reset all citation dates — destroying
+the publication history the citation metadata exists to preserve.
+
+## Strategy
+
+**Read `.aide/versions.json` at build time using the same pattern as the docs
+service.** The file is a flat object keyed by category-prefixed path. Each entry
+contains `publishedAt` (ISO 8601 timestamp), `sourceCommit` (short SHA), and
+optionally `previousCommit` (short SHA of the prior version). The key for a given
+artifact is derived from its kind and slug using the category prefix convention:
+
+| Kind | Slug | versions.json key |
+|------|------|-------------------|
+| `command` | `aide-init` | `commands/aide/init` |
+| `agent` | `aide-architect` | `agents/aide/aide-architect` |
+| `skill` | `study-playbook` | `skills/study-playbook` |
+
+The key derivation must follow the same structural convention the MCP server uses
+when generating the file — category prefix matching the `.claude/` subdirectory
+structure, not an arbitrary mapping.
+
+**Fail loudly on missing file or missing entry.** If `.aide/versions.json` does not
+exist, the build fails with a message naming the file path and advising to run
+`aide_upgrade`. If the file exists but contains no entry for the artifact's key, the
+build fails naming the key and the artifact kind/slug. There is no fallback to `git
+log`, no fallback to empty metadata, no graceful degradation. A missing entry is a
+build-blocking error.
+
+**Reuse the same `renderMarkdown` from the docs service.** The artifact source files
+are markdown with the same fixed plugin set (GFM tables, fenced code, inline code,
+headings, lists, links, emphasis, frontmatter extraction). No artifact-specific
+rendering extensions.
+
+## Good examples
+
+A reader visits the "aide init" command page. The citation header shows:
+
+> **Published** 2026-04-12T15:15:14-07:00 · **Source commit** `a9e55a4`
+
+These values match the `commands/aide/init` entry in `.aide/versions.json` exactly.
+They reflect when the command was authored and last revised in the upstream canonical
+repo, not when the file was synced into this project. A week later, `aide_upgrade`
+runs and syncs newer versions of other files but doesn't touch the init command. The
+init page still shows the same publication date — it hasn't been revised, so the
+date doesn't change.
+
+A reader visits the "aide-architect" agent page. The citation header shows the
+`publishedAt` and `sourceCommit` from the `agents/aide/aide-architect` entry in
+versions.json. The values are different from the local git log of the file at
+`.claude/agents/aide/aide-architect.md` because the local commit reflects the
+`aide_upgrade` sync, not the upstream authorship.
+
+## Bad examples
+
+The "aide init" page displays `sourceCommit: 1a06691` and
+`published: 2026-04-12T15:46:06-07:00` — values from local `git log`. The versions.json
+entry for `commands/aide/init` shows `sourceCommit: a9e55a4` and
+`publishedAt: 2026-04-12T15:15:14-07:00`. The page displays the wrong commit and the
+wrong date because `extractArtifactCitationMeta` shells out to `git log` instead of
+reading versions.json.
+
+Every time `aide_upgrade` runs, ALL artifact pages' publication dates reset to the sync
+timestamp. A command that hasn't been revised in a month suddenly shows "Published today."
+The citation history is destroyed on every upgrade.
+
+`versions.json` is missing because the developer hasn't run `aide_upgrade` yet. Instead
+of failing the build, the page silently renders with today's date and an empty commit SHA.
+The developer doesn't notice, the page ships with fabricated citation metadata, and a
+reader citing the page gets a date that reflects the build machine's clock, not the
+artifact's authorship history.
+
+## References
+
+- `src/service/docs/renderCanonical/.aide` — sibling spec governing the docs rendering
+  service, which already reads from `.aide/versions.json` correctly. The same antipattern
+  (local git ≠ upstream authorship) and the same fix pattern (read versions.json, fail
+  loudly) apply to this module.
+- `.aide/versions.json` — the upstream canonical version history file shipped by the MCP
+  server. Contains entries for all delivered files keyed by category-prefixed path.

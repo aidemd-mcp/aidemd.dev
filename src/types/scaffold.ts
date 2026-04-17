@@ -17,10 +17,12 @@ export type ScaffoldArtifact = {
   contentHtml: string;
   /** Raw markdown source text. */
   sourceText: string;
-  /** ISO 8601 date string sourced from git history, e.g. "2026-04-11T17:38:56-07:00". */
+  /** ISO 8601 date string sourced from .aide/versions.json upstream canonical history, e.g. "2026-04-11T17:38:56-07:00". */
   publishedAt: string;
-  /** Short (7-char) SHA of the git commit that last modified the source file. */
+  /** Short (7-char) SHA sourced from .aide/versions.json upstream canonical history. */
   commitSha: string;
+  /** Short SHA of the prior version's commit, sourced from .aide/versions.json upstream canonical history. Optional because not every entry has a prior version. */
+  previousCommit?: string;
 };
 
 /** A single entry in the scaffold tree displayed on the docs index. */

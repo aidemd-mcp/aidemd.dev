@@ -20,10 +20,14 @@ type ArtifactPageProps = {
  * objects; this component handles the rendering only.
  */
 const ArtifactPage = ({ artifact, seo, jsonLdId }: ArtifactPageProps) => {
-  const { publishedAt, commitSha } = artifact;
+  const { publishedAt, commitSha, previousCommit } = artifact;
+  const pathname = new URL(seo.canonicalUrl).pathname;
   const citeUrl = commitSha
-    ? `${SITE_URL}${new URL(seo.canonicalUrl).pathname}?v=${commitSha}`
+    ? `${SITE_URL}${pathname}?v=${commitSha}`
     : seo.canonicalUrl;
+  const previousVersionUrl = previousCommit
+    ? `${SITE_URL}${pathname}?v=${previousCommit}`
+    : undefined;
 
   const jsonLdWithDate = {
     ...seo.jsonLd,
@@ -66,6 +70,20 @@ const ArtifactPage = ({ artifact, seo, jsonLdId }: ArtifactPageProps) => {
                 </a>
               </dd>
             </div>
+
+            {previousVersionUrl && (
+              <div className="flex gap-3">
+                <dt className="text-zinc-500 flex-none">Previous version</dt>
+                <dd>
+                  <a
+                    href={previousVersionUrl}
+                    className="text-zinc-300 hover:text-zinc-100 transition-colors underline underline-offset-2"
+                  >
+                    {previousVersionUrl}
+                  </a>
+                </dd>
+              </div>
+            )}
           </dl>
         </header>
 

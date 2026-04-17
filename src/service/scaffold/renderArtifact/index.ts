@@ -37,7 +37,7 @@ export default async function renderArtifact({
 
   const contentHtml = await renderMarkdown(sourceText, sourcePath);
   const meta = artifactMeta({ slug, kind });
-  const { publishedAt, sourceCommit } = extractArtifactCitationMeta(sourcePath);
+  const { publishedAt, sourceCommit, previousCommit } = extractArtifactCitationMeta({ slug, kind });
 
   return {
     slug,
@@ -48,5 +48,6 @@ export default async function renderArtifact({
     sourceText,
     publishedAt,
     commitSha: sourceCommit,
+    previousCommit,
   };
 }

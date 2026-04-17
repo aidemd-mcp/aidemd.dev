@@ -1,0 +1,21 @@
+---
+description: >
+  ArtifactPage does not construct or render the previous-version URL from
+  previousCommit, violating outcomes.desired[0].
+intent:
+  - "outcomes.desired[0]: publishedAt, sourceCommit, AND previous-version URL must be derived from versions.json and surfaced on the rendered page"
+misalignment:
+  - implementation-drift
+---
+
+# QA Re-alignment Document
+
+## Issues
+
+- [x] `src/components/ArtifactPage/index.tsx` line 23 — `previousCommit` is present on `ScaffoldArtifact` and plumbed all the way to the page component, but `ArtifactPage` destructures only `{ publishedAt, commitSha }` and never reads `previousCommit`. No previous-version URL is constructed or rendered. A reader visiting an artifact page has no way to navigate to the prior version, and `outcomes.desired[0]`'s "previous-version URL" criterion is unmet end-to-end.
+  - Traces to: `outcomes.desired[0]` — "previous-version URL are derived from the `versions.json` entry keyed by the artifact's category-prefixed path"
+  - Misalignment: `implementation-drift` — the data was correctly plumbed (SHA reaches the component), but the final rendering step — constructing `/<kind>/<slug>?v=${previousCommit}` and displaying it as a "Previous version" citation link — was not implemented. The component already constructs `citeUrl` from `commitSha` using the same pattern; the previous-version URL should follow the same convention.
+
+## Retro
+
+The previous QA fix correctly identified and resolved the data-plumbing gap (SHA not read, not returned, not typed). The implementor addressed that gap completely. The remaining failure is a last-mile rendering gap: the `ArtifactPage` component is the only place where the URL can be constructed and displayed, and it was not updated as part of the fix. A QA pass that checks not just the service layer but the full rendering pipeline — including the page component that consumes `ScaffoldArtifact` — would have caught this in the same fix cycle. The check to run: does the rendered HTML contain any link derived from `previousCommit`? If no, the outcome is not met regardless of how clean the service layer is.

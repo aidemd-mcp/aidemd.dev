@@ -8,7 +8,7 @@ import extractCitationMeta from "./index";
 const mockReadFileSync = vi.mocked(readFileSync);
 
 const VERSIONS_FIXTURE = JSON.stringify({
-  "aide-spec": {
+  "docs/aide-spec": {
     publishedAt: "2026-04-11T20:06:53-07:00",
     sourceCommit: "c32e887",
   },

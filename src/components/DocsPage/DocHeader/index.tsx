@@ -9,9 +9,13 @@ type DocHeaderProps = {
 };
 
 const DocHeader = ({ citationMeta }: DocHeaderProps) => {
-  const { publishedAt, sourceCommit, versionedUrl, waybackUrl } = citationMeta;
+  const { publishedAt, sourceCommit, versionedUrl, previousCommit, waybackUrl } =
+    citationMeta;
 
   const citeUrl = `${SITE_URL}${versionedUrl}`;
+  const previousVersionUrl = previousCommit
+    ? `${SITE_URL}${versionedUrl.replace(/\?v=.*$/, `?v=${previousCommit}`)}`
+    : undefined;
 
   return (
     <header className="mb-10 pb-8 border-b border-zinc-800">
@@ -39,6 +43,20 @@ const DocHeader = ({ citationMeta }: DocHeaderProps) => {
             </a>
           </dd>
         </div>
+
+        {previousVersionUrl && (
+          <div className="flex gap-3">
+            <dt className="text-zinc-500 flex-none">Previous version</dt>
+            <dd>
+              <a
+                href={previousVersionUrl}
+                className="text-zinc-300 hover:text-zinc-100 transition-colors underline underline-offset-2"
+              >
+                {previousVersionUrl}
+              </a>
+            </dd>
+          </div>
+        )}
 
         {waybackUrl && (
           <div className="flex gap-3">

@@ -1,0 +1,164 @@
+---
+intent: >
+  Replace extractArtifactCitationMeta so it reads citation metadata from
+  .aide/versions.json instead of shelling out to git log, matching the
+  pattern already established by the sibling docs service. Remove stale
+  per-category versions.json stubs.
+---
+
+## Plan
+
+### 1. Rewrite `extractArtifactCitationMeta` to read from versions.json
+- [x] Rewrite implementation
+
+Read:
+- `coding-playbook/foundations/conventions` — naming, JSDoc, early returns
+- `coding-playbook/services/service-layer` — service contract (throw on error, plain data out)
+
+**Files to modify:**
+- `src/service/scaffold/renderArtifact/extractArtifactCitationMeta/index.ts` — full rewrite
+
+**What to do:**
+
+Replace the current `git log` + `execSync` implementation with a `readFileSync`-based
+lookup against `.aide/versions.json`. The function signature changes from accepting
+`sourcePath: string` to accepting `{ slug, kind }` matching the orchestrator's existing
+variables.
+
+The function must:
+- Read and parse `.aide/versions.json` using `readFileSync` (same as the sibling at
+  `src/service/docs/renderCanonical/extractCitationMeta/index.ts`)
+- Derive the versions.json key from `kind` and `slug` using a `resolveVersionKey` helper
+  (defined in the same file — single-helper exception, since the mapping is small and
+  tightly coupled to the lookup)
+- Key derivation rules (derived from the actual versions.json keys):
+  - `kind === "command"` and `slug === "aide"`: key is `commands/aide/aide`
+  - `kind === "command"` and `slug !== "aide"`: strip `aide-` prefix, key is `commands/aide/{remainder}`
+  - `kind === "agent"`: key is `agents/aide/{slug}`
+  - `kind === "skill"`: key is `skills/{slug}`
+- Throw with a diagnostic message naming the file path if versions.json is missing
+- Throw with a diagnostic message naming the key and kind/slug if no entry exists
+- Return `{ publishedAt, sourceCommit }` (same return type shape as today)
+
+**Existing helper to reuse:** Follow the same structural pattern as
+`src/service/docs/renderCanonical/extractCitationMeta/index.ts` — same file-read
+approach, same error message convention (mention `aide_upgrade`), same return shape.
+
+**No fallback.** The current implementation's silent fallback to `new Date()` and empty
+string is explicitly an undesired outcome in the spec. Both error paths must throw.
+
+### 2. Update the orchestrator call site
+- [x] Update call signature
+
+Read:
+- `coding-playbook/foundations/conventions` — variable naming from function returns, JSDoc
+
+**Files to modify:**
+- `src/service/scaffold/renderArtifact/index.ts` — change the call to `extractArtifactCitationMeta`
+
+**What to do:**
+
+The orchestrator currently calls `extractArtifactCitationMeta(sourcePath)`. Change it to
+`extractArtifactCitationMeta({ slug, kind })` to match the new signature. Both `slug` and
+`kind` are already in scope as destructured parameters of `renderArtifact`.
+
+The return value destructuring `{ publishedAt, sourceCommit }` stays the same — the
+return type shape is unchanged.
+
+No other changes to the orchestrator. The pipeline comment in the JSDoc can optionally
+drop the `sourcePath` arrow into `extractArtifactCitationMeta` since the function no
+longer receives a path, but the pipeline shape itself is unchanged.
+
+### 3. Write tests for `extractArtifactCitationMeta`
+- [x] Write co-located Vitest tests
+
+Read:
+- `coding-playbook/workflow/testing` — co-located tests, mocking with vi.mock, factory functions, parameterized tests
+
+**Files to create:**
+- `src/service/scaffold/renderArtifact/extractArtifactCitationMeta/index.test.ts`
+
+**What to do:**
+
+Write co-located Vitest tests following the pattern at
+`src/service/docs/renderCanonical/extractCitationMeta/index.test.ts`. Mock `node:fs`
+with `vi.mock`. Test cases:
+
+- **Happy path — command with aide- prefix:** slug `aide-init`, kind `command` resolves
+  key `commands/aide/init` and returns correct `publishedAt` and `sourceCommit`
+- **Happy path — root aide command:** slug `aide`, kind `command` resolves key
+  `commands/aide/aide`
+- **Happy path — agent:** slug `aide-architect`, kind `agent` resolves key
+  `agents/aide/aide-architect`
+- **Happy path — skill:** slug `study-playbook`, kind `skill` resolves key
+  `skills/study-playbook`
+- **Throws when versions.json is missing:** mock `readFileSync` to throw, assert error
+  message contains `aide_upgrade`
+- **Throws when entry is missing:** mock `readFileSync` to return `{}`, assert error
+  message contains the derived key
+
+Use `it.each` for the four happy-path key-derivation variants since they test the same
+assertion shape across different inputs.
+
+### 4. Delete stale per-category versions.json stubs
+- [x] Delete stub files
+
+Read:
+- `coding-playbook/foundations/conventions` — code hygiene (no dead code)
+
+**Files to delete:**
+- `.aide/commands/versions.json`
+- `.aide/agents/versions.json`
+- `.aide/skills/versions.json`
+
+These are empty `{}` stubs left over from the old per-category format. The canonical
+source is now the single `.aide/versions.json` file. Leaving them in place risks
+confusion — a future reader or agent might assume they are the data source.
+
+### 5. Update ScaffoldArtifact type JSDoc
+- [x] Update JSDoc comments
+
+Read:
+- `coding-playbook/foundations/conventions` — JSDoc accuracy
+
+**Files to modify:**
+- `src/types/scaffold.ts` — update two JSDoc comments
+
+**What to do:**
+
+The JSDoc on `publishedAt` currently says "sourced from git history" and `commitSha`
+says "SHA of the git commit that last modified the source file." Both are now incorrect.
+Update them to reference versions.json / upstream canonical history instead of git.
+
+## Decisions
+
+1. **Single-helper exception for `resolveVersionKey`.** The key derivation logic is 5-6
+   lines and is exclusively coupled to the versions.json lookup — it has no other caller
+   and no independent testability value. Extracting it into its own subfolder would add
+   folder ceremony for a trivial mapping. It lives as a named function above the default
+   export in the same file. The `it.each` test cases in step 3 implicitly cover it
+   through the public API. Convention ref: progressive-disclosure.md single-helper
+   exception.
+
+2. **Signature change from `sourcePath` to `{ slug, kind }`.** The current function
+   accepts `sourcePath` because it passes it to `git log`. The new function needs `slug`
+   and `kind` to derive the versions.json key. Accepting `sourcePath` and reverse-
+   engineering slug/kind from it would be fragile and would duplicate the mapping logic
+   already in `resolveSourcePath`. Using `{ slug, kind }` is cleaner — both values are
+   already available at the call site. Convention ref: service-layer (single input
+   object), data-flow (derive don't trust).
+
+3. **No `versionedUrl` in return type.** The sibling docs service returns a
+   `versionedUrl` field in its `CitationMeta`. The scaffold artifact type
+   (`ScaffoldArtifact`) does not have a `versionedUrl` field — it has `publishedAt` and
+   `commitSha`. Adding `versionedUrl` would be scope creep beyond what the spec
+   requests. The return type stays as `{ publishedAt, sourceCommit }`.
+
+4. **Synchronous `readFileSync`.** Matches the sibling implementation. The file is small
+   (< 10KB), read once per artifact at build time, and the synchronous read avoids
+   changing the function's sync/async contract which would ripple into the orchestrator.
+
+5. **Error messages mention `aide_upgrade`.** Both error paths (missing file, missing
+   entry) include "run aide_upgrade" in the message, matching the sibling service's
+   convention. This gives the developer an actionable next step rather than a bare
+   diagnostic.
