@@ -124,9 +124,9 @@
     "previousCommit": "d89d3cd"
   },
   "agents/aide/aide-architect": {
-    "publishedAt": "2026-04-13T17:55:11-07:00",
-    "sourceCommit": "c450780",
-    "previousCommit": "027f166"
+    "publishedAt": "2026-04-17T12:10:15-07:00",
+    "sourceCommit": "aa835fb",
+    "previousCommit": "c450780"
   },
   "agents/aide/aide-implementor": {
     "publishedAt": "2026-04-13T17:15:54-07:00",

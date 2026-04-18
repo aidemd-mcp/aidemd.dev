@@ -1,3 +1,5 @@
+[![AIDE](https://img.shields.io/badge/AIDE-intent--driven-0D9488?style=flat&logo=markdown&logoColor=white)](https://github.com/aidemd-mcp/server)
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/banner-dark.svg">

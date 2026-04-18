@@ -16,7 +16,8 @@
       "mcp__playwright__browser_run_code",
       "mcp__playwright__browser_press_key",
       "WebFetch(domain:archive.org)",
-      "mcp__aide__aide_upgrade"
+      "mcp__aide__aide_upgrade",
+      "mcp__playwright__browser_evaluate"
     ]
   }
 }
