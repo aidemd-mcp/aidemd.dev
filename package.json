@@ -8,7 +8,7 @@
     "start": "next start",
     "preview": "next build && npx serve out -p 4321",
     "test:unit": "vitest run",
-    "test:visual": "playwright test",
+    "test:visual": "playwright test --config=tests/playwright.config.ts",
     "docs:verify": "node scripts/docs-verify.mjs"
   },
   "dependencies": {
