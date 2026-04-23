@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — mirror the handoff exactly */
+  --color-bg: #0d0b08;
+  --color-card: #16120d;
+  --color-card-2: #0a0906;
+  --color-fg: #e8dfce;
+  --color-dim: rgba(232, 223, 206, 0.55);
+  --color-dim-2: rgba(232, 223, 206, 0.38);
+  --color-border: rgba(232, 223, 206, 0.12);
+  --color-hover: rgba(232, 223, 206, 0.05);
+  --color-accent: #3d6b4a;
+  --color-todo: #d6b25a;
+  --color-plan: #7aa6d6;
+  --color-danger: #ff5f56;
+
+  /* Typography */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Spacing scale — 4/8/12/14/16/18/20/24/28/32/40/44/60/64/80 px */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-18: 18px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-44: 44px;
+  --space-60: 60px;
+  --space-64: 64px;
+  --space-80: 80px;
+}
+
+/* Expo float animation — mascot hover */
+@keyframes expoFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* CLI cursor blink */
+@keyframes aideCursor {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Freeze all animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* Focus ring — visible, accent-colored */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

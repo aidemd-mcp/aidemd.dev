@@ -9,5 +9,20 @@ coverage/
 
 .claude/settings.local.json
 
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
 .DS_Store
 Thumbs.db
