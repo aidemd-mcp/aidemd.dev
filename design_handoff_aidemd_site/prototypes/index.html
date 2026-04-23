@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1400" />
+<title>AIDEMD.DEV — website explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; }
+  body { font-family: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="variant-editorial.jsx"></script>
+<script type="text/babel" src="variant-terminal.jsx"></script>
+<script type="text/babel" src="variant-linear.jsx"></script>
+<script type="text/babel" src="aidey.jsx"></script>
+<script type="text/babel" src="tweaks.jsx"></script>
+
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#3d6b4a",
+    "typePairing": "terminal"
+  }/*EDITMODE-END*/;
+
+  function App() {
+    const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
+
+    React.useEffect(() => {
+      const handler = (e) => {
+        if (!e.data) return;
+        if (e.data.type === '__activate_edit_mode') window.__setTweaksVisible?.(true);
+        if (e.data.type === '__deactivate_edit_mode') window.__setTweaksVisible?.(false);
+      };
+      window.addEventListener('message', handler);
+      window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+      return () => window.removeEventListener('message', handler);
+    }, []);
+
+    const updateTweaks = (updates) => {
+      setTweaks((t) => ({ ...t, ...updates }));
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: updates }, '*');
+    };
+
+    return (
+      <>
+        <DesignCanvas>
+          <DCSection id="sites" title="AIDEMD.DEV" subtitle="Three directions for the marketing + docs-adjacent site. Each is a full interactive prototype — scroll inside any artboard, click the pipeline stages, expand the intent tree, try the CLI demo. Expand any board to fullscreen with the icon on hover.">
+            <DCArtboard id="editorial" label="A · Editorial technical" width={1280} height={2600}>
+              <VariantEditorial tweaks={tweaks} />
+            </DCArtboard>
+            <DCArtboard id="terminal" label="B · Terminal / IDE" width={1280} height={2600}>
+              <VariantTerminal tweaks={tweaks} />
+            </DCArtboard>
+            <DCArtboard id="linear" label="C · Quiet confidence" width={1280} height={2600}>
+              <VariantLinear tweaks={tweaks} />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+        <TweaksPanel tweaks={tweaks} update={updateTweaks} />
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

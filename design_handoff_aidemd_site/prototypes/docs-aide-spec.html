@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>aide-spec — AIDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>html,body{margin:0;padding:0;background:#0d0b08}body{font-family:'JetBrains Mono',monospace}*{box-sizing:border-box}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="docs-shell.jsx"></script>
+<script type="text/babel">
+function Page() {
+  return (
+    <DocsShell current="aide-spec">
+      <div style={{ fontSize: 12, color: DOCS_PAL.dim, letterSpacing: 2, marginBottom: 10 }}>
+        <A href="Terminal.html">AIDE</A> / <A href="docs.html">Docs</A>
+      </div>
+      <H1>AIDE Spec</H1>
+      <DocMeta published="2026-04-13T13:47:06-07:00" commit="b859854" slug="aide-spec" />
+
+      <Lede>
+        <Strong>Autonomous Intent-Driven Engineering (AIDE)</Strong> puts intent at the center of everything. Not code, not tests, not prompts — intent. A short <C>.aide</C> doc lives next to the code it governs, and that doc is the contract. Architects plan from it. Implementors build from it. QA validates against it. When the intent changes, the code changes. When the code drifts from the intent, the code is wrong — full stop.
+      </Lede>
+      <P>
+        Across a project, these docs form a <Strong>cascading intent tree</Strong>: a hierarchy of <C>.aide</C> specs rooted at the project level, each child narrowing the intent of its parent. Agents navigate the tree from root to leaf to understand the full context behind any module.
+      </P>
+      <P>
+        The name is a double entendre. AIDE is also an <Strong>AI Domain Expert</Strong> — the pipeline includes a domain expert agent that fills the brain with domain knowledge and a strategist agent that distills that knowledge into the spec's body sections. A human domain expert can fill the brain the same way the agent would. But domain expertise is a perk, not the point. Intent is the first-class citizen; research is just one way to inform it.
+      </P>
+      <P>AIDE is a three-layer model:</P>
+      <UL>
+        <LI><Strong>The brain holds durable knowledge.</Strong> External to the project — a vault, an MCP memory store, a team wiki. Two kinds of content: domain research (what the module is supposed to do in the real world) and engineering conventions (how your team writes code — the coding playbook).</LI>
+        <LI><Strong>The .aide file holds the intent.</Strong> A short, structured brief living next to the orchestrator it governs. Strategy, outcomes, anti-patterns, domain examples. No code. This is the contract.</LI>
+        <LI><Strong>The code holds itself.</Strong> The implementation is ephemeral — if the intent changes, the code changes. The spec persists; the code is its current expression.</LI>
+      </UL>
+
+      <H2 id="file-types">File Types</H2>
+      <Table
+        headers={['File', 'Purpose']}
+        rows={[
+          [<C>.aide</C>, 'The intent spec. Default and sufficient for most modules.'],
+          [<C>intent.aide</C>, 'Same as .aide, renamed for disambiguation when a research.aide exists in the same folder.'],
+          [<C>research.aide</C>, 'Optional. Co-located research fallback when no external brain is available. Prefer the brain.'],
+          [<C>plan.aide</C>, "The architect's implementation plan. Checkboxed steps the implementor executes top-to-bottom."],
+          [<C>todo.aide</C>, 'QA re-alignment document. Captures where implementation drifted from intent.'],
+        ]}
+      />
+
+      <H2 id="placement">Where .aide Files Live</H2>
+      <P>
+        <C>.aide</C> files live next to orchestrator <C>index.ts</C> files — <Strong>never next to helpers</Strong>. An orchestrator coordinates a pipeline; its spec provides the domain context for that pipeline. Helpers are small, focused functions — their folder name and code are self-explanatory.
+      </P>
+      <Callout kind="note">
+        <Strong>Placement rule:</Strong> if a folder contains an orchestrator that coordinates helpers, it can have a <C>.aide</C>. If it contains a single-purpose helper, it doesn't. The one exception is the project root intent spec at <C>.aide/intent.aide</C> — the top of the cascading intent tree.
+      </Callout>
+
+      <H3 id="inheritance">Inheritance</H3>
+      <P>
+        <C>.aide</C> files at deeper levels inherit the context of their parent. A deeply nested spec doesn't re-explain the parent's strategy — that's in the parent spec. It only describes what makes <em>this</em> submodule succeed or fail. Each nested spec stays lean because the parent already carries the shared intent context.
+      </P>
+
+      <H3 id="example-tree">Example: full project intent tree</H3>
+      <CodeBlock label="project layout">{`project-root/
+├── .aide/
+│   ├── intent.aide                    ← project root intent (top of the intent tree)
+│   └── docs/                          ← methodology docs (not specs)
+├── src/
+│   ├── .aide                          ← src-level intent (narrows project root)
+│   └── service/<feature>/
+│       ├── .aide                      ← feature strategy (narrows src-level)
+│       ├── index.ts
+│       ├── <submodule-a>/
+│       │   ├── .aide                  ← submodule-a strategy (inherits feature)
+│       │   ├── index.ts
+│       │   ├── <submodule-a1>/
+│       │   │   ├── .aide              ← submodule-a1 intent (inherits submodule-a)
+│       │   │   ├── index.ts
+│       │   │   └── <helper>/
+│       │   │       └── index.ts       ← helper (no .aide)
+│       └── shared/
+│           └── <helper>/
+│               └── index.ts           ← helper (no .aide)`}</CodeBlock>
+      <P>The intent tree runs from <C>.aide/intent.aide</C> at the top down to the deepest feature submodule. Orchestrators have specs. Helpers don't. Deeper specs inherit from shallower ones.</P>
+
+      <H2 id="structure">Spec Structure</H2>
+      <P>
+        Every <C>.aide</C> file follows the same structure. <Strong>Frontmatter is required, and the five body sections below are required.</Strong> Without structure, agents generate freeform specs that don't scale — repeatability comes from the template.
+      </P>
+
+      <H3 id="frontmatter">Frontmatter (required)</H3>
+      <Table
+        headers={['Field', 'Required', 'Purpose']}
+        rows={[
+          [<C>scope</C>, 'Yes', 'The module path this spec governs. One spec, one scope.'],
+          [<C>description</C>, 'Yes', 'One-line purpose statement. Makes ancestor chains in aide_discover self-contained.'],
+          [<C>intent</C>, 'Yes', 'One paragraph, plain language: what this module is for. The north star every other field serves.'],
+          [<C>outcomes.desired</C>, 'Yes', 'The success criteria. The QA agent measures actual output against this list.'],
+          [<C>outcomes.undesired</C>, 'Yes', 'The failure modes. Outputs that look correct but violate intent.'],
+          [<C>status</C>, 'No', 'Alignment state set by tooling. aligned, misaligned, or pending (absent).'],
+        ]}
+      />
+
+      <Callout kind="note">
+        <Strong>Scope, description, intent, outcomes.</Strong> That's the whole contract. <C>intent</C> states the purpose; <C>outcomes</C> is the intent-engineering contract that operationalizes it — desired is the target, undesired is the tripwire.
+      </Callout>
+
+      <H3 id="body">Body sections (required)</H3>
+      <UL>
+        <LI><Strong><C>## Context</C></Strong> — Why this module exists and the domain-level background an agent needs to make good decisions. No code.</LI>
+        <LI><Strong><C>## Strategy</C></Strong> — The synthesized approach. Research pulled from the brain gets distilled into decisions. Write in decision form ("do X because Y"), not description form.</LI>
+        <LI><Strong><C>## Good examples</C></Strong> — Concrete domain output that illustrates success. Real output, not code.</LI>
+        <LI><Strong><C>## Bad examples</C></Strong> — Concrete domain output that illustrates failure, especially the almost-right-but-wrong cases.</LI>
+        <LI><Strong><C>## References</C></Strong> — A flat list of brain notes the synthesis agent read during strategy writing.</LI>
+      </UL>
+
+      <H2 id="pipeline">The Agent Pipeline</H2>
+      <P>
+        AIDE isn't one agent doing everything. It's a pipeline of specialized agents, each with one job and a narrow set of inputs. Every stage runs in a fresh context — no agent carries conversation from a prior stage. Handoff is via files only: <C>.aide</C>, <C>plan.aide</C>, <C>todo.aide</C>, brain notes. Splitting the roles is how each agent keeps its context small enough to stay accurate.
+      </P>
+      <UL>
+        <LI><Strong>Spec Writer</Strong> (<C>/aide:spec</C>) — Distills the interview into <C>.aide</C> frontmatter.</LI>
+        <LI><Strong>Domain Expert</Strong> (<C>/aide:research</C>) — <em>Optional.</em> Fills the brain with domain knowledge.</LI>
+        <LI><Strong>Strategist</Strong> (<C>/aide:synthesize</C>) — Reads the brain and distills it into the body sections.</LI>
+        <LI><Strong>Architect</Strong> (<C>/aide:plan</C>) — Translates the spec into a <C>plan.aide</C>. See <A href="docs-plan-aide.html">plan.aide spec</A>.</LI>
+        <LI><Strong>Implementor</Strong> (<C>/aide:build</C>) — Executes <C>plan.aide</C> top-to-bottom.</LI>
+        <LI><Strong>QA agent</Strong> (<C>/aide:qa</C>) — Walks the intent tree, writes <C>todo.aide</C>. See <A href="docs-todo-aide.html">todo.aide spec</A>.</LI>
+      </UL>
+
+      <PrevNext next={{ slug: 'aide-template', title: 'aide-template.md' }} />
+      <DocsFooter />
+    </DocsShell>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AIDE Canonical Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0d0b08; }
+  body { font-family: 'JetBrains Mono', monospace; }
+  * { box-sizing: border-box; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="docs-shell.jsx"></script>
+<script type="text/babel">
+function DocsIndex() {
+  const p = DOCS_PAL;
+  return (
+    <DocsShell current={null}>
+      <div style={{ fontSize: 12, color: p.dim, letterSpacing: 2, marginBottom: 16 }}>AIDEMD.DEV / DOCS</div>
+      <H1>AIDE Canonical Docs</H1>
+      <Lede>
+        The byte-faithful, timestamped, archivable record of the AIDE methodology. Every page is a direct render of the source file in the <C>.aide/</C> hub.
+      </Lede>
+
+      <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {DOCS_PAGES.map((pg) => (
+          <a key={pg.slug} href={`docs-${pg.slug}.html`} style={{
+            display: 'grid', gridTemplateColumns: '48px 1fr auto', gap: 16, alignItems: 'center',
+            padding: '14px 18px', background: p.card, border: `1px solid ${p.border}`,
+            borderLeft: `2px solid ${p.accent}`, borderRadius: 4, textDecoration: 'none', color: p.fg,
+            fontSize: 14,
+          }}>
+            <span style={{ color: p.dim, fontSize: 12 }}>{String(pg.num).padStart(2, '0')}</span>
+            <span style={{ color: p.accent, fontWeight: 600 }}>{pg.title}</span>
+            <span style={{ color: p.dim, fontSize: 11 }}>read →</span>
+          </a>
+        ))}
+      </div>
+
+      <DocsFooter />
+    </DocsShell>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<DocsIndex />);
+</script>
+</body>
+</html>

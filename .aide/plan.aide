@@ -1,0 +1,577 @@
+---
+intent: >
+  Deliver aidemd.dev as a greenfield Next.js 14 App Router static export -- the
+  marketing landing page and docs shell render pixel-for-pixel against the
+  Terminal design handoff at 1440px, the docs pipeline generates 33 routes by
+  build-time filesystem walk across .aide/docs/, .claude/commands/,
+  .claude/agents/, and .claude/skills/ (zero hardcoded lists), Shiki pre-renders
+  syntax highlighting at build time with a custom theme keyed off the handoff
+  accent palette, and the Expo mascot (renamed from AIDEY) drives scroll-
+  contextual tips via IntersectionObserver. Ships to GitHub Pages with GA4
+  afterInteractive, footer-dot canonical signal, and per-docs cite-as URLs
+  pinned to commit hash.
+---
+
+## Project Structure
+
+The tree below is the complete proposed state of the repo after this plan
+executes. Everything under `src/app/` is new. `.aide/docs/`, `.claude/`, and
+`design_handoff_aidemd_site/` already exist -- the first two are read at build
+time by the docs pipeline, the third is reference material only and is NOT
+shipped.
+
+Three conventions encoded in the tree:
+
+1. **Client vs server components.** Every file annotated `[client]` opens with
+   `"use client"`. Everything else is a server component by default. The spec
+   requires defaulting to server; only files needing state, refs, or browser
+   APIs become client components.
+2. **_components/ colocation.** Next.js treats any folder prefixed `_` as
+   non-routable. Section-level components for the marketing page live under
+   `src/app/_components/` and for docs under `src/app/docs/_components/`.
+   Top-level `src/components/` is reserved for primitives consumed by 2+
+   unrelated features (Nav, Footer, Expo, CodeBlock, Callout, DocMeta).
+3. **Folder-name = default-export.** Every component folder exports one
+   default function with the same name as the folder. `Hero/index.tsx` exports
+   `Hero`. This is the progressive-disclosure contract.
+
+```
+aidemd.dev/                           ← scope root (. in intent.aide)
+├── .aide/
+│   ├── intent.aide                   [existing] project-level spec
+│   ├── plan.aide                     [existing] THIS FILE
+│   └── docs/                         [existing] 9 methodology .md files read by the docs pipeline at build time
+│       ├── index.md
+│       ├── aide-spec.md
+│       ├── aide-template.md
+│       ├── plan-aide.md
+│       ├── todo-aide.md
+│       ├── progressive-disclosure.md
+│       ├── agent-readable-code.md
+│       ├── automated-qa.md
+│       └── cascading-alignment.md
+├── .claude/                          [existing] read by the docs pipeline at build time (13 commands + 9 agents + 2 skills = 24 routes)
+│   ├── commands/aide.md + commands/aide/*.md
+│   ├── agents/aide/*.md
+│   └── skills/brain/SKILL.md + skills/study-playbook/SKILL.md
+├── design_handoff_aidemd_site/       [existing] reference only -- NEVER shipped to public/
+├── public/                           [new] static assets served at /
+│   ├── expo-teach.png                renamed from aidey-teach.png
+│   ├── expo-think.png                renamed from aidey-read.png (see Decisions -- `aidey-think.png` does NOT exist in the handoff; `aidey-read.png` fills the "think" pose role)
+│   ├── expo-wave.png                 renamed from aidey-wave.png
+│   ├── expo-point.png                renamed from aidey-teach.png (handoff has only 3 pose crops; see Decisions for the 4-pose mapping)
+│   ├── favicon.ico                   generated from accent-green square
+│   ├── robots.txt                    sitemap pointer
+│   └── .nojekyll                     GitHub Pages: disable Jekyll processing
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx                [new] root orchestrator: JetBrains Mono font, GlobalScripts, metadata. (children: ReactNode) => JSX
+│   │   ├── page.tsx                  [new] marketing orchestrator: composes the 10 sections from _components/. () => JSX
+│   │   ├── globals.css               [new] Tailwind v4 @theme tokens, CSS vars (--bg, --card, --fg, --accent...), @keyframes for the Expo float and CLI cursor blink, ::selection, :focus-visible, prefers-reduced-motion guardrail
+│   │   ├── not-found.tsx             [new] minimal 404 in terminal aesthetic. () => JSX
+│   │   ├── sitemap.ts                [new] () => MetadataRoute.Sitemap -- emits / + /docs + all 33 docs routes
+│   │   ├── _components/              [new] marketing-page-only components (Next.js treats _-prefixed folders as non-routable)
+│   │   │   ├── TopBar/
+│   │   │   │   ├── index.tsx         orchestrator: (props: { active?: 'docs'|'agents'|'skills'|'commands' }) => JSX -- traffic lights + label + 6-item nav
+│   │   │   │   └── TrafficLights/
+│   │   │   │       └── index.tsx     () => JSX -- three fixed-color dots (#ff5f56, #ffbd2e, #27c93f)
+│   │   │   ├── Hero/
+│   │   │   │   ├── index.tsx         orchestrator: () => JSX -- left column typewriter headline + CLI install, right column .aide preview frame
+│   │   │   │   ├── Typewriter/
+│   │   │   │   │   └── index.tsx     [client] (props: { text: string, speed?: number }) => JSX -- reserves final headline box before first paint so CLS = 0
+│   │   │   │   ├── InstallLine/
+│   │   │   │   │   └── index.tsx     [client] () => JSX -- "$ npx @aidemd-mcp/server init" block with copy-to-clipboard + ✓ copied swap (1500ms)
+│   │   │   │   └── AideFrame/
+│   │   │   │       └── index.tsx     (props: { title: string, children: ReactNode }) => JSX -- card w/ window-dot chrome used in hero preview and pipeline output panes
+│   │   │   ├── ThreeLayerModel/
+│   │   │   │   ├── index.tsx         orchestrator: () => JSX -- three LayerBox cards (Brain / Spec / Code)
+│   │   │   │   └── LayerBox/
+│   │   │   │       └── index.tsx     (props: { label: string, title: string, body: string }) => JSX -- 2px left-border accent, uppercase caption, body text
+│   │   │   ├── Pipeline/
+│   │   │   │   ├── index.tsx         [client] orchestrator: () => JSX -- stage buttons row + active-stage panel, reads PIPELINE_STAGES from @/data/pipeline
+│   │   │   │   ├── StageButton/
+│   │   │   │   │   └── index.tsx     (props: { stage: PipelineStage, isActive: boolean, onSelect: () => void, index: number }) => JSX
+│   │   │   │   ├── StagePanel/
+│   │   │   │   │   └── index.tsx     (props: { stage: PipelineStage }) => JSX -- 2-column layout, IOBlock x2
+│   │   │   │   └── IOBlock/
+│   │   │   │       └── index.tsx     (props: { label: 'reads'|'writes', items: string[] }) => JSX -- 2px left border varies: dim for reads, accent for writes
+│   │   │   ├── IntentTree/
+│   │   │   │   ├── index.tsx         [client] orchestrator: () => JSX -- left column tree, right column ancestor-chain readout when an .aide is selected
+│   │   │   │   ├── TreeNode/
+│   │   │   │   │   └── index.tsx     [client] recursive (props: { node: IntentNode, depth: number }) => JSX -- caret rotates 90° on toggle, click .aide to select
+│   │   │   │   └── AidePreview/
+│   │   │   │       └── index.tsx     (props: { preview: AidePreview, depth: number }) => JSX -- inline yaml-style block w/ accent desired, todo undesired
+│   │   │   ├── VaultBrain/
+│   │   │   │   ├── index.tsx         [client] orchestrator: () => JSX -- 2-tab card (research | playbook) reading VAULT_NOTES from @/data/vaultNotes
+│   │   │   │   ├── TabButton/
+│   │   │   │   │   └── index.tsx     (props: { label: string, isActive: boolean, onSelect: () => void }) => JSX
+│   │   │   │   └── NoteCard/
+│   │   │   │       └── index.tsx     (props: { path: string, preview: string }) => JSX -- 2px accent left-border card
+│   │   │   ├── CliDemo/
+│   │   │   │   ├── index.tsx         [client] orchestrator: () => JSX -- terminal frame w/ play/pause/restart, auto-loops DEMO_SCRIPT from @/data/demoScript
+│   │   │   │   ├── DemoLine/
+│   │   │   │   │   └── index.tsx     (props: { line: DemoLine }) => JSX -- switches on line kind (prompt | out | aide | plan)
+│   │   │   │   └── DemoCursor/
+│   │   │   │       └── index.tsx     () => JSX -- 8x14 accent-green blinking block via aideCursor keyframe
+│   │   │   ├── Comparison/
+│   │   │   │   ├── index.tsx         orchestrator: () => JSX -- 2-col OpenSpec vs AIDE table, reads COMPARISON_ROWS from @/data/comparison
+│   │   │   │   └── ComparisonRow/
+│   │   │   │       └── index.tsx     (props: { topic: string, openspec: string, aide: string }) => JSX
+│   │   │   ├── Quickstart/
+│   │   │   │   ├── index.tsx         orchestrator: () => JSX -- 3 TermStep cards in a grid
+│   │   │   │   └── TermStep/
+│   │   │   │       └── index.tsx     (props: { n: number, cmd: string, note: string }) => JSX
+│   │   │   ├── Footer/
+│   │   │   │   └── index.tsx         () => JSX -- "© 2026 TetsuKodai Group LLC · ● canonical" + inbound/outbound links (install, github ↗, privacy)
+│   │   │   ├── AsciiDivider/
+│   │   │   │   └── index.tsx         () => JSX -- 1px dashed border-top divider between marketing sections (6px 64px padding)
+│   │   │   ├── SectionHeader/
+│   │   │   │   └── index.tsx         (props: { num: string, title: string }) => JSX -- "§01 the agent pipeline" format
+│   │   │   └── SectionObserver/
+│   │   │       └── index.tsx         [client] (props: { id: SectionId, children: ReactNode }) => JSX -- wraps each numbered section; emits the section's id via ExpoTipContext whenever its intersection ratio crosses 0.4
+│   │   └── docs/
+│   │       ├── layout.tsx            [new] docs layout orchestrator: (children: ReactNode) => JSX -- sticky TopBar (variant='docs') + Sidebar + main column
+│   │       ├── page.tsx              [new] docs index: () => JSX -- lists all 33 pages grouped by section (docs/agents/skills/commands)
+│   │       ├── [section]/
+│   │       │   ├── page.tsx          [new] section-index renderer: ({ params: Promise<{ section }> }) => JSX -- filters registry to one section, renders Breadcrumb + H1 + lede + list of DocsIndexCards. Backs /docs/methodology/, /docs/commands/, /docs/agents/, /docs/skills/.
+│   │       │   └── [slug]/
+│   │       │       ├── page.tsx      [new] docs renderer: ({ params: Promise<{ section, slug }> }) => JSX -- reads the markdown file, renders through DocsTemplate
+│   │       │       └── generateStaticParams.ts  [NOT A FILE -- export lives inline in page.tsx] (but the orchestrator that backs it is @/service/docsRegistry/buildRegistry)
+│   │       └── _components/          [new] docs-page-only components
+│   │           ├── ActiveAwareTopBar/
+│   │           │   └── index.tsx     [client] () => JSX -- usePathname() wrapper that resolves active='docs'|'agents'|'skills'|'commands' by URL prefix and passes it to TopBar. Used by docs/layout.tsx since TopBar is a server component.
+│   │           ├── DocsSidebar/
+│   │           │   ├── index.tsx     orchestrator: (props: { current?: DocRouteKey }) => JSX -- 4 category sections (methodology, agents, skills, commands) each with its file list, active-row accent border
+│   │           │   ├── CategoryBlock/
+│   │           │   │   └── index.tsx (props: { label: string, routes: DocRoute[], current?: DocRouteKey }) => JSX
+│   │           │   └── SidebarRow/
+│   │           │       └── index.tsx (props: { route: DocRoute, isActive: boolean, index: number }) => JSX -- "01 aide-spec.md" row
+│   │           ├── DocsTemplate/
+│   │           │   ├── index.tsx     orchestrator: (props: { doc: RenderedDoc, prev?: DocRoute, next?: DocRoute }) => JSX -- breadcrumb + H1 + DocMeta + body HTML + PrevNext + DocsFooter
+│   │           │   ├── Breadcrumb/
+│   │           │   │   └── index.tsx (props: { category: string, slug: string }) => JSX -- "AIDE / DOCS / AIDE-SPEC" uppercase dim
+│   │           │   └── PrevNext/
+│   │           │       └── index.tsx (props: { prev?: DocRoute, next?: DocRoute }) => JSX -- 2-card row w/ accent titles
+│   │           ├── DocsIndexCard/
+│   │           │   └── index.tsx     (props: { route: DocRoute, index: number }) => JSX -- one row on the /docs index page
+│   │           └── DocsFooter/
+│   │               └── index.tsx     () => JSX -- docs-scoped footer (install, github, privacy, canonical dot)
+│   ├── components/                   [new] primitives consumed by 2+ unrelated features (marketing + docs)
+│   │   ├── Expo/
+│   │   │   ├── .aide                 [new] sub-spec: Expo mascot contract (pose source, tip copy, IntersectionObserver contract, never-blocks-content rule)
+│   │   │   ├── index.tsx             [client] orchestrator: () => JSX -- reads ExpoTipContext; renders sprite + optional bubble; swaps sprite pose by tip
+│   │   │   ├── ExpoSpeechBubble/
+│   │   │   │   └── index.tsx         (props: { title: string, body: string, onDismiss: () => void }) => JSX -- 14px radius, 280px wide, arrow at right-bottom
+│   │   │   └── ExpoTipContext/
+│   │   │       └── index.tsx         [client] exports ExpoTipProvider and useExpoTip; Provider reads section id updates from SectionObserver via window events, maps section → tip
+│   │   ├── CodeBlock/
+│   │   │   ├── index.tsx             orchestrator: (props: { html: string, label?: string, code: string }) => JSX -- server-rendered Shiki HTML + CopyButton
+│   │   │   └── CopyButton/
+│   │   │       └── index.tsx         [client] (props: { text: string }) => JSX -- copy/✓ copied/1500ms pattern reused by CodeBlock and DocMeta
+│   │   ├── Callout/
+│   │   │   └── index.tsx             (props: { kind: 'note'|'warn'|'info', children: ReactNode }) => JSX -- 3px left border (#3d6b4a / #d6b25a / #7aa6d6), uppercase 10-11px label
+│   │   ├── DocMeta/
+│   │   │   └── index.tsx             (props: { published: string, commit: string, slug: string }) => JSX -- 2px accent left-border card; Published | Source commit (chip) | Cite as (click-to-copy)
+│   │   ├── GlobalScripts/
+│   │   │   └── index.tsx             () => JSX | null -- emits GA4 next/script afterInteractive tags when NEXT_PUBLIC_GA4_ID is set; respects navigator.doNotTrack via inline gtag config
+│   │   └── CanonicalTag/
+│   │       └── index.tsx             [client] () => null -- usePathname + useEffect to set <link rel="canonical"> (static export can't do this server-side)
+│   ├── data/                         [new] static constant data ported from shared.jsx + new comparison copy
+│   │   ├── pipeline.ts               PIPELINE_STAGES: PipelineStage[] -- 6 stages: spec, research, synthesize, plan, build, qa
+│   │   ├── intentTree.ts             INTENT_TREE_ROOTS: IntentNode[] -- the two-root tree from shared.jsx (with SRC_TREE merged)
+│   │   ├── vaultNotes.ts             VAULT_NOTES: { research: NoteEntry[], playbook: NoteEntry[] }
+│   │   ├── demoScript.ts             DEMO_SCRIPT: DemoLine[]
+│   │   ├── comparison.ts             COMPARISON_ROWS: readonly { dimension: string, aide: string, openspec: string }[] -- 7 rows ported VERBATIM from variant-editorial.jsx ComparisonTable (brand-approved copy). Column order Dimension | AIDE | OpenSpec.
+│   │   ├── quickstart.ts             QUICKSTART_STEPS: { n: number, cmd: string, note: string }[]
+│   │   ├── expoTips.ts               EXPO_TIPS: Readonly<Record<SectionId, { pose: ExpoPose, title: string, body: string }>> -- 5 tips ported VERBATIM from aidey.jsx AIDEY_TIPS_DEFAULT with s/AIDEY/Expo/g (and pose 'read'→'think' to match public/ asset filenames); 5 additional tips authored to cover all 10 SectionIds. One entry per SectionId.
+│   │   └── docsCategories.ts         DOCS_CATEGORIES: readonly { section: DocSection, label: string, urlSegment: string, absRoot: string }[] -- maps filesystem root → nav label → URL segment. Also exports SECTION_INDEX_META: Record<DocSection, { label: string, lede: string }> consumed by /docs/[section]/page.tsx for per-section H1 + lede paragraph.
+│   ├── service/
+│   │   └── docsRegistry/
+│   │       ├── .aide                 [new] sub-spec: docs pipeline contract (4 filesystem roots, zero exclusions, commit hash injection, frontmatter handling, route shape)
+│   │       ├── index.ts              orchestrator: () => Promise<DocRegistry> -- walks all 4 roots, parses frontmatter, injects commit hashes, returns the registry
+│   │       ├── walkDocsRoot/
+│   │       │   └── index.ts          (input: { absRoot: string, section: DocSection, urlSegment: string }) => Promise<DocRoute[]> -- recursive .md discovery, extension filter, slug derivation from relative path
+│   │       ├── parseDocFrontmatter/
+│   │       │   └── index.ts          (input: { absPath: string }) => Promise<{ frontmatter: DocFrontmatter, body: string }> -- gray-matter wrapper; synthesizes defaults for files without frontmatter
+│   │       ├── resolveCommitHash/
+│   │       │   └── index.ts          (input: { absPath: string }) => string -- execSync('git log -1 --format=%h -- <absPath>'); returns 'uncommitted' when no history; CACHED per-build via an in-process Map
+│   │       ├── orderRoutes/
+│   │       │   └── index.ts          (input: { routes: DocRoute[] }) => DocRoute[] -- deterministic ordering: section priority (methodology → commands → agents → skills) then alphabetical slug; index.md always first within its section
+│   │       └── renderMarkdown/
+│   │           └── index.ts          (input: { markdown: string, shiki: Highlighter }) => Promise<string> -- unified + remark-gfm + rehype-raw + rehype-shiki-from-highlighter; returns HTML string
+│   ├── lib/
+│   │   ├── shiki/
+│   │   │   ├── index.ts              orchestrator: () => Promise<Highlighter> -- singleton getHighlighter; loads custom theme + required langs (ts, tsx, js, jsx, yaml, bash, json, md, mdx, css, html)
+│   │   │   └── theme/
+│   │   │       └── aideTheme.json    Shiki-format theme: bg #0a0906, fg #e8dfce, keyword #3d6b4a, string #d6b25a, variable #e8dfce, comment rgba(232,223,206,0.55), punctuation rgba(232,223,206,0.55)
+│   │   ├── cn/
+│   │   │   └── index.ts              (...inputs: ClassValue[]) => string -- clsx + tailwind-merge helper (exported from @/lib/cn)
+│   │   └── sections/
+│   │       └── index.ts              SECTION_IDS: readonly SectionId[] -- canonical list of marketing section ids matched against Expo tips
+│   └── types/
+│       ├── docs.ts                   DocSection = 'methodology'|'commands'|'agents'|'skills'; DocRouteKey = `${DocSection}/${string}`; DocRoute = { section: DocSection, slug: string, title: string, urlPath: string, absPath: string, order: number }; DocFrontmatter = { title?: string, description?: string, published?: string, commit?: string }; RenderedDoc = { route: DocRoute, frontmatter: DocFrontmatter, bodyHtml: string, commit: string, published: string }; DocRegistry = { routes: DocRoute[], getByKey: (key: DocRouteKey) => DocRoute | undefined }
+│       ├── pipeline.ts               PipelineStage = { id: 'spec'|'research'|'synthesize'|'plan'|'build'|'qa', cmd: string, name: string, role: string, reads: string[], writes: string[], detail: string }
+│       ├── intentTree.ts             IntentNodeKind = 'dir'|'intent'|'plan'|'todo'|'code'; IntentNode = { name: string, kind: IntentNodeKind, note?: string, preview?: AidePreview, children?: IntentNode[] }; AidePreview = { scope: string, intent: string, desired: string[], undesired: string[] }
+│       ├── demo.ts                   DemoLine = { prompt: true, text: string } | { out: string } | { aide: true, path: string } | { plan: true, path: string }
+│       ├── expo.ts                   ExpoPose = 'teach'|'think'|'wave'|'point'; SectionId = 'hero'|'threeLayerModel'|'pipeline'|'intentTree'|'vaultBrain'|'cliDemo'|'comparison'|'quickstart'|'footer'|'docs'; ExpoTip = { pose: ExpoPose, title: string, body: string }
+│       └── vault.ts                  NoteEntry = { path: string, preview: string }; VaultTab = 'research'|'playbook'
+├── tests/                            [new] Playwright visual regression + DOM snapshots at 1440px
+│   ├── playwright.config.ts          baseURL from npm run preview, viewport 1440x900, threshold 0.2
+│   ├── fixtures/
+│   │   └── 1440.spec.ts              screenshot compare for /, /docs, /docs/methodology/aide-spec (the 3 canonical renders in the handoff definition-of-done)
+│   └── visual/                       golden screenshots (populated on first run, committed to repo)
+├── scripts/
+│   └── verify-docs-registry.mjs      CLI smoke test that runs buildRegistry() and prints the 33-route table so humans can diff against filesystem
+├── next.config.mjs                   [new] output: 'export', images: { unoptimized: true }, trailingSlash: true (GitHub Pages directory-index compatibility), experimental.mdxRs off (we render MDX-ish via unified in docsRegistry, not via next-mdx)
+├── postcss.config.mjs                [new] @tailwindcss/postcss
+├── tsconfig.json                     [new] { baseUrl: ".", paths: { "@/*": ["./src/*"] }, strict, jsx: react-jsx, moduleResolution: bundler, target: ES2020 }
+├── vitest.config.ts                  [new] environment: node; include: [src/service/**/*.test.ts, src/lib/**/*.test.ts]; alias @ → src
+├── package.json                      [new] next@14, react@18, tailwindcss@4, @tailwindcss/postcss@4, shiki@1, unified, remark-parse, remark-gfm, remark-rehype, rehype-raw, rehype-stringify, gray-matter, clsx, tailwind-merge, vitest, @playwright/test. Scripts: dev, build, start, preview (serves out/ via `npx serve out`), test:unit, test:visual, docs:verify
+├── .gitignore                        [new] node_modules, .next, out, .env*.local, coverage
+├── .env.example                      [new] NEXT_PUBLIC_GA4_ID= (empty by default; script tag omitted when unset)
+├── .nvmrc                            [new] 22
+├── CLAUDE.md                         [existing]
+└── README.md                         [existing]
+```
+
+## Prerequisites
+
+Greenfield project -- no upstream modules to coordinate with. Prerequisites are
+external:
+
+- **Git repo initialized with at least one commit.** The `resolveCommitHash/`
+  helper uses `git log -1 --format=%h -- <file>` at build time. Before step 1
+  runs, the scope directory must be `git init`'d and have an initial commit --
+  otherwise every docs page falls back to the literal string `'uncommitted'`.
+  Step 1 handles this as part of project bootstrap.
+- **npm registry reachable.** `npm install` pulls Next 14, Tailwind 4, Shiki 1,
+  unified, gray-matter, clsx, tailwind-merge, Vitest, Playwright.
+- **Design handoff assets on disk.** `design_handoff_aidemd_site/prototypes/`
+  already exists and is the visual source of truth. Assets in
+  `prototypes/assets/` (4 PNGs) will be renamed on copy to `public/` in step 3.
+
+## Plan
+
+### 1. Bootstrap project scaffolding, Tailwind v4 theme, and CSS var palette
+
+Read: `coding-playbook/setup/getting-started`, `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [ ] 1a. Initialize package.json with Next 14, React 18, Tailwind 4, @tailwindcss/postcss, clsx, tailwind-merge, TypeScript, and the MDX pipeline deps (shiki@1, unified, remark-parse, remark-gfm, remark-rehype, rehype-raw, rehype-stringify, gray-matter). Add dev deps: vitest, @playwright/test, @types/react, @types/node. Scripts: `dev`, `build`, `start`, `preview` (`next build && npx serve out -p 4321`), `test:unit`, `test:visual`, `docs:verify`.
+- [ ] 1b. Create `tsconfig.json`, `next.config.mjs` (output: 'export', images.unoptimized: true, trailingSlash: true), `postcss.config.mjs`, `.gitignore`, `.env.example`, `.nvmrc`, `public/.nojekyll`.
+- [ ] 1c. Create `src/lib/cn/index.ts` -- the clsx + tailwind-merge helper. Export `cn` default.
+- [ ] 1d. Create `src/app/globals.css` with Tailwind v4 `@import "tailwindcss";` + `@theme { ... }` defining every CSS variable from the handoff palette VERBATIM: `--color-bg: #0d0b08; --color-card: #16120d; --color-card-2: #0a0906; --color-fg: #e8dfce; --color-dim: rgba(232,223,206,0.55); --color-dim-2: rgba(232,223,206,0.38); --color-border: rgba(232,223,206,0.12); --color-hover: rgba(232,223,206,0.05); --color-accent: #3d6b4a; --color-todo: #d6b25a; --color-plan: #7aa6d6; --color-danger: #ff5f56;`. Add `--font-mono: "JetBrains Mono", ui-monospace, monospace;`. Add spacing scale tokens 4/8/12/14/16/18/20/24/28/32/40/44/60/64/80 as CSS custom props `--space-4` etc. (Tailwind 4 picks these up.) Add the Expo float and CLI cursor @keyframes here. Add `prefers-reduced-motion: reduce` override that freezes animations. Add `::selection { background: var(--color-accent); color: var(--color-bg); }` and `:focus-visible` ring.
+- [ ] 1e. Create `src/app/layout.tsx` -- import JetBrains Mono via `next/font/google` weights 400/500/600/700 as CSS var `--font-jetbrains-mono`; apply to `<html>` via `className`; render `<body>` with `bg-[color:var(--color-bg)] text-[color:var(--color-fg)] font-mono` and embed `<GlobalScripts />` + `<CanonicalTag />`. Export `metadata: Metadata` with title template `%s | aidemd.dev`, default description from intent.aide's one-liner, metadataBase `https://aidemd.dev`, Open Graph + Twitter card defaults, no robots overrides.
+- [ ] 1f. `git init` in the project root (if not already a repo), stage everything added, and make an initial commit -- the docs registry's commit-hash injection depends on at least one commit existing in history.
+
+**Traces to:** intent.aide "static Next.js export deployable to GitHub Pages", "JetBrains Mono for every character", "named CSS variables mirror the handoff's --bg, --card...", "4/8/12/.../80 spacing scale", "CLS on the hero is zero".
+
+**Acceptance:** `npm run build` succeeds and emits a static `out/` directory; `out/index.html` is empty-shell but present; page palette variables resolve to the exact handoff hex values when inspected.
+
+### 2. Define the type system, data modules, and registry shapes
+
+Read: `coding-playbook/workflow/type-system`, `coding-playbook/architecture/folder-structure`, `coding-playbook/architecture/data-flow`
+
+- [ ] 2a. Create `src/types/docs.ts`, `src/types/pipeline.ts`, `src/types/intentTree.ts`, `src/types/demo.ts`, `src/types/expo.ts`, `src/types/vault.ts` -- exact shapes annotated in the Project Structure tree. All unions declared with string-literal members; no enums; no classes.
+- [ ] 2b. Create `src/lib/sections/index.ts` exporting `SECTION_IDS` as `readonly SectionId[]` -- the canonical ordered list matching marketing sections hero → threeLayerModel → pipeline → intentTree → vaultBrain → cliDemo → comparison → quickstart → footer, plus the `docs` section-id used when the user is inside /docs/*.
+- [ ] 2c. Create `src/data/pipeline.ts` -- port `PIPELINE_STAGES` from `design_handoff_aidemd_site/prototypes/shared.jsx` lines 3-58 VERBATIM (cmd, name, role, reads, writes, detail strings). Default export none; named export `PIPELINE_STAGES: readonly PipelineStage[]`.
+- [ ] 2d. Create `src/data/intentTree.ts` -- port the `INTENT_TREE` + `SRC_TREE` objects from `shared.jsx` lines 69-159 verbatim. Export as `INTENT_TREE_ROOTS: readonly IntentNode[]` (a 2-element tuple).
+- [ ] 2e. Create `src/data/vaultNotes.ts` -- port the research and playbook file arrays from `shared.jsx` `VaultBlock` (lines 528-538) verbatim. Export `VAULT_NOTES: { research: readonly NoteEntry[]; playbook: readonly NoteEntry[] }`.
+- [ ] 2f. Create `src/data/demoScript.ts` -- port `DEMO_SCRIPT` from `shared.jsx` lines 397-422 verbatim. Export `DEMO_SCRIPT: readonly DemoLine[]`.
+- [ ] 2g. Create `src/data/quickstart.ts` -- three steps from `variant-terminal.jsx` lines 172-174 verbatim (n, cmd, note). Export `QUICKSTART_STEPS: readonly { n: number; cmd: string; note: string }[]`.
+- [ ] 2h. Create `src/data/comparison.ts` -- port the 7 rows VERBATIM from `design_handoff_aidemd_site/prototypes/variant-editorial.jsx` `ComparisonTable` component (lines 249-257 of that file). Source verification required: open the file, locate the `rows` const inside `ComparisonTable`, and confirm the 7 rows are exactly: (1) `Primary artifact | .aide (intent + outcomes) | spec.md (proposal + tasks)`, (2) `Review model | approve at 2 gates: spec + plan | review every proposal`, (3) `Agent pipeline | 6 specialized agents | 1 generalist`, (4) `Durable knowledge | external brain (vault/MCP) | in-repo markdown`, (5) `Domain expertise | automated research agent | you supply it`, (6) `QA loop | intent-tree walk + todo.aide | manual review`, (7) `Opinions per kg | heavy | light`. If the source rows don't match, STOP and flag back to the orchestrator -- do NOT silently use the user-provided text without source verification. Do NOT paraphrase, drop, reorder, or add rows. Encode as `COMPARISON_ROWS: readonly { dimension: string; aide: string; openspec: string }[]`. Note the field-name change `topic → dimension` (matches the column header in the brand-approved render). Update `src/types/comparison.ts` accordingly -- or merge into an existing types file if cleaner; pick whichever fits the playbook's type-system convention.
+- [ ] 2i. Create `src/data/expoTips.ts`. Three sub-tasks: **(1) Verify source.** Open `design_handoff_aidemd_site/prototypes/aidey.jsx` and locate `AIDEY_TIPS_DEFAULT` (lines 5-11). Confirm the 5 tips are exactly: `wave / hey — i'm AIDEY / your domain expert. i walk you through how intent becomes code, one stage at a time. click the pipeline stages or open any node in the intent tree.`; `teach / the .aide is the contract / scope, intent, outcomes.desired, outcomes.undesired. if it doesn't serve the intent, it gets cut.`; `read / the brain holds durable knowledge / domain research + your coding playbook live in an Obsidian vault. fill it once, reuse it across every project.`; `teach / intent cascades / every child .aide inherits its parent. you never restate context — you narrow it.`; `wave / that's it! / ready to install? scroll down for the one-liner.`. If the source doesn't match, STOP and flag back to the orchestrator. **(2) Port the 5 verbatim** with `s/AIDEY/Expo/g` (the title `hey — i'm AIDEY` becomes `hey — i'm Expo`; no other strings need substitution at the body level). Map each to its natural section: `wave / hey — i'm Expo` → `hero`; `teach / the .aide is the contract` → `threeLayerModel` (the .aide is the middle layer); `read / the brain holds durable knowledge` → `vaultBrain`; `teach / intent cascades` → `intentTree`; `wave / that's it!` → `quickstart`. **Pose rename:** the source uses `read` as a pose name, but the public/ asset is `expo-think.png` (step 3b copies `aidey-read.png → expo-think.png`). So the `vaultBrain` tip's pose field MUST be encoded as `'think'` not `'read'`. The `ExpoPose` type in `src/types/expo.ts` lists only `'teach'|'think'|'wave'|'point'`; encoding `'read'` would fail type-check. Document the read→think rename inline in the data file's JSDoc with a sentence pointing back to step 3b. **(3) Author 5 NEW tips** for the remaining sections (`pipeline`, `cliDemo`, `comparison`, `footer`, `docs`), matching tone exactly: all-lowercase titles; second person; 1-2 sentences; framework name is `AIDE`, mascot is `Expo` (keep distinct -- never write `AIDEY` or the abandoned interim `AID`); specific to the section's content. Pose choice rules: `point` for tips that direct attention to something on screen ("look at this"); `teach` for explanatory tips; `wave` only for greeting-style tips; `think` for reflective/conceptual tips. Suggested poses: `pipeline → point` (directing to the stage selector); `cliDemo → point` (directing to the terminal); `comparison → think` (the "heavier vs lighter" reflection); `footer → wave` (sign-off); `docs → teach` (the docs are the canonical reference). Final structure: `EXPO_TIPS: Readonly<Record<SectionId, ExpoTip>>` with exactly 10 keys -- `hero`, `threeLayerModel`, `pipeline`, `intentTree`, `vaultBrain`, `cliDemo`, `comparison`, `quickstart`, `footer`, `docs`.
+- [ ] 2j. Create `src/data/docsCategories.ts` -- export `DOCS_CATEGORIES: readonly { section: DocSection; label: string; urlSegment: string; absRoot: string }[]` = 4 entries in this exact order: `{ section: 'methodology', label: 'docs', urlSegment: 'methodology', absRoot: '.aide/docs' }, { section: 'commands', label: 'commands', urlSegment: 'commands', absRoot: '.claude/commands' }, { section: 'agents', label: 'agents', urlSegment: 'agents', absRoot: '.claude/agents' }, { section: 'skills', label: 'skills', urlSegment: 'skills', absRoot: '.claude/skills' }`. This table is the single source of truth for both the top-nav label→href mapping and the filesystem-walk roots.
+
+**Traces to:** intent.aide "docs page list from a build-time filesystem walk across four content roots", "four separate top-level nav entries", "Drive mascot tips from IntersectionObserver".
+
+**Acceptance:** All types compile with `strict: true`. `npm run build` still succeeds.
+
+### 3. Rename and copy Expo mascot PNGs to public/
+
+Read: `coding-playbook/foundations/conventions`
+
+- [ ] 3a. Copy `design_handoff_aidemd_site/prototypes/assets/aidey-teach.png` → `public/expo-teach.png`. (Source filename flagged in Decisions: mapping below maps the 3 actual handoff assets into the 4 poses the spec demands.)
+- [ ] 3b. Copy `aidey-read.png` → `public/expo-think.png` (the "read/think" pose).
+- [ ] 3c. Copy `aidey-wave.png` → `public/expo-wave.png`.
+- [ ] 3d. Re-copy `aidey-teach.png` → `public/expo-point.png` (the teach pose doubles for point; the handoff only ships 3 pose crops, see Decisions).
+- [ ] 3e. Verify NO file under `public/` contains the substring "aidey" (case-insensitive). Run `grep -ri "aidey" public/ || true` -- empty output is the pass condition.
+
+**Traces to:** intent.aide "Rename the four handoff PNGs on copy to public/: expo-teach.png, expo-think.png, expo-wave.png, expo-point.png", "No string visible to a user, screen reader, or search engine says AIDEY or AID."
+
+**Acceptance:** `public/expo-teach.png`, `public/expo-think.png`, `public/expo-wave.png`, `public/expo-point.png` exist. `grep -ri aidey public/` returns empty.
+
+### 4. Build the docs registry pipeline (filesystem walk → 33 routes)
+
+Read: `coding-playbook/services/service-layer`, `coding-playbook/architecture/folder-structure`, `coding-playbook/foundations/conventions`
+
+- [ ] 4a. Create `src/service/docsRegistry/.aide` -- intent sub-spec: scope (the 4 content roots), intent (build the 33-route registry with zero exclusions), outcomes.desired (every .md file discovered becomes a DocRoute; commit hash injected at build time; ordering is deterministic; index.md routes render at the section root), outcomes.undesired (hardcoded page lists anywhere; skipped files; missing commit hashes silently defaulting without marker).
+- [ ] 4b. Create `src/service/docsRegistry/walkDocsRoot/index.ts` -- recursive walker. Uses `node:fs/promises.readdir(absRoot, { recursive: true, withFileTypes: true })` in Node 22; filters entries where `dirent.isFile() && dirent.name.endsWith('.md')`. Slug derivation: relative path from `absRoot`, strip `.md`, replace path separators with `/`; special-case `index.md` and folder `index.md` patterns (see Decisions). Each entry returns `{ section, slug, title, urlPath: \`/docs/${urlSegment}/${slug}\`, absPath, order: 0 }`. `title` defaults to the first `# ` heading in the file or the slug if none.
+- [ ] 4c. Create `src/service/docsRegistry/parseDocFrontmatter/index.ts` -- wraps `gray-matter(fileContents)`. If a file has no frontmatter block, returns `{ frontmatter: { title: deriveFromFirstH1(body) ?? slug }, body: fileContents }`. Never throws on missing frontmatter; those files are first-class (the `.claude/commands/*.md` and `.claude/agents/*.md` files are plain markdown without YAML frontmatter).
+- [ ] 4d. Create `src/service/docsRegistry/resolveCommitHash/index.ts` -- uses `node:child_process.execSync('git log -1 --format=%h -- ' + JSON.stringify(absPath), { encoding: 'utf8' }).trim()`. Returns `'uncommitted'` when stdout is empty (file not yet committed). Wrap in an in-process `Map<string, string>` cache keyed on absPath (commit hashes can't change during a single build).
+- [ ] 4e. Create `src/service/docsRegistry/orderRoutes/index.ts` -- sort by (1) section priority from DOCS_CATEGORIES order (methodology, commands, agents, skills), (2) `index.md` always first within its section, (3) alphabetical by slug. Assigns `order: i` to each route after sorting.
+- [ ] 4f. Create `src/service/docsRegistry/renderMarkdown/index.ts` -- unified pipeline: `remark-parse → remark-gfm → remark-rehype (allowDangerousHtml: true) → rehype-raw → rehypeShikiFromHighlighter(shiki, 'aide-theme') → rehype-stringify`. Takes markdown + a prebuilt Highlighter instance. Returns HTML string. Callout and DocMeta rendering is NOT handled here -- those are consumer-side React components; the pipeline only produces plain HTML for paragraphs, lists, inline code, fenced code blocks (with Shiki), tables, headings, blockquotes.
+- [ ] 4g. Create `src/service/docsRegistry/index.ts` -- orchestrator. Flow: (1) import DOCS_CATEGORIES, (2) for each category, call walkDocsRoot; concat all routes, (3) sort via orderRoutes, (4) return `{ routes, getByKey: (key) => routes.find(r => \`${r.section}/${r.slug}\` === key) }`. JSDoc describes the cascading discovery-ordering-keying flow. Cache: the orchestrator memoizes its own output via a module-level `let cached: DocRegistry | null` so generateStaticParams and every page load the same registry in a single build.
+- [ ] 4h. Create `src/service/docsRegistry/index.test.ts` -- vitest suite. Mocks `node:fs/promises` and `node:child_process`. Asserts: (i) 33 routes total (numbers breakdown: 9 methodology, 13 commands (aide.md + 12 subcommands), 9 agents, 2 skills), (ii) every `urlPath` matches `/docs/{methodology,commands,agents,skills}/\<slug>`, (iii) ordering puts `docs/methodology/index` first overall, (iv) `uncommitted` fallback works when git stdout is empty.
+- [ ] 4i. Create `scripts/verify-docs-registry.mjs` -- dynamic-imports the registry and prints a table of (section, slug, urlPath, commit) for humans to diff against `ls -R .aide/docs .claude/commands .claude/agents .claude/skills`. Wire `npm run docs:verify` to it.
+
+**Traces to:** intent.aide "docs page list from a build-time filesystem walk across four content roots ... with zero exclusions", "A hardcoded list of doc pages anywhere in the codebase ... is a spec violation", "cite-as URLs follow the pattern https://aidemd.dev/docs/<slug>?v=<commit>".
+
+**Acceptance:** `npm run docs:verify` prints 33 rows. `npm run test:unit` passes. `buildRegistry()` returns the same routes across repeated calls (memoization).
+
+### 5. Stand up Shiki build-time highlighter and the AIDE theme
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/module-patterns`
+
+- [ ] 5a. Create `src/lib/shiki/theme/aideTheme.json` -- TextMate-format Shiki theme. Colors: background `#0a0906`, foreground `#e8dfce`. Token rules: `keyword.*`, `storage.*`, `constant.language` → `#3d6b4a`; `string.*`, `punctuation.definition.string` → `#d6b25a`; `variable.*`, `entity.name.function`, `support.function` → `#e8dfce`; `comment.*`, `punctuation.definition.comment` → `rgba(232,223,206,0.55)`; `punctuation.*` (non-string) → `rgba(232,223,206,0.55)`; `entity.name.tag`, `markup.heading` → `#3d6b4a`. Name it `aide-theme`.
+- [ ] 5b. Create `src/lib/shiki/index.ts` -- exports default async `getHighlighter()`. Uses `shiki.createHighlighter({ themes: [aideTheme], langs: ['ts', 'tsx', 'js', 'jsx', 'bash', 'yaml', 'json', 'md', 'mdx', 'css', 'html', 'python'] })`. Module-level `let cached: Highlighter | null` singleton so one highlighter instance serves every build-time render.
+- [ ] 5c. Wire the highlighter into `renderMarkdown/index.ts` (step 4f now fully resolves -- when a docs page orchestrator calls renderMarkdown, it passes the shared Highlighter).
+
+**Traces to:** intent.aide "Syntax-highlight code blocks via Shiki or Prism with a custom theme keyed off the handoff accent colors", "Pre-render highlighting at build time if possible, to keep JS payload small".
+
+**Acceptance:** A docs page with a fenced ```ts``` block renders HTML containing `<span style="color:#3d6b4a">` for keywords and `<span style="color:#d6b25a">` for strings. Zero runtime JS for highlighting.
+
+### 6. Build the top-nav TopBar primitive and marketing Hero section
+
+Read: `coding-playbook/client/components`, `coding-playbook/client/seo`, `coding-playbook/foundations/conventions`
+
+- [ ] 6a. Create `src/app/_components/TopBar/TrafficLights/index.tsx` -- 3 × 11px circles with fixed hex values (`#ff5f56`, `#ffbd2e`, `#27c93f`), in a flex row with 10px gap. Server component.
+- [ ] 6b. Create `src/app/_components/TopBar/index.tsx` -- composes TrafficLights + label `aidemd.dev — zsh` (dim, 12px, 18px left margin) + right-aligned nav (6 links in order: docs, agents, skills, commands, github ↗, npm ↗). `github` → `https://github.com/aidemd-mcp/server`, `npm` → `https://www.npmjs.com/package/@aidemd-mcp/server` (both `target="_blank" rel="noopener noreferrer"`). `docs` → `/docs`; `agents` → `/docs/agents`; `skills` → `/docs/skills`; `commands` → `/docs/commands`. Props: `{ active?: 'docs'|'agents'|'skills'|'commands' }`. Active link gets an accent-green 2px bottom border + brighter text. Rendered padding `10px 16px`, bg `var(--color-card)`, border-bottom `1px solid var(--color-border)`. In the docs variant (accessed via the docs layout, step 9), TopBar is `position: sticky; top: 0; z-index: 10`.
+- [ ] 6c. Create `src/app/_components/Hero/Typewriter/index.tsx` -- client component. Props: `{ text: string; speed?: number }` (default 40ms). Uses an invisible span containing the full text to reserve the final box height and width BEFORE first paint (spec explicitly forbids CLS on the hero). A visible span overlays it and reveals one character per `speed`ms via `useEffect` + `setInterval`, cycling with a 2s pause at full reveal. The headline-final-box reservation is the load-bearing detail -- no CLS regardless of animation state.
+- [ ] 6d. Create `src/app/_components/Hero/InstallLine/index.tsx` -- client component. Renders `<div>` with `$ npx @aidemd-mcp/server init`, accent-green `$` prompt, cursor style. On click: `navigator.clipboard.writeText("npx @aidemd-mcp/server init")`; swaps the right-side `⧉` glyph to `✓ copied` for 1500ms via a state-driven timer.
+- [ ] 6e. Create `src/app/_components/Hero/AideFrame/index.tsx` -- server component. Window-chrome card reused by the hero preview and the pipeline output panel. Props `{ title: string; children: ReactNode }`. Chrome row: 8px dim dot + 11px dim title. Body padding 16px 18px, font-size 13px, line-height 1.75. Card bg `var(--color-card)`, border `1px solid var(--color-border)`, radius 6, drop-shadow `0 16px 40px rgba(0,0,0,0.4)`.
+- [ ] 6f. Create `src/app/_components/Hero/index.tsx` -- orchestrator. 2-column grid (`grid-cols-[1fr_1fr] gap-12`). Left column: dim 12px breadcrumb (`~/aidemd.dev ∙ main ∙ a6f9c3d` -- the `a6f9c3d` is a literal string in the design, NOT a real commit), Typewriter with the intent.aide's "good example" headline `Your intent is the contract every agent works from.` at 36px weight 600 letter-spacing -0.5px, then the dim comment block from `variant-terminal.jsx` lines 50-53, then `<InstallLine />` and `[✓] works with Claude Code / [✓] MCP-native / [✓] Obsidian vault as the brain` chips. Right column: `<AideFrame title="src/service/retention/.aide">` with the yaml-style content from `variant-terminal.jsx` lines 66-80.
+- [ ] 6g. Create `src/app/_components/AsciiDivider/index.tsx` -- 1px dashed border-top divider, 6px 64px padding.
+- [ ] 6h. Create `src/app/_components/SectionHeader/index.tsx` -- `§{num} {title}` format. `§num` accent-green 14px; title 22px weight 600 `var(--color-fg)`.
+
+**Traces to:** intent.aide "Your intent is the contract every agent works from.", "the headline's final box must be reserved before first paint", "top-level nav exposes exactly six destinations in order", "GitHub link ... aidemd-mcp/server".
+
+**Acceptance:** `/` renders TopBar + Hero at 1440px with visually-identical layout to `variant-terminal.jsx` hero (lines 40-84), palette exactly matches, no layout shift during Typewriter animation, copy-to-clipboard works in Chrome/Firefox/Safari.
+
+### 7. Build the 4 middle marketing sections: ThreeLayerModel, Pipeline, IntentTree, VaultBrain
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [ ] 7a. Create `src/app/_components/ThreeLayerModel/LayerBox/index.tsx` -- server. Props `{ label, title, body }`. Classes: `bg-[color:var(--color-card)] border border-[color:var(--color-border)] border-l-2 border-l-[color:var(--color-accent)] rounded-[4px] p-[16px_18px]`. Title (`brain/`, `.aide`, `src/`) accent-green 13px; uppercase label 11px letter-spacing-1 dim; body 13px line-height-1.6 fg.
+- [ ] 7b. Create `src/app/_components/ThreeLayerModel/index.tsx` -- orchestrator. SectionHeader `01` + `three-layer model` + grid-cols-3 gap-5 row of 3 LayerBox cards with content VERBATIM from `variant-terminal.jsx` lines 92-94.
+- [ ] 7c. Create `src/app/_components/Pipeline/StageButton/index.tsx` -- client. Props `{ stage, isActive, onSelect, index }`. Renders a relative button with monofont 11-px `{nn} · {stage.cmd}` on top and 14-px weight-600 `{stage.name}` below. Active state: bg `var(--color-card)`, border `1px solid var(--color-accent)`, name color accent; inactive: bg `var(--color-bg)`, border `var(--color-border)`, name color fg. When active, a 14×14 rotated-45° accent-bordered square sits at `left: 50%; bottom: -8px` as the downward pointer -- this detail is load-bearing in the design.
+- [ ] 7d. Create `src/app/_components/Pipeline/IOBlock/index.tsx` -- server. Props `{ label: 'reads'|'writes'; items }`. Uppercase 10px label with letter-spacing-1.5, then vertical stack of items; each item is a `padding: 6px 10px; border: 1px solid var(--color-border); border-left: 2px solid {label==='writes' ? accent : dim}; border-radius: 4; font-size: 12;` row.
+- [ ] 7e. Create `src/app/_components/Pipeline/StagePanel/index.tsx` -- server. Props `{ stage }`. Padding `24px 26px`, card bg, border accent-green, radius 8. 2-col grid: left column has accent 11px `{stage.cmd.toUpperCase()}` + 22px weight-600 `{stage.name}` + 14px fg `{stage.role}` + 13px dim `{stage.detail}`. Right column: `<IOBlock label="reads" items={stage.reads} />` + `<IOBlock label="writes" items={stage.writes} />` stacked.
+- [ ] 7f. Create `src/app/_components/Pipeline/index.tsx` -- client orchestrator. `useState<StageId>('spec')`. Reads PIPELINE_STAGES. Grid-cols-6 gap-1.5 row of StageButton; below, render StagePanel for the active stage. Add a 180ms opacity + translateY(4px) animation on panel change via `className={cn('transition-all duration-[180ms]', panelKey===stage.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1')}` and a keyed remount.
+- [ ] 7g. Create `src/app/_components/IntentTree/AidePreview/index.tsx` -- server. Props `{ preview, depth }`. Renders the yaml-style preview block (scope/intent/outcomes with desired in accent, undesired in todo). Margin-left follows `6 + depth * 18 + 28` px just like `shared.jsx` line 236.
+- [ ] 7h. Create `src/app/_components/IntentTree/TreeNode/index.tsx` -- client. Recursive. Props `{ node, depth }`. `useState<boolean>(depth < 2)` for open, `useState<boolean>(false)` for showPreview. Icon map from `shared.jsx`: dir → `▸` dim, intent → `◆` accent, plan → `▦` plan-blue, todo → `☐` todo-amber, code → `·` dim. Caret: `▾` when open, `▸` when closed. Hover gives bg `var(--color-hover)` via a `group-hover:` or inline `onMouseEnter/onMouseLeave` (pick the idiomatic Tailwind way per the playbook -- inline events are fine for hover states that don't have a Tailwind equivalent). On click: if hasChildren toggle open; if `node.preview` toggle showPreview.
+- [ ] 7i. Create `src/app/_components/IntentTree/index.tsx` -- client orchestrator. Reads INTENT_TREE_ROOTS. Left column is the tree with `var(--color-border)` 1px + radius 6 + padding `14px 10px`. Right column is an AideFrame (reused from step 6e) titled `aide_discover --path src/service/retention/draftOpener` with the ancestor-chain content from `variant-terminal.jsx` lines 124-139 verbatim.
+- [ ] 7j. Create `src/app/_components/VaultBrain/TabButton/index.tsx` -- client. Props `{ label, isActive, onSelect }`. Active: bg accent, fg bg; inactive: bg transparent, fg fg, border `var(--color-border)`. Size 5px 10px, font-size 11px mono.
+- [ ] 7k. Create `src/app/_components/VaultBrain/NoteCard/index.tsx` -- server. Props `{ path, preview }`. `bg-[color:var(--color-bg)] border border-[color:var(--color-border)] border-l-2 border-l-[color:var(--color-accent)] rounded-[4px] p-[14px_16px]`. Path line accent mono 12px; preview 13px fg line-height-1.55.
+- [ ] 7l. Create `src/app/_components/VaultBrain/index.tsx` -- client orchestrator. 2-col grid `grid-cols-[260px_1fr]`, card wrapper `border-radius: 8; border: 1px solid var(--color-border); bg: var(--color-card);`. Left column: uppercase `YOUR VAULT` 11px + 2 TabButtons + filename list (file names only, hoverable accent-left border). Right column: description line + 3-4 NoteCards rendering the active tab's entries.
+
+**Traces to:** intent.aide "intent cascades — every child .aide inherits its parent", pipeline stage selector and intent tree and vault tabs are in "state model local" list.
+
+**Acceptance:** At 1440px the four sections visually match `variant-terminal.jsx` (lines 87-154) and `shared.jsx` interactive components. Pipeline clicks swap the active stage with the 180ms fade. Tree caret rotates on toggle; clicking an intent node renders its preview. Tabs swap the note list.
+
+### 8. Build the 4 closing marketing sections: CliDemo, Comparison, Quickstart, Footer
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`
+
+- [ ] 8a. Create `src/app/_components/CliDemo/DemoCursor/index.tsx` -- server. 8×14 accent-green rectangle with `animation: aideCursor 1s steps(2) infinite`. The @keyframes `aideCursor { 50% { opacity: 0; } }` already lives in globals.css from step 1d.
+- [ ] 8b. Create `src/app/_components/CliDemo/DemoLine/index.tsx` -- server. Props `{ line }`. Switch on kind: `prompt` → `› {text}` with accent `›`; `out` → dim paragraph; `aide` → faux `+ path` + yaml-style block reproducing `shared.jsx` `FauxAideBlock` (lines 487-505); `plan` → same but reproducing `FauxPlanBlock` (lines 507-521).
+- [ ] 8c. Create `src/app/_components/CliDemo/index.tsx` -- client orchestrator. Reads DEMO_SCRIPT. Terminal frame: traffic lights + `~/my-app — zsh — aide` label + right-aligned `⏸ pause` / `▶ play` / `↻ restart` controls. Body: `useRef` scroll container 360px tall. Timer logic ports from `shared.jsx` CLIDemo (lines 424-444): 900ms delay for prompts, 360ms for output; scroll-to-bottom on each step change; blinking DemoCursor at tail while playing.
+- [ ] 8d. Create `src/app/_components/Comparison/ComparisonRow/index.tsx` -- server. Props `{ dimension: string; aide: string; openspec: string }` (note the `topic → dimension` rename from step 2h, and the column ORDER per the brand-approved render: `Dimension | AIDE | OpenSpec` -- AIDE goes in the MIDDLE, not the right). 3-col grid row using `grid-cols-[1.2fr_1fr_1fr]`. Cell padding `14px 24px`; row separator `border-bottom: 1px solid rgba(232,223,206,0.12)` (last row drops the bottom border). Cell typography per the brand styling: **Dimension** column → JetBrains Mono 12-13px, color `var(--color-fg)` at 55% opacity (use `text-[color:var(--color-fg)]/55` or the equivalent `var(--color-dim)` token); **AIDE** column → JetBrains Mono 13px, weight 500, color `var(--color-fg)` solid (full weight, no dim); **OpenSpec** column → JetBrains Mono 13px, color `var(--color-fg)` at 55% opacity. The middle-column emphasis is load-bearing -- it is how the table communicates which framework the page is about.
+- [ ] 8e. Create `src/app/_components/Comparison/index.tsx` -- orchestrator. Reads `COMPARISON_ROWS` from `@/data/comparison`. Section header uses the eyebrow + title format established in the brand-approved `variant-editorial.jsx` `ComparisonTable` section (lines 145-148): eyebrow `AIDE vs. SPEC-FIRST ALTERNATIVES` rendered as JetBrains Mono 11px, uppercase, letter-spacing 1.5px, color `var(--color-accent)` (or dim accent if the page-level header treatment forbids accent on eyebrows -- check globals.css); title `Heavier. More opinionated. More hands-off.` rendered as 22px weight 600 `var(--color-fg)`. Table wrapper: `border-radius: 8; border: 1px solid rgba(232,223,206,0.12); overflow: hidden; bg: var(--color-card-2);` (the `#0a0906` deeper card token from globals.css). Header row uses the same 3-col grid as ComparisonRow with cells: `Dimension` (uppercase 11px letter-spacing 1.5 dim), `AIDE` (uppercase 11px letter-spacing 1.5 in accent green `#3d6b4a` -- color `var(--color-accent)`), `OpenSpec` (uppercase 11px letter-spacing 1.5 dim). Header row bg `var(--color-card)` (`#16120d`) + border-bottom `1px solid rgba(232,223,206,0.12)`. Body: map `COMPARISON_ROWS` through `<ComparisonRow ... />`, passing `dimension/aide/openspec` props. SectionHeader numbering (`§05` etc.) is decided in step 12a's page composition; this orchestrator does not include the §-numbered SectionHeader -- the eyebrow + title from variant-editorial replace it for this section specifically.
+- [ ] 8f. Create `src/app/_components/Quickstart/TermStep/index.tsx` -- server. Props `{ n, cmd, note }`. Card with bg `var(--color-card)`, border `var(--color-border)`, radius 4, padding `14px 16px`. Rows: accent 11px `step {n}` + 13px `$ {cmd}` + dim 12px `# {note}`.
+- [ ] 8g. Create `src/app/_components/Quickstart/index.tsx` -- orchestrator. SectionHeader + `grid-cols-3 gap-4` row of 3 TermStep cards using QUICKSTART_STEPS.
+- [ ] 8h. Create `src/app/_components/Footer/index.tsx` -- server. Flex row space-between, 30px 64px 40px padding, 11px font dim. Left: `© 2026 TetsuKodai Group LLC · <span color=accent>●</span> canonical`. Right: `install` (link to `#quickstart`), `github ↗` (https://github.com/aidemd-mcp/server), `privacy` (`/privacy` -- stub for now, emits /privacy route later or mailto fallback).
+
+**Traces to:** intent.aide "The footer reads © 2026 TetsuKodai Group LLC and carries the canonical dot", "Animated CLI demo ... auto-play on mount, loops".
+
+**Acceptance:** Sections match their JSX counterparts visually. CLI demo loops without breaking when user clicks pause/play/restart. Comparison rows read as concrete claims ("would a skeptical technical lead roll eyes?" test passes).
+
+### 9. Build the Expo mascot (sub-spec at src/components/Expo/)
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`, `coding-playbook/agentic/agentic`
+
+- [ ] 9a. Create `src/components/Expo/.aide` -- intent sub-spec. Frontmatter scope `src/components/Expo`, intent summarizing the mascot's dual job (Domain Expert personification + scroll-contextual tip). outcomes.desired: pose and tip string come from EXPO_TIPS keyed on the current section id from ExpoTipContext; never auto-opens a second time after the user dismisses; positioned fixed bottom-right; sprite is 58px wide in sidebar variant, 140px in page-level hero/floating variant; never blocks content (pointer-events-none on wrapper, pointer-events-auto on bubble/img only); no string ever says "AIDEY" or the abandoned interim "AID". outcomes.undesired: chatbot UX, blocking content, tip strings containing AIDEY/aidey or standalone AID as a mascot name, layout shift when bubble appears.
+- [ ] 9b. Create `src/app/_components/SectionObserver/index.tsx` -- client. Props `{ id: SectionId; children: ReactNode }`. IntersectionObserver with `rootMargin: '-30% 0px -30% 0px'`, `threshold: 0.4`. On enter, calls `setActiveSection(id)` from `useExpoTip()`. On unmount or exit, no-op (the next observer takes over). This wraps each marketing section root element.
+- [ ] 9c. Create `src/components/Expo/ExpoTipContext/index.tsx` -- client. Exports `ExpoTipProvider({ children })` + `useExpoTip()` hook. Context value: `{ activeSection: SectionId; setActiveSection: (id: SectionId) => void; dismissed: boolean; setDismissed: (v: boolean) => void }`. Default activeSection is `'hero'`; default dismissed is `false`. No external dependencies -- this is pure React Context per the playbook (no state libs).
+- [ ] 9d. Create `src/components/Expo/ExpoSpeechBubble/index.tsx` -- client. Props `{ title, body, onDismiss }`. 280px wide, 14px radius, padding `14px 16px`, bg `var(--color-card)` in dark theme (always dark for aidemd.dev), border `1px solid var(--color-border)`. Close × button top-right. Accent-green title 13px weight-600; body 13px line-height-1.5 fg. Small arrow at right-bottom (-6px right offset, 22px bottom offset, 12×12 rotated -45°).
+- [ ] 9e. Create `src/components/Expo/index.tsx` -- client orchestrator. Reads `useExpoTip()`; resolves tip from EXPO_TIPS[activeSection]. Fixed `position: fixed; bottom: 24px; right: 24px; z-index: 20; pointer-events: none;`. Renders ExpoSpeechBubble (pointer-events: auto) when !dismissed + sprite `<img src="/expo-{pose}.png" width={140}>` wrapped in pointer-events-auto button that re-opens the bubble when dismissed. Float animation via `expoFloat` keyframe (in globals.css from step 1d): 4s ease-in-out infinite, translate-y-[-6px] + rotate(1deg) at 50%.
+- [ ] 9f. Wrap the root layout's `<body>` children in `<ExpoTipProvider>` (edit step 1e's layout.tsx).
+- [ ] 9g. Add `<Expo />` as a last child of `<body>` in `src/app/layout.tsx` so it's present on every page (marketing + docs).
+
+**Traces to:** intent.aide "The mascot being called AIDEY or AID anywhere ... is a spec violation", "scroll-contextual tips driven by IntersectionObserver", "never blocks content, never auto-opens on load".
+
+**Acceptance:** Scrolling `/` updates the Expo tip title+body as each SectionObserver passes the threshold. Dismissing the bubble hides it for the session; clicking the sprite re-opens. `grep -ri AIDEY src/` returns empty. `grep -ri aidey src/` returns empty. `grep -rnE '\bAID\b' src/` returns empty.
+
+### 10. Build the docs layout, sidebar, docs index, and docs template
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [ ] 10a. Create `src/components/Callout/index.tsx` -- server. Props `{ kind, children }`. Kind → border-left color map: `note: var(--color-accent)`, `warn: var(--color-todo)`, `info: var(--color-plan)`. Wrapper `margin: 16px 0 20px; padding: 12px 16px; bg: rgba(232,223,206,0.03); border: 1px solid var(--color-border); border-left: 3px solid {kind-color}; border-radius: 4; font-size: 13; line-height: 1.7;`. Label: uppercase 10-11px letter-spacing-1.5 weight-600 in the kind color, 4px below sits the body.
+- [ ] 10b. Create `src/components/CodeBlock/CopyButton/index.tsx` -- client. Props `{ text }`. The canonical copy button pattern (swap icon to `✓ copied` for 1500ms).
+- [ ] 10c. Create `src/components/CodeBlock/index.tsx` -- server orchestrator. Props `{ html: string; label?: string; code: string }`. `html` is the pre-highlighted Shiki HTML; `code` is the raw source for CopyButton; `label` is the optional header label (language name or filename). Renders: card wrapper border 1px + radius 6 + bg `#0a0906`; when label, header row with `label` + `<CopyButton text={code} />`; body `<pre>` with the Shiki HTML via `dangerouslySetInnerHTML`.
+- [ ] 10d. Create `src/components/DocMeta/index.tsx` -- server. Props `{ published, commit, slug }`. 2px accent left-border card. 2-col grid (100px label col + 1fr value col). Published plain text; Source commit wrapped in a mono chip (background `rgba(232,223,206,0.05)`, 1px border, 3px radius, 1px 6px padding); Cite as is `<CopyButton text={citeUrl} />` + dotted-underline accent URL text `https://aidemd.dev/docs/{slug}?v={commit}`.
+- [ ] 10e. Create `src/app/docs/_components/DocsSidebar/SidebarRow/index.tsx` -- server. Props `{ route, isActive, index }`. Active: bg `rgba(61,107,74,0.12)`, color accent, left-border 2px accent. Inactive: color fg, transparent left-border. 7px 24px padding, flex-gap 12px, 13px font-size. Left column: dim 02-digit number `String(index+1).padStart(2,'0')`. Right: `{route.slug}.md`.
+- [ ] 10f. Create `src/app/docs/_components/DocsSidebar/CategoryBlock/index.tsx` -- server. Props `{ label, routes, current }`. Uppercase dim-2 11px letter-spacing `# {label}` section header, then list of SidebarRow.
+- [ ] 10g. Create `src/app/docs/_components/DocsSidebar/index.tsx` -- server orchestrator. Props `{ current?: DocRouteKey; activeSection?: DocSection }`. Imports `buildRegistry()` result; groups routes by section; renders 4 CategoryBlocks (methodology, commands, agents, skills in DOCS_CATEGORIES order). Sticky top-44, height `calc(100vh - 44px)`, overflow auto, 280px wide, border-right, padding `28px 0`. Bottom: an Expo teach-pose promo card (58px sprite + accent title `Expo says:` + 11-px body "Every page here is a byte-faithful render of the source file in your .aide/ hub."). **Active-row rule (load-bearing):** the SidebarRow's `isActive` is determined by either (a) exact match on `current` (a specific page like `/docs/agents/aide-architect`), OR (b) the row belongs to `activeSection` AND no `current` is set (the user is on a section-index page like `/docs/agents/`). The CategoryBlock header gets a subtle accent treatment when its section matches `activeSection`. The orchestrator (`docs/layout.tsx`) determines `current` and `activeSection` from pathname and passes both -- never compute pathname inside DocsSidebar (it's a server component).
+- [ ] 10h. Create `src/app/docs/layout.tsx` -- server orchestrator. Renders the client wrapper `ActiveAwareTopBar` (new component, created here in `src/app/docs/_components/ActiveAwareTopBar/index.tsx` -- minimal client component that calls `usePathname()` and passes the resolved `active` prop down to TopBar). **TopBar active-rule mapping (load-bearing):** pathname starts-with `/docs/agents/` → `active='agents'`; starts-with `/docs/skills/` → `active='skills'`; starts-with `/docs/commands/` → `active='commands'`; starts-with `/docs/methodology/` → `active='docs'` (the nav label `docs` corresponds to the methodology section); pathname is exactly `/docs/` (the global index) → `active='docs'`. The match is prefix-based (starts-with), not strict equality, so both section-index URLs (`/docs/agents/`) and leaf doc URLs (`/docs/agents/aide-architect/`) highlight the same nav entry. Layout also passes `activeSection` (one of `'methodology'|'commands'|'agents'|'skills'`) and `current` (the leaf DocRouteKey when on a leaf page, undefined when on a section index) to `<DocsSidebar />`. Layout structure: `<ActiveAwareTopBar />` + 2-col grid `grid-cols-[280px_1fr]` of `<DocsSidebar current={...} activeSection={...} />` + main column (children).
+- [ ] 10i. Create `src/app/docs/_components/DocsIndexCard/index.tsx` -- server. Props `{ route, index }`. Card row: 02-digit index + `{slug}.md` + dim preview (first frontmatter description or first 100 chars of body) + `read →` accent link.
+- [ ] 10j. Create `src/app/docs/page.tsx` -- server. Loads registry; renders breadcrumb `AIDE / DOCS`, H1 `AIDE Canonical Docs`, lede paragraph (one sentence -- drafted per intent.aide voice), then 4 grouped sections each listing its routes as DocsIndexCards, then DocsFooter.
+- [ ] 10k. Create `src/app/docs/_components/DocsTemplate/Breadcrumb/index.tsx` + `PrevNext/index.tsx` + `DocsTemplate/index.tsx` -- server. DocsTemplate orchestrates Breadcrumb + H1 + DocMeta + body (dangerouslySetInnerHTML = renderedHtml) + Callout styling (via rehype detection -- or post-process step in renderMarkdown that wraps `> [!NOTE]` blockquotes in `<div class="callout-note">` etc., rendered via a consumer-side overlay -- see Decisions) + PrevNext + DocsFooter.
+- [ ] 10l. Create `src/app/docs/[section]/[slug]/page.tsx` -- server. Exports `generateStaticParams()` that imports buildRegistry and returns `routes.map(r => ({ section: r.section, slug: r.slug }))`. Exports `generateMetadata({ params })` returning `{ title, description, alternates: { canonical: \`https://aidemd.dev${route.urlPath}\` } }`. Default export: reads the route, reads the file contents, parses frontmatter, renders body via renderMarkdown, looks up prev/next neighbors by ordering, renders `<DocsTemplate />`.
+- [ ] 10m. Create `src/app/docs/_components/DocsFooter/index.tsx` -- mirror Footer from step 8h but with docs-variant links (install, github ↗, privacy) and the canonical-dot signal.
+- [ ] 10n. Create `src/app/docs/[section]/page.tsx` -- server. The section-index page that backs `/docs/methodology/`, `/docs/commands/`, `/docs/agents/`, `/docs/skills/`. Exports `generateStaticParams()` returning the 4 section keys sourced from `DOCS_CATEGORIES` (step 2j): `DOCS_CATEGORIES.map(c => ({ section: c.section }))`. Exports `generateMetadata({ params })` returning `{ title: \`${sectionLabel} | aidemd.dev\`, alternates: { canonical: \`https://aidemd.dev/docs/${section}/\` } }`. Default export: reads `buildRegistry()`, filters routes to the matching `section` param, renders a section-scoped header (Breadcrumb `AIDE / DOCS / {SECTION-UPPER}` reusing the `Breadcrumb` from step 10k, then H1 = section label per the table below, then a section-specific lede paragraph), then a list of `<DocsIndexCard />` (step 10i, reuse) for that section's routes only, then `<DocsFooter />`. Section labels and ledes (encode as a small lookup table `SECTION_INDEX_META: Record<DocSection, { label: string; lede: string }>` either inline in this file or in `src/data/docsCategories.ts` next to `DOCS_CATEGORIES` -- pick the colocation that keeps the data single-sourced): `methodology → label: "Methodology", lede: "the canonical AIDE methodology docs"`; `commands → label: "Commands", lede: "the slash commands shipped with @aidemd-mcp/server"`; `agents → label: "Agents", lede: "the specialized subagents the AIDE orchestrator delegates to"`; `skills → label: "Skills", lede: "the Claude Code skills bundled with the package"`. Reuse the same DocsTemplate-adjacent visual primitives (Breadcrumb, DocsIndexCard, DocsFooter) so the four section indexes are visually consistent with the global `/docs/` index from step 10j -- they differ only in scope (one section's routes vs all 33).
+- [ ] 10o. Update the Project Structure tree at the top of this plan file (the annotated tree under `## Project Structure`): under `src/app/docs/`, add a `[section]/page.tsx` entry alongside the existing `[section]/[slug]/page.tsx`, annotated as: `[new] section-index renderer: ({ params: Promise<{ section }> }) => JSX -- filters registry to one section, renders a list of DocsIndexCards`. The four section roots (`/docs/methodology/`, `/docs/commands/`, `/docs/agents/`, `/docs/skills/`) all resolve through this file.
+- [ ] 10p. Verify acceptance for the section-index routing: (i) clicking each of the 4 nav links (`docs`, `agents`, `skills`, `commands`) lands on a real route that renders the section's pages as a list -- no 404. (ii) Direct URL navigation to `/docs/agents/`, `/docs/skills/`, `/docs/commands/`, `/docs/methodology/` all return 200 and render the section-index. (iii) `DocsSidebar` correctly highlights the active section's CategoryBlock header on a section-index URL (when `current` is undefined and `activeSection` is set -- the rule from step 10g). (iv) `ActiveAwareTopBar` highlights the right nav entry per the prefix rule from step 10h (e.g. `/docs/agents/` → `agents` highlighted; `/docs/methodology/aide-spec/` → `docs` highlighted). (v) `generateStaticParams` for `[section]/page.tsx` produces exactly 4 entries; combined with `[section]/[slug]/page.tsx`'s 33 entries the build emits 37 docs pages total (1 global index + 4 section indexes + 33 leaf pages = 38 docs routes; sitemap.ts step 11c must include all four section indexes).
+
+**Traces to:** intent.aide "Render the docs with one template that matches the docs-* design references exactly", "four separate top-level nav entries" (each label now resolves to a real section-index route, not just a hash anchor or a 404), "cite-as URLs follow the pattern ... with commit at build time", "1000px main column max-width".
+
+**Acceptance:** `/docs` renders the index with all 33 pages grouped. Every `/docs/{section}/{slug}` route exists, renders the DocsTemplate with the file's content, shows a real commit hash in DocMeta, and the Cite as URL click-to-copy works. Visual diff against `docs.html` + `docs-aide-spec.html` at 1440px is zero.
+
+### 11. Build GA4 GlobalScripts, CanonicalTag, sitemap, robots, and not-found page
+
+Read: `coding-playbook/client/seo`
+
+- [ ] 11a. Create `src/components/GlobalScripts/index.tsx` -- server. Reads `process.env.NEXT_PUBLIC_GA4_ID`; if unset, returns `null`. Otherwise renders two `next/script` tags: (1) `<Script src={\`https://www.googletagmanager.com/gtag/js?id=${id}\`} strategy="afterInteractive" />`, (2) `<Script id="ga4-init" strategy="afterInteractive">{\`...gtag config string...\`}</Script>`. Init string respects DNT: check `navigator.doNotTrack === '1' || window.doNotTrack === '1'` before `gtag('config', id)` -- when DNT on, omit the config call (the gtag.js library still loads but no events fire without a config).
+- [ ] 11b. Create `src/components/CanonicalTag/index.tsx` -- client. `usePathname` + `useEffect` to set/refresh `<link rel="canonical" href={\`https://aidemd.dev${pathname === '/' ? '' : pathname}\`}>`. Static export cannot inject server-side canonical tags (next/metadata's alternates.canonical works but requires SSG + Node rendering per-route; our per-route metadata in docs uses alternates.canonical but this client component is the root-layout fallback for /).
+- [ ] 11c. Add `src/app/sitemap.ts` -- `export default async function sitemap(): Promise<MetadataRoute.Sitemap>` that returns `/` + `/docs` + every route from `buildRegistry()`.
+- [ ] 11d. Add `public/robots.txt` -- `User-agent: *\nAllow: /\nSitemap: https://aidemd.dev/sitemap.xml`.
+- [ ] 11e. Create `src/app/not-found.tsx` -- minimal terminal-aesthetic 404 page. TopBar + centered `> route not found (404) — try /docs` + Footer.
+
+**Traces to:** intent.aide "GA4 with a production measurement ID, loaded via next/script strategy afterInteractive", "respect standard do-not-track behavior", "static export deployable to GitHub Pages".
+
+**Acceptance:** With `NEXT_PUBLIC_GA4_ID` unset, `npm run build` succeeds and the output contains no gtag references. With the var set (simulated via `.env.local`), the gtag script tag renders in `<head>` with `strategy="afterInteractive"`. Every route page has a `<link rel="canonical">` in its rendered HTML.
+
+### 12. Compose the marketing page (src/app/page.tsx) and wire SectionObserver + ExpoTipProvider
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`
+
+- [ ] 12a. Edit `src/app/page.tsx` -- render `<main>` containing the 10 sections wrapped in SectionObserver, in order: TopBar; SectionObserver id="hero" wrapping Hero; AsciiDivider; SectionObserver id="threeLayerModel" wrapping SectionHeader+ThreeLayerModel; AsciiDivider; ...pipeline, intentTree, vaultBrain, cliDemo, comparison, quickstart...; Footer. Section padding `40px 64px`.
+- [ ] 12b. Add JSON-LD scripts to `page.tsx` for Organization (name=TetsuKodai Group LLC, url=https://aidemd.dev, contactPoint pointing to github issues) and WebSite (name=aidemd.dev, url=https://aidemd.dev). Per the coding-playbook SEO pattern.
+- [ ] 12c. Confirm `<html lang="en">` is set in layout.tsx (edit step 1e output if not).
+
+**Traces to:** intent.aide "A founder, operator, or technical lead arriving cold must, within one scroll of the landing page, understand ...".
+
+**Acceptance:** `/` renders all 10 sections in the exact order from `variant-terminal.jsx`. Scrolling through changes the Expo tip. Lighthouse SEO shows Organization + WebSite structured data.
+
+### 13. Unit tests for non-visual logic (docs registry + markdown rendering)
+
+Read: `coding-playbook/workflow/testing`, `coding-playbook/foundations/conventions`
+
+- [ ] 13a. Create `vitest.config.ts` per the playbook's Testing config -- environment node, include `src/service/**/*.test.ts` + `src/lib/**/*.test.ts`, alias `@` → `./src`.
+- [ ] 13b. Expand `src/service/docsRegistry/index.test.ts` (stub from step 4h) to cover: (i) 33 total routes, (ii) `orderRoutes` places `methodology/index` first, (iii) `uncommitted` fallback for unpushed files, (iv) `parseDocFrontmatter` handles files with and without frontmatter, (v) slug derivation handles nested `.claude/commands/aide/build.md` → `slug: 'aide/build'`.
+- [ ] 13c. Create `src/service/docsRegistry/renderMarkdown/index.test.ts` -- assert that `renderMarkdown('# Title\n\n```ts\nconst x = 1;\n```\n')` returns HTML containing an `<h1>` and a Shiki-highlighted `<pre><code class="language-ts">` with the `#3d6b4a` keyword color.
+
+**Traces to:** intent.aide "docs page list from a build-time filesystem walk ... with zero exclusions".
+
+**Acceptance:** `npm run test:unit` exits 0.
+
+### 14. Playwright visual regression tests at 1440px (pixel-fidelity gate)
+
+Read: `coding-playbook/workflow/testing`, `coding-playbook/client/components`
+
+- [ ] 14a. Create `tests/playwright.config.ts` -- webServer `npx serve out -p 4321` after `npm run build`, `baseURL: 'http://localhost:4321'`, `use: { viewport: { width: 1440, height: 900 } }`, `expect: { toHaveScreenshot: { threshold: 0.2, maxDiffPixelRatio: 0.005 } }`.
+- [ ] 14b. Create `tests/fixtures/1440.spec.ts` -- three tests: `toHaveScreenshot('home.png')` for `/`, `toHaveScreenshot('docs-index.png')` for `/docs`, `toHaveScreenshot('docs-aide-spec.png')` for `/docs/methodology/aide-spec`. Each test `await page.addStyleTag({ content: '*,*::before,*::after { animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; }' })` before screenshotting -- this freezes the Typewriter, Expo float, and CLI demo into deterministic states for byte-faithful compare.
+- [ ] 14c. On first run, commit the generated `tests/visual/*.png` goldens. Document in README how to regenerate (`npx playwright test --update-snapshots`).
+
+**Traces to:** intent.aide "render pixel-for-pixel against the chosen Terminal design references ... at a 1440px desktop viewport".
+
+**Acceptance:** `npm run test:visual` passes. Diff against committed goldens is within threshold. Any unapproved visual change to hero/docs shell/docs template fails CI until reviewed.
+
+### 15. Responsive fallback (sidebar→drawer below 768px, layout down to 375px)
+
+Read: `coding-playbook/client/components`
+
+- [ ] 15a. Convert `DocsSidebar` from sticky-left into a Radix/lightweight drawer below the `md:` breakpoint. Below 768px, render a `<button>` in TopBar (docs variant only) with a hamburger glyph that toggles an overlay drawer containing the sidebar content. The desktop sidebar uses `hidden md:block`; the drawer uses `block md:hidden`. No new dependencies -- implement with `useState` + a transparent-overlay div.
+- [ ] 15b. Marketing-page 2-column grids (Hero, IntentTree) collapse to single-column below `md:` via `grid-cols-1 md:grid-cols-2`. Pipeline row of 6 stage buttons wraps onto 2 rows of 3 below `md:`.
+- [ ] 15c. Verify at 375px: no horizontal scroll on `/`, `/docs`, `/docs/methodology/aide-spec`. TopBar collapses to `docs` + hamburger at the smallest sizes.
+- [ ] 15d. Expo mascot sprite shrinks to 80px below `md:` and the bubble shifts to `max-width: calc(100vw - 120px)`.
+
+**Traces to:** intent.aide "mobile viewport (375px) is best-effort: responsive down, sidebar collapses to drawer below 768px, but not a strict Lighthouse gate".
+
+**Acceptance:** Three canonical pages open at 375px without horizontal scroll or overlapping content. Drawer toggles the sidebar in/out.
+
+### 16. Lighthouse pass and final definition-of-done check
+
+Read: `coding-playbook/client/seo`, `coding-playbook/foundations/conventions`
+
+- [ ] 16a. Run `npm run build` → `npm run preview` → open Lighthouse in Chrome at 1440px with throttling off for desktop scoring. Capture all 4 category scores. Target ≥ 95.
+- [ ] 16b. If any category is < 95, diagnose (common causes: unminified CSS, oversized images, missing alt text, contrast on dim text). Fix at the source -- never add workarounds. No visual regressions allowed as part of the fix.
+- [ ] 16c. Run the definition-of-done checklist from `design_handoff_aidemd_site/README.md` lines 244-252: (i) marketing page identical to Terminal.html at 1440px (covered by test:visual), (ii) docs index + both written doc pages identical (covered), (iii) 6 remaining doc pages rendered from real `.aide/docs/*.md` (covered -- they ARE the source), (iv) interactions work (manual pass with Playwright screenshot + click automation), (v) mobile responsive to 375px (covered in step 15), (vi) Lighthouse ≥ 95 (covered in 16a), (vii) no CLS on hero (typewriter reserves final box).
+- [ ] 16d. Search the built `out/` directory for the literal string "aidey" (case-insensitive). Expected: zero hits. `grep -ri aidey out/ || true` -- empty output is the pass. The only references allowed anywhere are in `design_handoff_aidemd_site/`, which is never shipped.
+
+**Traces to:** intent.aide "scores at least 95 in all four Lighthouse categories on a 1440px desktop run", "AIDEY or AID anywhere in shipped output ... is a spec violation".
+
+**Acceptance:** Lighthouse ≥ 95 in all 4 categories at 1440px desktop. No "aidey" in `out/`. All visual tests pass. Definition of done from handoff README is satisfied point-by-point.
+
+## Decisions
+
+### Why a single plan.aide instead of sub-plans
+
+The intent.aide anticipated sub-plans for complex modules. I considered splitting into root + sub-plans for `_components/`, `docs/`, `components/Expo/`, `service/docsRegistry/`. I rejected that because (1) the project is greenfield, so there are no prerequisite modules to front-load -- every sub-plan would declare the same "Tailwind theme + palette vars + cn helper" prerequisite from step 1, which is noise; (2) the primitives (CodeBlock, Callout, DocMeta, Expo) are shared across marketing and docs, and splitting forces the architect to pre-commit to where each primitive lives before either consumer exists -- risky; (3) the implementor's cognitive load is actually lower when the whole build order lives in one file they read once. Sub-`.aide` intent files DO exist for the two most complex orchestrators (`service/docsRegistry/.aide` in step 4a, `src/components/Expo/.aide` in step 9a) because those capture contracts non-obvious from the folder tree alone. No sub-`plan.aide` files -- this plan IS the plan.
+
+### Why Shiki over Prism
+
+Shiki pre-renders syntax highlighting at build time into static HTML with inline color styles, which means zero runtime JS for code blocks. Prism requires a client-side library load + DOM-walk at runtime, which adds ~30KB gzipped and a layout shift on first paint when the highlight overlay applies. For a static-export Lighthouse-≥95 site with dozens of code blocks, Shiki is the objectively smaller payload. The custom theme translates the handoff accent palette verbatim into TextMate token rules.
+
+### Why Next.js App Router over Astro
+
+The handoff README suggested Astro as an alternative. App Router wins because (1) the intent.aide and handoff both reference Next.js 14 App Router + MDX, (2) `next/script` afterInteractive has well-understood semantics for the GA4 load, (3) `generateStaticParams` + `output: 'export'` produces the same static artifact as Astro with less tooling divergence, (4) the team's existing muscle memory is Next. No behavioral advantage to Astro here.
+
+### Why CSS variables + Tailwind v4 @theme tokens instead of per-component CSS
+
+The playbook's "No CSS-in-JS or CSS Modules" anti-pattern is a hard rule. Tailwind v4's `@theme` block maps CSS variables to Tailwind utility tokens; every handoff palette hex becomes both a CSS variable (`var(--color-accent)`) AND a utility class (`bg-accent`, `text-accent`). Component-specific values that don't fit the design-system scale are expressed as Tailwind arbitrary values (e.g. `p-[14px_16px]`, `grid-cols-[280px_1fr]`). No .module.css files. No styled-components. No inline `style={{}}` when a Tailwind utility works. Per the `feedback_globals_css_scope_resolution` memo, globals.css holds exactly: @theme tokens, :root var aliases, @keyframes, ::selection, :focus-visible, prefers-reduced-motion. That's it.
+
+### Why a build-time filesystem walk instead of a static manifest
+
+intent.aide lists "a hardcoded list of doc pages anywhere in the codebase" as an undesired outcome. A manifest would be a hardcoded list. The filesystem walk is the structural guarantee against drift -- adding a .md file under any of the 4 content roots automatically produces a route. Trade-off: slightly slower build (4 `readdir` calls plus one `git log` per file). At 33 files the build-time cost is negligible (< 100ms total). The cache in `resolveCommitHash` guarantees we shell out to git exactly once per file per build.
+
+### Handoff mascot pose mapping (load-bearing, user-spec-breaking risk flagged)
+
+intent.aide demands four public/ files: `expo-teach.png`, `expo-think.png`, `expo-wave.png`, `expo-point.png`. The handoff `design_handoff_aidemd_site/prototypes/assets/` ships only THREE pose crops: `aidey-teach.png`, `aidey-read.png`, `aidey-wave.png` (plus `aidey-character-sheet.png` which is a design-process artifact, not a shipable sprite). I'm mapping as follows: teach → expo-teach.png, read → expo-think.png (the "read" pose IS thinking body-language), wave → expo-wave.png, teach (reused) → expo-point.png. This is a deliberate 3-asset → 4-pose expansion; the alternative is to crop a new "point" pose from the character-sheet PNG, which is out of scope for v1 and would be a design decision rather than an implementation decision. Flag: if the user prefers a dedicated point pose, commission one and re-run step 3 to replace the file.
+
+### Why IntersectionObserver for Expo tips instead of scroll-Y math
+
+intent.aide explicitly calls for IntersectionObserver. IO is cheaper than scroll listeners (browser-coordinated, not rAF-driven), and the threshold=0.4 + rootMargin -30%/-30% combination gives the intuitive "the section I'm looking at" semantics without needing to hand-tune pixel offsets. The context provider pattern (ExpoTipContext) avoids prop-drilling and satisfies the "no state management libraries" anti-pattern -- React Context is the escape hatch for cross-cutting state that the playbook allows.
+
+### Why per-route alternates.canonical AND a client CanonicalTag
+
+Static export supports `alternates.canonical` in `generateMetadata` for known routes, and that's preferred. But the root layout's client `CanonicalTag` remains as a belt-and-suspenders fallback for any route that forgets to set metadata (and for error routes where Next.js may not run generateMetadata). If the per-route metadata is correct, CanonicalTag's useEffect is a no-op (it'll set the same href). No duplicate tags -- the client updates the existing tag in place.
+
+### Why `trailingSlash: true` in next.config.mjs
+
+GitHub Pages serves directories as `/foo/index.html`. Without trailingSlash, Next.js static export outputs `/docs/methodology/aide-spec.html` which Pages happily serves at `/docs/methodology/aide-spec` -- but internal links using `<Link href="/docs/...">` would 404 in preview environments that don't strip `.html`. trailingSlash ensures every route is `/docs/methodology/aide-spec/index.html`, which Pages, `serve`, and any static host handles identically.
+
+### Why the 6-item nav maps `docs`→`/docs`, `commands/agents/skills`→`/docs/<section>`
+
+intent.aide says: "Expose four separate docs sections as four separate top-level nav entries." The nav items are visible labels; the URL structure is orthogonal. Keeping all docs under `/docs/*` preserves one docs layout, one sidebar, one template, one filesystem-walk registry. The four labels point to the four section roots within /docs -- and **each of those URLs resolves to a real section-index page** (built by `/docs/[section]/page.tsx`, step 10n), not just a URL pattern that happens to be valid. Clicking `agents` lands on `/docs/agents/`, which renders an index of the 9 agent pages; clicking `commands` lands on `/docs/commands/`, which renders the 13 command pages; and so on. The four labels are first-class routes with their own H1, lede, and DocsIndexCard list -- this collapses to the same experience as if each were a top-level route, without duplicating layout components.
+
+### Why section-index pages at `/docs/<section>/`
+
+Progressive disclosure: a user clicking `agents` in the nav has a strong implicit signal "show me what agents exist". The alternatives are (a) hash-anchor scrolling on the global `/docs/` index page, which works visually but breaks deep-linking and back-button semantics; (b) collapsing all 4 nav links to `/docs/` and letting the user scroll-find, which fails the "four separate top-level nav entries" intent; (c) creating a real index page per section, which is what we do. The cost is one new page route (`[section]/page.tsx`) -- but it reuses every primitive (Breadcrumb, DocsIndexCard, DocsFooter) so there is no new visual vocabulary. The active-row rule on DocsSidebar becomes "pathname starts with the route's prefix" instead of strict equality (so `/docs/agents/` highlights every row in the agents CategoryBlock as part of the active section, even though no specific row's `current` matches). Same for ActiveAwareTopBar: prefix-based, not equality-based. This means a user at `/docs/agents/aide-architect/` and a user at `/docs/agents/` both see the `agents` nav highlighted -- the active state is "you're inside the agents section", not "you're on this exact URL".
+
+### Expo tip copy: 5 verbatim from handoff, 5 newly authored
+
+The 5 tips in `aidey.jsx` `AIDEY_TIPS_DEFAULT` are brand-approved copy from the handoff. Re-drafting them would be re-deciding settled brand voice; they get ported verbatim with a single substitution `s/AIDEY/Expo/g` (intent.aide demands the mascot be renamed to Expo). The 5 source tips happen to map naturally to 5 of the 10 SectionIds (`hero`, `threeLayerModel`, `intentTree`, `vaultBrain`, `quickstart`); the remaining 5 sections (`pipeline`, `cliDemo`, `comparison`, `footer`, `docs`) need new tips. Those are authored fresh in step 2i, matching the source tone exactly: all-lowercase titles, second person, 1-2 sentences, framework=AIDE / mascot=Expo kept distinct, no "AIDEY" or abandoned interim "AID" anywhere. **Pose rename `read → think`:** the source tip for `vaultBrain` uses pose `'read'`. But the public/ asset filename is `expo-think.png` (step 3b copies `aidey-read.png → expo-think.png`), and the `ExpoPose` type in `src/types/expo.ts` enumerates only `'teach'|'think'|'wave'|'point'`. So the data file MUST encode the `vaultBrain` tip's pose as `'think'`, not `'read'`. The handoff's "read" pose IS reading-as-thinking body language, so the rename is semantic-preserving, not destructive. Documented inline in the data file's JSDoc.
+
+### Comparison rows: port verbatim from variant-editorial.jsx, do NOT redraft
+
+The OpenSpec vs AIDE comparison rows in `variant-editorial.jsx` `ComparisonTable` (lines 249-257) are brand-approved copy. The visual *direction* of variant-editorial was rejected in favor of variant-terminal, but the table's *data* survived the rejection -- it's the same set of comparable claims either way. Re-drafting would re-decide settled brand copy. Step 2h ports all 7 rows verbatim, with source verification required (the implementor opens variant-editorial.jsx and confirms the rows match before encoding -- if there's a discrepancy, they flag back rather than silently using the user-provided text). Field-name change `topic → dimension`: the brand-approved column header is "Dimension", so the field name follows. Column-order change in step 8d: the brand-approved column order is `Dimension | AIDE | OpenSpec` (AIDE in the middle), and the middle column gets weight-500 + solid foreground while the outer columns get 55% opacity dim. The middle-column emphasis is the table's primary visual rhetoric -- it answers "which framework is this page about" without text -- so getting the column order right is load-bearing.
+
+### Why raw HTML + rehype instead of @mdx-js/react or @next/mdx
+
+The docs content is plain markdown (`.md`, not `.mdx`), sourced from two independent tool ecosystems (the AIDE canonical docs and the Claude Code skills/commands). Introducing MDX would require re-authoring the content with React component imports -- which defeats the "render directly from this repo's filesystem" guarantee in intent.aide. Unified + rehype gives us the HTML we need with Shiki integration. Callouts are handled via a small rehype plugin that converts GitHub-flavored `> [!NOTE] ... > body` blockquotes into `<div class="callout callout-note">` before render; the Callout component's styling applies via a `.callout-note` utility in globals.css OR by replacing the div server-side with `<Callout kind="note">` via rehype-react. Pick rehype-react for type safety in step 10k -- if it proves painful, fall back to class-based CSS targeting. Decision noted in plan step 10k.
+
+### Why Playwright over DOM-snapshot tests for pixel-fidelity
+
+The intent.aide outcome is rendered output matching the JSX prototypes "pixel-for-pixel at 1440px". DOM snapshots can catch structural drift but cannot catch color drift, spacing drift, font-weight drift, or kerning differences. Playwright `toHaveScreenshot` at a fixed viewport is the only test that actually verifies rendered pixels. The 0.2 threshold + 0.005 maxDiffPixelRatio gives a ~0.5% pixel tolerance which is generous enough to survive font-rasterization variance across Playwright versions but tight enough to catch a palette swap or a 2px spacing miss. Playwright is a dev-dep; browsers install only in CI. Per the playbook, component tests are "most brittle, least valuable" -- visual regression is not component tests, it's acceptance tests, and those are load-bearing here.
+
+### Why the spacing scale lives in globals.css `@theme` tokens
+
+The scale is 4/8/12/14/16/18/20/24/28/32/40/44/60/64/80. Tailwind's default scale (`p-1 = 4px, p-2 = 8px`) covers most but not all (e.g., `14px, 18px, 44px, 60px` are not Tailwind defaults). Defining `--spacing-14: 14px` etc. in @theme gives utility classes like `p-14` that map to the exact custom values. The alternative -- arbitrary values like `p-[14px]` everywhere -- works but visually clutters JSX. Defining the scale once in @theme keeps the JSX readable AND enforces "no ad-hoc spacing values" (any `p-[13px]` in review is an obvious spec violation).
+
+### Why `design_handoff_aidemd_site/` stays in the repo (and out of public/)
+
+The handoff directory is the visual source of truth for every plan step. Developers diff against it during implementation. Deleting it after the build would leave future maintainers without the reference. Keeping it in the repo is correct; shipping it to public/ would be a spec violation (scaffolding in production). next.config.mjs + Next's static asset resolver only serves files from `public/` -- the handoff directory stays on disk, invisible to the built site. No action needed; just never copy out of it into public/ except via step 3.
+
+### Scope note on step 15 (mobile responsive)
+
+The intent.aide is explicit that mobile is "best-effort, not strict" and not a Lighthouse gate. Step 15 delivers the "sidebar→drawer below 768px" and "usable at 375px" requirements but does NOT attempt parity with the desktop visual density at smaller sizes. Pixel-fidelity applies at 1440px only; below 768px, the layout is responsive/functional but not pixel-compared. The visual regression suite (step 14) only screenshots at 1440px.

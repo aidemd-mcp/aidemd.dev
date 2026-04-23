@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>aide-template — AIDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>html,body{margin:0;padding:0;background:#0d0b08}body{font-family:'JetBrains Mono',monospace}*{box-sizing:border-box}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="docs-shell.jsx"></script>
+<script type="text/babel">
+function Page() {
+  return (
+    <DocsShell current="aide-template">
+      <div style={{ fontSize: 12, color: DOCS_PAL.dim, letterSpacing: 2, marginBottom: 10 }}>
+        <A href="Terminal.html">AIDE</A> / <A href="docs.html">Docs</A>
+      </div>
+      <H1>AIDE Template</H1>
+      <DocMeta published="2026-04-20T15:35:59-07:00" commit="73e3feb" slug="aide-template" />
+
+      <Callout kind="warn">
+        <Strong>For agents: this file is a scaffold, not a reference.</Strong> If you are creating a new <C>.aide</C> file, copy the fenced block below verbatim into the new file, then replace every <C>{'<…>'}</C> placeholder with content specific to the module being specced.
+      </Callout>
+
+      <H2 id="how">How to use this template</H2>
+      <UL>
+        <LI>Create the new <C>.aide</C> file at the correct location (next to the orchestrator <C>index.ts</C> it governs, or at <C>.aide/intent.aide</C> for the project root).</LI>
+        <LI>Copy the entire fenced block under The Template into the new file, without the surrounding backticks.</LI>
+        <LI>Fill in the frontmatter: replace each <C>{'<…>'}</C> placeholder with a concrete value.</LI>
+        <LI>For each body section, read the guidance paragraph, then <Strong>replace it</Strong> with real content for this module.</LI>
+        <LI>A finished <C>.aide</C> contains zero placeholders and zero guidance paragraphs.</LI>
+      </UL>
+
+      <H2 id="template">The Template</H2>
+      <CodeBlock label=".aide">{`---
+scope: <module path this spec governs, e.g. service/<module-name>>
+description: <one-line purpose statement>
+intent: >
+  One paragraph, plain language, written so a human reading it cold
+  understands the purpose of this module in under ten seconds. State
+  the problem being solved and the conditions of success in terms of
+  the consumer/user/recipient of the module's output — not in terms
+  of the code that will implement it.
+outcomes:
+  desired:
+    - <One concrete, observable success criterion.>
+    - <Write them so they are falsifiable: a reviewer should be able to
+      look at real output and say yes or no without hedging.>
+  undesired:
+    - <A failure mode that violates the intent. Especially important:
+      the kind of output that looks correct on the surface and passes
+      tests but misses the point.>
+    - <Call out the almost-right answers a lazy or pattern-matching
+      agent would produce.>
+---
+
+## Context
+
+<!-- REPLACE: explain why this module exists and the domain-level
+  problem it solves. Write for a strong generalist engineer who does
+  not know this specific domain. No code. -->
+
+## Strategy
+
+<!-- REPLACE: describe how this module honors its intent and hits
+  outcomes.desired without tripping outcomes.undesired. Write in
+  decision form, not description form. Cite data inline. No code. -->
+
+## Good examples
+
+<!-- REPLACE: concrete domain output that illustrates success. Real
+  output, not code. Pattern material for QA agents. -->
+
+## Bad examples
+
+<!-- REPLACE: show the almost-right answer — output that looks valid,
+  passes tests, and still violates the intent. -->
+
+## References
+
+<!-- The synthesis agent populates this section during synthesis. Each
+  entry is a bullet: brain note path + one-line description of what
+  was drawn from it. -->`}</CodeBlock>
+
+      <Callout kind="info">
+        <Strong>Install:</Strong> <C>npx @aidemd-mcp/server@latest init</C>
+      </Callout>
+
+      <PrevNext prev={{ slug: 'aide-spec', title: 'aide-spec.md' }} next={{ slug: 'plan-aide', title: 'plan-aide.md' }} />
+      <DocsFooter />
+    </DocsShell>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body>
+</html>
