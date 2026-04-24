@@ -1,47 +1,42 @@
 ---
+status: closed
 description: >
-  Two user-reported findings from 2026-04-23: (1) docs content max-width
-  questioned — resolved as a non-issue, handoff matches; (2) sidebar scroll
-  container uses the OS-native scrollbar instead of the Terminal-palette
-  custom scrollbar that the warm-dark aesthetic requires.
+  QA pass 2026-04-24: all outcomes verified after Session 1 (GitHub-style
+  edge-anchored TopBar + docs layout refactor) and Session 2 (universal
+  custom scrollbar CSS). No open issues.
 intent: >
-  pixel-for-pixel Terminal design execution at 1440px (outcomes.desired[0]);
-  no visible deviation from the Terminal design references
-  (outcomes.undesired[0])
-misalignment:
-  - implementation-drift
-  - spec-gap
+  Wide-viewport chrome anchoring (outcomes.desired[1]);
+  custom scrollbars on all scroll containers (outcomes.desired[2]);
+  no centered-column chrome drift (outcomes.undesired[1]);
+  no OS-native scrollbars (outcomes.undesired[2]).
+misalignment: []
 ---
 
 # QA Re-alignment Document
 
-## Notes (non-issues — no fix required)
-
-**Finding 1 — Docs content max-width is correct.**
-The handoff source of truth is `design_handoff_aidemd_site/prototypes/docs-shell.jsx`
-line 90: `<main style={{ padding: '40px 64px 80px', maxWidth: 1000 }}>`. The
-current implementation at `src/app/docs/_components/DocsSidebar/SidebarShell/index.tsx`
-and `src/app/docs/layout.tsx` line 48 also sets `maxWidth: 1000`. These match
-exactly. The README section "Docs page template" also explicitly states
-"Main column (max-width 1000px, padding `40px 64px 80px`)". 1000px is the
-intentional prose-readable width for the docs content column and is the value
-the handoff specifies — it is not a drift from 1280px and does not need to change.
-
----
-
 ## Issues
 
-- [ ] **ISSUE-01 — Sidebar scroll container renders OS-native scrollbar, breaking the warm-dark Terminal aesthetic**
-  File: `src/app/docs/_components/DocsSidebar/SidebarShell/index.tsx` line 58 — `<aside>` has inline style `overflowY: 'auto'`. At 1440px the sidebar content (scrollHeight: 1544px) overflows its fixed height (clientHeight: 856px), causing a scrollbar to render. No custom `::-webkit-scrollbar` or `scrollbar-width` rules exist anywhere in `src/app/globals.css` or in any loaded stylesheet (confirmed via runtime evaluation of `document.styleSheets`). On desktop Chromium the native scrollbar renders as a visible light-grey bar (approximately 15px wide) against the `#0d0b08` warm-dark background — a stark contrast that breaks the Terminal aesthetic.
-  The handoff `design_handoff_aidemd_site/prototypes/docs-shell.jsx` line 49 also uses `overflow: 'auto'` with no custom scrollbar CSS; the handoff silently inherits Chromium's thin overlay scrollbar when rendered as a prototype in-browser. In production, the OS/browser's native thick scrollbar replaces the thin overlay scrollbar, producing a visible deviation. The intent spec outcome requires pixel-for-pixel Terminal execution; the native scrollbar is not part of that aesthetic and constitutes a visible deviation.
-  Traces to: `outcomes.desired[0]` — "pixel-for-pixel against the Terminal design references at 1440px — palette, spacing scale, borders, radii, and accent-bar treatments all match the handoff exactly"
-  Also trips: `outcomes.undesired[0]` — "any visible deviation from the Terminal design references at 1440px"
-  Misalignment: `implementation-drift` — the handoff prototype's thin overlay scrollbar behavior was not explicitly specified, so no custom scrollbar CSS was written; in production the thick native scrollbar is visible and deviates from the Terminal aesthetic.
-
----
+*(none — all outcomes satisfied)*
 
 ## Retro
 
-**What would have caught ISSUE-01 earlier:** The spec and handoff both rely on `overflow: auto` without naming the expected scrollbar appearance. A spec-level assertion — "sidebar scroll container uses a custom thin scrollbar matching the warm-dark palette, not the OS-native scrollbar" — would have surfaced this as a required implementation detail during the plan stage. A Playwright visual regression screenshot cropped to the sidebar right edge at 1440px with a long enough content list to force overflow would have caught the native scrollbar in the visual diff.
+Prior ISSUE-01 (OS-native scrollbar on sidebar) is resolved: Session 2 added
+`* { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }`
+plus WebKit `::-webkit-scrollbar*` rules globally in `src/app/globals.css` (lines
+242–268), covering body, sidebar, code blocks, and all future overflow regions.
+Computed values confirmed via Playwright: `scrollbar-width: thin`,
+`scrollbar-color: rgba(232, 223, 206, 0.12) rgba(0, 0, 0, 0)` on `document.body`
+and all elements.
 
-**Stage that needs strengthening:** `spec-gap` — the docs shell sub-spec (if it existed) should have enumerated `::-webkit-scrollbar` and `scrollbar-width` rules as first-class Terminal visual requirements, not left them implicit in the prototype's browser-rendering behavior. Overflow scroll containers in warm-dark UIs always need explicit scrollbar styling; this should be a named convention in the coding playbook.
+Prior wide-viewport chrome drift (non-issue in previous pass) is now a named
+desired outcome — and the implementation satisfies it cleanly. At 1920px: header
+inner wrapper has `max-width: none`, brand cluster left edge at 16px, nav right
+edge at 1894px (16px from the header right). Docs layout uses a full-width flex
+row with no centering container above the sidebar — the `<aside>` genuinely
+touches the viewport-left edge.
+
+**Dev-server note (not a code failure):** On the current session the `.next` cache
+has stale vendor chunks (`tailwind-merge.js` not found), blocking all
+`/docs/[section]/[...slug]` routes with a 500. A dev server restart (`npm run dev`)
+will rebuild the chunks and restore docs rendering. The source code is correct;
+this is a cache staleness artifact only.

@@ -59,8 +59,8 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
       style={sticky ? { position: 'sticky', top: 0, zIndex: 10, height: 44 } : undefined}
       aria-label="Site header"
     >
-      {/* Inner wrapper: caps content at layout-max-width, centers it, carries the flex row */}
-      <div className="max-w-[var(--layout-max-width)] mx-auto flex items-center gap-[10px] px-[16px] py-[10px] h-full">
+      {/* Inner wrapper: edge-anchored, no max-width cap — GitHub top-bar pattern. */}
+      <div className="flex items-center gap-[10px] px-[16px] py-[10px] h-full">
         <Link
           href="/"
           className="flex items-center hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)] rounded-sm"

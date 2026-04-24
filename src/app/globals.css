@@ -239,6 +239,34 @@
   line-height: 1.65;
 }
 
+/* ── Custom scrollbars — warm-dark palette ───────────────────────────────── */
+/* Applies globally to all scroll containers: body, docs sidebar, code blocks */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* Chromium / WebKit */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dim);
+}
+
 /* Selection */
 ::selection {
   background: var(--color-accent);

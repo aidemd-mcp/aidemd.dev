@@ -29,8 +29,9 @@ export default async function DocsSidebar() {
 
   return (
     <>
-      {/* Desktop: sticky left column, hidden below md: */}
-      <div className="hidden md:block">
+      {/* Desktop: sticky left column, hidden below md:; flex-shrink-0 prevents
+          compression inside the flex row in docs/layout.tsx */}
+      <div className="hidden md:block flex-shrink-0">
         <SidebarShell groupedRoutes={groupedRoutes} />
       </div>
 

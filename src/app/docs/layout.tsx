@@ -15,9 +15,10 @@ interface DocsLayoutProps {
  *   - ActiveAwareTopBar: sticky client component that reads usePathname() and
  *     derives the active TopBar nav entry (docs | agents | skills | commands).
  *     At mobile breakpoints it also renders a hamburger button overlay.
- *   - 2-column grid: 280px DocsSidebar (desktop, hidden md:block) + 1fr main.
- *     Below md: the grid collapses to a single column; the sidebar becomes a
- *     drawer overlay toggled by the hamburger in the TopBar.
+ *   - flex row: 280px DocsSidebar flush with viewport-left edge (desktop,
+ *     hidden md:block), then flex-1 main that centers its 1000px prose column.
+ *     Below md: single-column; sidebar becomes a drawer overlay toggled by
+ *     the hamburger in the TopBar.
  *
  * DocsSidebar computes activeSection and current internally via usePathname()
  * in its SidebarShell client sub-component — the layout itself does not
@@ -28,26 +29,36 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
     <DocsDrawerProvider>
       <div className="min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-fg)]">
         <ActiveAwareTopBar />
+        {/*
+         * Wide-viewport layout: sidebar anchored to viewport-left edge, main
+         * centered at 1000px with its own margins — GitHub-docs pattern.
+         *
+         * At desktop (md+): flex row.
+         *   - Sidebar aside (inside DocsSidebar) is 280px wide, position:sticky,
+         *     flexShrink:0 — it sits flush with the viewport-left edge because
+         *     there is no centering container above it.
+         *   - Main gets flex:1 + flex justify-center so the 1000px prose block
+         *     centers within the remaining viewport width.
+         *
+         * At mobile (<md): single column; sidebar collapses to drawer overlay.
+         */}
         <div
-          className="md:grid"
-          style={{
-            gridTemplateColumns: '280px 1fr',
-            minHeight: 'calc(100vh - 44px)',
-          }}
+          className="flex"
+          style={{ minHeight: 'calc(100vh - 44px)' }}
         >
-          <Suspense fallback={<div className="hidden md:block" style={{ width: 280 }} />}>
+          <Suspense fallback={<div className="hidden md:block flex-shrink-0" style={{ width: 280 }} />}>
             <DocsSidebar />
           </Suspense>
           <main
-            className="px-[20px] md:px-[64px]"
-            style={{
-              paddingTop: 40,
-              paddingBottom: 80,
-              maxWidth: 1000,
-              width: '100%',
-            }}
+            className="flex-1 min-w-0 flex justify-center"
+            style={{ paddingTop: 40, paddingBottom: 80 }}
           >
-            {children}
+            <div
+              className="w-full px-[20px] md:px-[64px]"
+              style={{ maxWidth: 1000 }}
+            >
+              {children}
+            </div>
           </main>
         </div>
       </div>
