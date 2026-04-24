@@ -36,7 +36,7 @@ export default function Hero() {
             className="text-[14px] leading-[1.7] mt-[28px] text-[color:var(--color-dim)] whitespace-pre-wrap font-mono"
             aria-label="Framework description"
           >
-            {`# AIDEMD is a spec-first framework for agentic development.\n# powered by automated intent driven engineering.\n# heavier than OpenSpec. more opinionated.\n# designed to leave you at 0% code review.`}
+            {`# AIDE is Autonomous Intent-Driven Engineering.\n# a spec-first framework for agentic development.\n# heavier than OpenSpec. more opinionated.\n# designed to leave you at 0% code review.`}
           </pre>
 
           {/* Install line */}
@@ -74,7 +74,9 @@ export default function Hero() {
               they actually did — not a templated "we miss you".
             </div>
             <div className="text-[color:var(--color-dim)]">outcomes:</div>
-            <div className="pl-[12px] text-[color:var(--color-dim)]">desired:</div>
+            <div className="pl-[12px] text-[color:var(--color-dim)]">
+              desired:
+            </div>
             <div className="pl-[24px]">
               <span className="text-[color:var(--color-accent)]">- </span>
               Opens with factual order-history reference
@@ -83,7 +85,9 @@ export default function Hero() {
               <span className="text-[color:var(--color-accent)]">- </span>
               Body under 80 words
             </div>
-            <div className="pl-[12px] text-[color:var(--color-dim)]">undesired:</div>
+            <div className="pl-[12px] text-[color:var(--color-dim)]">
+              undesired:
+            </div>
             <div className="pl-[24px]">
               <span className="text-[color:var(--color-todo)]">- </span>
               Fabricated references
