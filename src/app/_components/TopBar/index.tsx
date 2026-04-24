@@ -53,6 +53,7 @@ const NAV_LINKS = [
 export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isDocs = pathname === "/docs" || pathname.startsWith("/docs/");
   return (
     <header
       className="w-full bg-[color:var(--color-card)] border-b border-[color:var(--color-border)]"
@@ -67,17 +68,28 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
           aria-label="Home"
         >
           <TrafficLights />
-          <span
-            className={cn(
-              "ml-[18px] text-[12px] hidden md:inline",
-              isHome
-                ? "text-[color:var(--color-fg)]"
-                : "text-[color:var(--color-dim)]",
-            )}
-            aria-hidden="true"
-          >
-            aidemd.dev — zsh
-          </span>
+          {isDocs ? (
+            <span
+              className="ml-[18px] text-[12px] hidden md:inline"
+              aria-hidden="true"
+            >
+              <span style={{ color: "var(--color-accent)" }}>$</span>
+              {" "}aidemd.dev
+              <span style={{ color: "var(--color-dim)" }}>/docs</span>
+            </span>
+          ) : (
+            <span
+              className={cn(
+                "ml-[18px] text-[12px] hidden md:inline",
+                isHome
+                  ? "text-[color:var(--color-fg)]"
+                  : "text-[color:var(--color-dim)]",
+              )}
+              aria-hidden="true"
+            >
+              aidemd.dev — zsh
+            </span>
+          )}
         </Link>
         <nav
           className="ml-auto flex items-center gap-[20px] text-[11px] text-[color:var(--color-dim)]"
