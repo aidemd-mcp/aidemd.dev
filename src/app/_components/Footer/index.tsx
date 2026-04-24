@@ -2,7 +2,7 @@
  * Site footer.
  *
  * Left: "© 2026 TetsuKodai Group LLC · ● canonical" (● is accent-green).
- * Right: install (→ #quickstart), github ↗, privacy (→ /privacy).
+ * Right: install (→ npm package), github ↗, privacy (→ /privacy).
  */
 export default function Footer() {
   return (
@@ -28,7 +28,9 @@ export default function Footer() {
       {/* Right nav */}
       <nav className="flex items-center gap-[24px]" aria-label="Footer navigation">
         <a
-          href="#quickstart"
+          href="https://www.npmjs.com/package/@aidemd-mcp/server"
+          target="_blank"
+          rel="noopener noreferrer"
           className="hover:text-[color:var(--color-fg)] transition-colors"
         >
           install
