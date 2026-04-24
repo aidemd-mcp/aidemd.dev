@@ -36,7 +36,7 @@ export default function Hero() {
             className="text-[14px] leading-[1.7] mt-[28px] text-[color:var(--color-dim)] whitespace-pre-wrap font-mono"
             aria-label="Framework description"
           >
-            {`# AIDEMD is a spec-first framework for agentic development.\n# Powered by AIDE - Autonomous Intent-Driven Engineering\n# heavier than OpenSpec. more opinionated.\n# designed to leave you at 0% code review.`}
+            {`# AIDEMD is a spec-first framework for agentic development.\n# heavier than OpenSpec. more opinionated.\n# designed to leave you at 0% code review.`}
           </pre>
 
           {/* Install line */}
