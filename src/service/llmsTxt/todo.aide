@@ -1,0 +1,63 @@
+---
+intent: >
+  All outcomes.desired and outcomes.undesired verified. Fix loop closed clean
+  on 2026-04-24.
+misalignment: []
+---
+
+# QA Re-alignment Document
+
+## Re-validation Summary (2026-04-24 — final pass)
+
+All four issues tracked across this fix loop are resolved:
+
+1. Methodology section ordering — `loadRouteGroups` reads `.aide/docs/index.md`
+   and re-sorts the Methodology section to `index → aide-spec → aide-template →
+   plan-aide → todo-aide → progressive-disclosure → agent-readable-code →
+   automated-qa → cascading-alignment`. Matches spec exactly. RESOLVED.
+
+2. Description coverage — All 33 of 33 link entries carry non-empty descriptions.
+   `getDocMeta` falls back to `extractBodyFirstSentence` when frontmatter
+   `description:` is absent. RESOLVED.
+
+3. Agent/skill titles — Agents section shows clean names (`aide-aligner`,
+   `aide-architect`, etc.) with no slash-prefixed slug-path titles.
+   `parseDocFrontmatter` title chain is `data.title → H1 → data.name → slug`.
+   RESOLVED.
+
+4. Stale `@ts-expect-error` in `llmsTxtConfig/index.test.ts` line 29 — directive
+   removed; `tsc --noEmit` now exits 0. RESOLVED.
+
+## Issues
+
+(none — all issues resolved, fix loop closed)
+
+## Retro
+
+The fix loop ran four iterations before reaching a clean state. Three issues were
+caught in the first QA pass (ordering, descriptions, titles); one was caught in
+the second pass (stale `@ts-expect-error`). All were implementation-drift or
+test-gap misalignments — no spec-gap or strategy-gap regressions.
+
+What would have caught these earlier:
+
+1. **Methodology ordering** — The plan step that wired `loadRouteGroups` did not
+   include a test asserting the canonical order from `.aide/docs/index.md`. An
+   explicit order-assertion test in the unit suite would have blocked merging an
+   alphabetical sort.
+
+2. **Missing descriptions** — The plan step for description extraction did not
+   enumerate a fallback chain with a test for the "no frontmatter description"
+   case. A test fixture with a doc that has no `description:` frontmatter would
+   have caught the gap.
+
+3. **Agent/skill title format** — The plan step for title extraction did not
+   specify which title form should win for nested-path slugs. A test asserting
+   that agent entries use bare `aide-aligner` rather than slash-prefixed
+   slug-path form would have caught the drift immediately.
+
+4. **Stale `@ts-expect-error`** — `Object.freeze` is a runtime guarantee only;
+   TypeScript does not infer `readonly` from it unless the type carries `readonly`
+   modifiers. A pre-commit hook running `tsc --noEmit` would have caught TS2578
+   when the test was written. Plan steps that place `@ts-expect-error` should
+   verify TypeScript actually reports an error at that site before committing.

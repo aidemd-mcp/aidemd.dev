@@ -9,6 +9,7 @@ import resolveCommitHash from './resolveCommitHash';
 import resolvePublishedDate from './resolvePublishedDate';
 import renderMarkdown from './renderMarkdown';
 import getHighlighter from '@/lib/shiki';
+import getDocMetaHelper from './getDocMeta';
 
 /** Module-level cache — populated on first call and reused for the remainder of the build. */
 let cached: DocRegistry | null = null;
@@ -56,6 +57,15 @@ export default async function buildRegistry(): Promise<DocRegistry> {
   cached = registry;
   return registry;
 }
+
+/**
+ * Cheap-read counterpart to `renderDoc`. Returns only the route's resolved
+ * title and the optional frontmatter `description` — no Shiki, no HTML
+ * rendering. Prefer this over `renderDoc` when you need title + description
+ * only (e.g. the llms.txt generator, sitemaps, or meta-index surfaces).
+ * Use `renderDoc` when the rendered body HTML is required.
+ */
+export const getDocMeta = getDocMetaHelper;
 
 /**
  * Reads, parses, and renders a single doc route to a RenderedDoc. The Shiki

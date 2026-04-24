@@ -1,0 +1,852 @@
+---
+intent: >
+  Build the llms.txt generator at src/service/llmsTxt — consume docsRegistry
+  (not duplicate the walk), add a lightweight description accessor to
+  docsRegistry's public API so per-route frontmatter descriptions are
+  available without a full markdown render, compose a canonical-URL link
+  list grouped by the four DOCS_CATEGORIES sections, render the complete
+  llmstxt.org-shaped document (H1 + blockquote + three prose paragraphs +
+  four H2 link lists), emit it to public/llms.txt via a Node prebuild
+  script so the static export serves /llms.txt at the site root, and
+  gate the artifact with build-time verification that catches shape,
+  URL, and drift failures before next build proceeds.
+---
+
+## Project Structure
+
+Annotated tree of the module after the plan executes, rooted at
+`src/service/llmsTxt/`. Everything inside this tree is new except where
+marked `[existing]`. The shape mirrors the `src/service/socialShare/`
+precedent — an orchestrator that exposes a pure-data config plus a
+sibling render pipeline invoked only via npm scripts — because the two
+modules solve the same class of problem (build-time static asset that
+must land in `public/` under the static-export contract).
+
+```
+src/service/llmsTxt/
+├── .aide                              ← [existing] intent spec
+├── plan.aide                          ← [existing] this file
+├── index.ts                           ← orchestrator. Single job: expose the
+│                                          llmstxt.org content contract as a
+│                                          plain-data config for any caller.
+│                                          Shape:
+│                                            export const llmsTxtConfig: LlmsTxtConfig
+│                                            export default llmsTxtConfig
+│                                          Does NOT import Playwright, fs
+│                                          writes, or docsRegistry at module
+│                                          load — keeps this importable from
+│                                          the Next build graph without
+│                                          pulling Node-only code into the
+│                                          bundle. The sibling renderLlmsTxt
+│                                          helper is reached only via
+│                                          npm run llms:render.
+│
+├── llmsTxtConfig/
+│   └── index.ts                       ← () => LlmsTxtConfig
+│                                          Pure constant builder. Centralizes
+│                                          every copy surface the generator
+│                                          emits that is NOT derived from
+│                                          docsRegistry: the H1 product name,
+│                                          the blockquote sentence, the three
+│                                          prose paragraphs (overview,
+│                                          why-it-matters, getting-started),
+│                                          the canonical origin, the npm
+│                                          install command, and the output
+│                                          path. All link-list text comes
+│                                          from docsRegistry at render time;
+│                                          this file never names a doc slug.
+│
+├── renderLlmsTxt/
+│   ├── index.ts                       ← renderLlmsTxt(): Promise<void>
+│   │                                       Node-only script entry invoked by
+│   │                                       npm run llms:render. Pipeline:
+│   │                                       load registry → group routes by
+│   │                                       section → fetch per-route
+│   │                                       descriptions → compose document
+│   │                                       → write to public/llms.txt →
+│   │                                       verify output.
+│   │
+│   ├── run.mjs                        ← Three-line ESM shim invoked by npm
+│   │                                       script. Imports the compiled TS
+│   │                                       entry via tsx and calls it —
+│   │                                       exact same pattern as
+│   │                                       socialShare/renderOgImage/run.mjs.
+│   │                                       Keeps the prebuild hook pointing
+│   │                                       at a stable .mjs file while the
+│   │                                       render logic lives in typed .ts.
+│   │
+│   ├── loadRouteGroups/
+│   │   └── index.ts                   ← (registry: DocRegistry) =>
+│   │                                       Promise<RouteGroup[]>
+│   │                                       Groups DocRegistry.routes by
+│   │                                       section in DOCS_CATEGORIES order,
+│   │                                       enriches each route with its
+│   │                                       description via the prerequisite
+│   │                                       getDocMeta helper, and preserves
+│   │                                       the registry's deterministic
+│   │                                       within-section ordering. Returns
+│   │                                       one RouteGroup per section.
+│   │
+│   ├── composeDocument/
+│   │   ├── index.ts                   ← (config: LlmsTxtConfig,
+│   │   │                                 groups: RouteGroup[]) => string
+│   │   │                                 Orchestrator that assembles the
+│   │   │                                 full llms.txt file in the exact
+│   │   │                                 llmstxt.org order:
+│   │   │                                   H1 → blockquote → preamble (3
+│   │   │                                   paragraphs) → H2 link lists
+│   │   │                                   (one per RouteGroup).
+│   │   │                                 Pure function — no I/O. Returns
+│   │   │                                 the final UTF-8 string ending in
+│   │   │                                 a single trailing newline.
+│   │   │
+│   │   ├── renderHeading/
+│   │   │   └── index.ts               ← (config: LlmsTxtConfig) => string
+│   │   │                                  Produces the H1 line
+│   │   │                                  (`# <productName>`) plus a blank
+│   │   │                                  line. Nothing else.
+│   │   │
+│   │   ├── renderBlockquote/
+│   │   │   └── index.ts               ← (config: LlmsTxtConfig) => string
+│   │   │                                  Produces the one-sentence summary
+│   │   │                                  prefixed with `> ` plus a blank
+│   │   │                                  line.
+│   │   │
+│   │   ├── renderPreamble/
+│   │   │   └── index.ts               ← (config: LlmsTxtConfig) => string
+│   │   │                                  Renders the three prose paragraphs
+│   │   │                                  (overview, whyItMatters,
+│   │   │                                  gettingStarted) as bare paragraphs
+│   │   │                                  separated by blank lines — no
+│   │   │                                  subheadings, per the llmstxt.org
+│   │   │                                  spec.
+│   │   │
+│   │   ├── renderSection/
+│   │   │   └── index.ts               ← (group: RouteGroup) => string
+│   │   │                                  Renders one H2 heading
+│   │   │                                  (`## <label>`) plus the group's
+│   │   │                                  link list. Delegates each list
+│   │   │                                  entry to renderLink.
+│   │   │
+│   │   └── renderLink/
+│   │       └── index.ts               ← (entry: LinkEntry) => string
+│   │                                       Renders one bullet line in the
+│   │                                       exact llmstxt.org format:
+│   │                                         `- [<title>](<absoluteUrl>): <description>`
+│   │                                       absoluteUrl is prebuilt by
+│   │                                       loadRouteGroups — this helper
+│   │                                       never constructs URLs.
+│   │
+│   └── verifyOutput/
+│       └── index.ts                   ← (outPath: string,
+│                                          expectedSectionOrder: DocSection[])
+│                                          => Promise<{ bytes: number;
+│                                                       routeCount: number }>
+│                                       Reads the generated file and gates
+│                                       the build. Throws on ANY of:
+│                                       - file missing or empty
+│                                       - first line does not start with
+│                                         `# ` (H1 missing)
+│                                       - second non-blank line does not
+│                                         start with `> ` (blockquote
+│                                         missing)
+│                                       - H2 headings absent, in wrong
+│                                         order, or any section has zero
+│                                         links
+│                                       - any link line lacks the
+│                                         `[title](url): description`
+│                                         shape
+│                                       - any link URL is relative, ends
+│                                         in `.md`, or does not start with
+│                                         the canonical origin
+│                                       - file contains the abandoned
+│                                         mascot names `AIDEY` or the
+│                                         standalone token ` AID ` (case
+│                                         sensitive — the root intent's
+│                                         prohibition is absolute)
+│                                       - file advertises a companion
+│                                         file (`/llms-full.txt`, `/ai.txt`)
+│                                       Returns bytes and routeCount on
+│                                       success so the render orchestrator
+│                                       can log them.
+│
+└── types.ts                           ← Module-local types:
+                                           - LlmsTxtConfig     (product
+                                             name, summary, preamble,
+                                             origin, outputPath, install
+                                             command)
+                                           - LinkEntry         (title,
+                                             absoluteUrl, description)
+                                           - RouteGroup        (section,
+                                             label, entries: LinkEntry[])
+                                         No runtime logic. Local to this
+                                         module because the shapes are
+                                         llms.txt-specific and should not
+                                         leak into src/types/ (which is
+                                         reserved for cross-module types).
+```
+
+Changes outside the module:
+
+```
+public/
+├── llms.txt                           ← NEW, generated artifact — plain
+│                                          UTF-8, trailing newline. Written
+│                                          by renderLlmsTxt. Not hand-edited,
+│                                          not checked in as a source. Next
+│                                          copies it to out/llms.txt on
+│                                          build, served as text/plain by
+│                                          GitHub Pages at /llms.txt.
+└── ...                                ← [existing] unchanged.
+
+src/service/docsRegistry/              ← [existing, additive — see
+                                           Prerequisites section] — gains
+                                           one new exported helper
+                                           getDocMeta. No other behavior
+                                           changes.
+
+package.json                           ← [existing, modified] —
+                                           + scripts.llms:render:
+                                             "node --import tsx
+                                              src/service/llmsTxt/renderLlmsTxt/run.mjs"
+                                           + scripts.prebuild is extended
+                                             from "npm run og:render" to
+                                             "npm run og:render && npm run llms:render"
+                                             so both static assets are
+                                             regenerated on every build in
+                                             a deterministic order.
+```
+
+The `design/` folder convention from socialShare does NOT apply here —
+llms.txt has no visual artifact, no fonts, no binary assets. Its only
+input is text, and the canonical text comes from docsRegistry, so there
+is nothing to check into a `design/` subfolder.
+
+## Prerequisites
+
+This plan consumes one existing module and requires one additive public
+API surface to be added to it before the render pipeline can run. The
+prerequisite does not require its own `plan.aide` — the change is a
+pure additive export that extends the existing orchestrator's public
+surface by one function.
+
+- **`@/service/docsRegistry` must expose `getDocMeta(route: DocRoute):
+  Promise<{ title: string; description: string | undefined }>`.** This
+  returns the route's title (already carried on `DocRoute`) and the
+  frontmatter `description` parsed from the same markdown file
+  `renderDoc` reads. Implementation must NOT invoke the Shiki
+  highlighter and must NOT render markdown to HTML — the whole point of
+  the accessor is a cheap, frontmatter-only read. The accessor is added
+  as a named export on `src/service/docsRegistry/index.ts` alongside
+  the existing `renderDoc` named export. This is step 1 of the Plan
+  below — the llmsTxt module does not land until it exists.
+
+- **`@/service/docsRegistry` continues to export its current public
+  surface unchanged:** the default `buildRegistry` function, the named
+  `renderDoc` function, and the types via `@/types/docs`
+  (`DocRegistry`, `DocRoute`, `DocSection`, `DocRouteKey`,
+  `DocFrontmatter`, `RenderedDoc`). llmsTxt consumes `buildRegistry`
+  (to get the deterministic 33-route list), `DocRoute` (for typing),
+  and `DocSection` (for the section ordering contract) — but it never
+  calls `renderDoc` because HTML rendering is wasted work for this use
+  case.
+
+- **`@/data/docsCategories` continues to export `DOCS_CATEGORIES` and
+  `SECTION_INDEX_META`.** llmsTxt reads `DOCS_CATEGORIES` for section
+  ordering (methodology → commands → agents → skills) and uses each
+  entry's `section` and `urlSegment` values. No additions required.
+
+- **Node 22 + npm 10 on the build host.** `node:fs/promises` and native
+  ESM are assumed (same baseline as the existing `socialShare`
+  pipeline). No new runtime dependencies — the render script uses
+  only Node built-ins plus `tsx` for on-the-fly TypeScript (already
+  a devDependency).
+
+## Plan
+
+### 1. Extend docsRegistry with a frontmatter-only meta accessor
+
+Read: `coding-playbook/services/service-layer`, `coding-playbook/architecture/folder-structure`, `coding-playbook/foundations/conventions`
+
+This step lives inside `src/service/docsRegistry/`, not `src/service/llmsTxt/`,
+because the frontmatter read belongs to the registry's domain — parsing
+the same markdown file `renderDoc` reads is the registry's job, not
+llmsTxt's. Keeping the read inside docsRegistry preserves horizontal
+isolation (llmsTxt never reaches into another service's internals) and
+concentrates filesystem+parsing concerns in one orchestrator.
+
+- [x] 1a. Add a new helper folder `src/service/docsRegistry/getDocMeta/`
+      containing `index.ts`. Default export signature:
+      `getDocMeta(route: DocRoute): Promise<{ title: string; description: string | undefined }>`.
+      The helper reads `route.absPath` via `node:fs/promises.readFile`,
+      delegates to the existing sibling `parseDocFrontmatter` helper
+      for YAML extraction, and returns the resolved `title` and the
+      `description` field from the returned frontmatter (undefined
+      when absent). No Shiki, no markdown-to-HTML, no body processing.
+      JSDoc narrates the contract: this is the cheap-read counterpart
+      to `renderDoc`, intended for consumers that need title +
+      description only (such as the llms.txt generator and any future
+      sitemap or meta-index surface).
+- [x] 1b. Export `getDocMeta` as a named export from
+      `src/service/docsRegistry/index.ts` — alongside the existing
+      default `buildRegistry` and named `renderDoc`. JSDoc on the
+      new export cross-references `renderDoc` so readers of the
+      orchestrator know when to pick which accessor.
+- [x] 1c. Add `src/service/docsRegistry/getDocMeta/index.test.ts`
+      co-located per the testing convention. Vitest with
+      `vi.mock('node:fs/promises', ...)` returning fixture markdown
+      content for three cases: (i) frontmatter with `title` and
+      `description` both present — returns both verbatim; (ii)
+      frontmatter with `title` only — returns title, `description`
+      undefined; (iii) no frontmatter, body starts with `# H1` —
+      returns `title` derived from H1 and `description` undefined.
+      These are the three shapes the 33 real docs exhibit; the test
+      pins the accessor's behavior against each.
+
+### 2. Declare llmsTxt module types
+
+Read: `coding-playbook/workflow/type-system`, `coding-playbook/foundations/conventions`
+
+- [x] Create `src/service/llmsTxt/types.ts` defining three plain-data
+      shapes used throughout the module:
+        - `LlmsTxtConfig`: product identity and static copy surfaces.
+          Fields: `productName: string` (for the H1), `summary: string`
+          (for the blockquote, one sentence), `overview: string` (first
+          preamble paragraph), `whyItMatters: string` (second preamble
+          paragraph), `gettingStarted: string` (third preamble
+          paragraph), `origin: "https://aidemd.dev"` (literal type —
+          drift guard), `outputPath: string` (site-root path where the
+          file is served; literal `"/llms.txt"`), `filesystemPath:
+          string` (absolute or process-cwd-relative path where the
+          render script writes the file; `public/llms.txt`).
+        - `LinkEntry`: one rendered bullet. Fields:
+          `title: string`, `absoluteUrl: string`, `description: string`
+          (required — an empty string is valid, `undefined` is not,
+          so the renderer never has to branch on presence).
+        - `RouteGroup`: one H2 section's worth of links. Fields:
+          `section: DocSection`, `label: string` (the H2 heading text —
+          comes from `SECTION_INDEX_META[section].label` so Methodology/
+          Commands/Agents/Skills match the site's own labels verbatim),
+          `entries: LinkEntry[]` (in the registry's deterministic
+          within-section order, already sorted by
+          `docsRegistry.buildRegistry`).
+      No runtime logic — types only. Import
+      `DocSection` from `@/types/docs`.
+
+### 3. Author the static config (everything not derived from docsRegistry)
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/services/service-layer`
+
+- [x] Create `src/service/llmsTxt/llmsTxtConfig/index.ts` — default export
+      returning a frozen `LlmsTxtConfig`. Copy constants (exact strings
+      traceable to the `.aide` Good examples section):
+        - `productName`: `"AIDE — Autonomous Intent-Driven Engineering"`
+        - `summary`: one sentence that names the methodology AND the
+          package in the same breath, per Strategy decision #2. The
+          canonical string is modeled on the spec's Good examples
+          blockquote — an implementor-facing verbatim reference. The
+          final string is a plain declarative sentence; do not insert
+          exclamation points, hype adjectives, or the mascot name.
+        - `overview`: one short paragraph explaining what AIDE (the
+          methodology) and `@aidemd-mcp/server` (the package) are,
+          using the root-intent framing "a short intent spec next to
+          the code is the contract every agent works from." No
+          adjectives from the undesired list ("seamless",
+          "revolutionary", "cutting-edge", "game-changing"). No
+          exclamation points. No mascot name.
+        - `whyItMatters`: one short paragraph addressed to the agent
+          reading the file — "if you are operating in a codebase that
+          ships `.aide` files, this methodology governs how you read
+          those specs, plan from them, build against them, and
+          validate your output." Matches the spec's Good examples
+          third paragraph.
+        - `gettingStarted`: two short sentences. Sentence one: install
+          via `npx @aidemd-mcp/server init`. Sentence two: docs site
+          URL `https://aidemd.dev/`.
+        - `origin`: `"https://aidemd.dev"` as a literal.
+        - `outputPath`: `"/llms.txt"` as a literal.
+        - `filesystemPath`: resolved at render time via
+          `path.resolve(process.cwd(), 'public/llms.txt')` — so the
+          config stores the repo-relative string
+          `"public/llms.txt"` and the render orchestrator does the
+          resolution. Keeps this config pure-data and independent of
+          `process.cwd()` at import time.
+      Return `Object.freeze(...)` of the object so mutation attempts
+      throw in strict mode — same drift guard the socialShare config
+      uses.
+
+### 4. Author the llmsTxt orchestrator (import-safe public surface)
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [x] Create `src/service/llmsTxt/index.ts`. The orchestrator imports
+      `llmsTxtConfig`, calls it once at module load, and exports both
+      the resolved config as a named export `llmsTxt` AND as the
+      default export — mirroring the shape `src/service/socialShare/index.ts`
+      established. JSDoc narrates: this module's single consumer-
+      facing responsibility is handing the content contract to
+      whoever needs it; the render script at `renderLlmsTxt/` is a
+      sibling helper reached only via `npm run llms:render` and is
+      deliberately not imported from this orchestrator (keeps
+      `node:fs/promises` writes out of the Next build graph).
+      No render-script wiring. No prerequisites on docsRegistry at
+      this layer — the orchestrator is pure config.
+
+### 5. Implement the route-group loader (consumes docsRegistry)
+
+Read: `coding-playbook/services/service-layer`, `coding-playbook/architecture/folder-structure`, `coding-playbook/foundations/conventions`
+
+- [x] Create `src/service/llmsTxt/renderLlmsTxt/loadRouteGroups/index.ts`.
+      Default export: `loadRouteGroups(registry: DocRegistry):
+      Promise<RouteGroup[]>`. Pipeline (pure composition — each bullet
+      below names one tier of transformation):
+        1. For each category in `DOCS_CATEGORIES` (in array order,
+           which is methodology → commands → agents → skills):
+             - Filter `registry.routes` to those whose `section` matches.
+               The filter preserves the within-section ordering the
+               registry already produced (index-first, alphabetical).
+             - For each filtered route, call `getDocMeta(route)` to
+               obtain `{ title, description }`. `Promise.all` the
+               per-route calls to parallelize the frontmatter reads.
+             - Construct a `LinkEntry` per route:
+                 - `title`: prefer `meta.title`; fall back to
+                   `route.title` (which is already resolved from H1
+                   or slug by `walkDocsRoot`).
+                 - `absoluteUrl`: the registry's `route.urlPath` is
+                   site-root relative (`/docs/<section>/<slug>`);
+                   prefix with `llmsTxtConfig.origin` to produce the
+                   absolute URL the spec requires
+                   (`https://aidemd.dev/docs/<section>/<slug>`).
+                 - `description`: prefer `meta.description`; fall back
+                   to the empty string if the doc has no frontmatter
+                   description at all. Rendering decides whether to
+                   emit the `: description` suffix based on emptiness
+                   (see step 6d).
+             - Emit one `RouteGroup`:
+                 - `section`: category.section
+                 - `label`: `SECTION_INDEX_META[category.section].label`
+                   — guarantees the H2 heading text matches the site's
+                   own section heading exactly
+                 - `entries`: the constructed `LinkEntry[]`
+        2. Return the array of four `RouteGroup`s in category order.
+      The loader never mutates `registry`, never re-walks the
+      filesystem, and never reads a markdown file that docsRegistry
+      has not already registered as a route. That is the drift-
+      resistance contract: add a file, docsRegistry sees it,
+      `loadRouteGroups` sees it, llms.txt emits it — no manual step.
+
+### 6. Implement the document composer (pure string assembly)
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [x] 6a. Create `src/service/llmsTxt/renderLlmsTxt/composeDocument/renderHeading/index.ts`.
+      Default export: `renderHeading(config: LlmsTxtConfig): string`.
+      Returns the single line `# <productName>` followed by `\n\n`
+      (one blank line separator).
+- [x] 6b. Create `.../composeDocument/renderBlockquote/index.ts`.
+      Default export: `renderBlockquote(config: LlmsTxtConfig): string`.
+      Returns `> <summary>` followed by `\n\n`.
+- [x] 6c. Create `.../composeDocument/renderPreamble/index.ts`.
+      Default export: `renderPreamble(config: LlmsTxtConfig): string`.
+      Returns the three prose paragraphs (overview, whyItMatters,
+      gettingStarted) joined with `\n\n` between them and terminated
+      with `\n\n`. No subheadings. No additional structure.
+- [x] 6d. Create `.../composeDocument/renderLink/index.ts`. Default
+      export: `renderLink(entry: LinkEntry): string`. Returns exactly
+      one line:
+        - When `entry.description` is non-empty:
+          `- [<title>](<absoluteUrl>): <description>`
+        - When `entry.description` is empty:
+          `- [<title>](<absoluteUrl>)` (no trailing colon)
+      No logic beyond the presence check. The line ends in `\n`.
+- [x] 6e. Create `.../composeDocument/renderSection/index.ts`. Default
+      export: `renderSection(group: RouteGroup): string`. Returns
+      `## <label>\n\n` followed by each entry rendered via `renderLink`,
+      followed by one blank line. Sections never share a heading — one
+      H2 per group, always.
+- [x] 6f. Create `.../composeDocument/index.ts` — the composer
+      orchestrator. Default export:
+      `composeDocument(config: LlmsTxtConfig, groups: RouteGroup[]): string`.
+      Pipeline:
+        1. `renderHeading(config)`
+        2. `renderBlockquote(config)`
+        3. `renderPreamble(config)`
+        4. `groups.map(renderSection).join("")`
+        5. Normalize trailing whitespace so the final string ends in
+           exactly one `\n`.
+      Pure function — no I/O. Inline step-by-step comments narrate
+      the pipeline per the Tier-3 convention.
+
+### 7. Implement the output verifier (gates the build)
+
+Read: `coding-playbook/services/service-layer`, `coding-playbook/foundations/conventions`
+
+- [x] Create `src/service/llmsTxt/renderLlmsTxt/verifyOutput/index.ts`.
+      Default export signature:
+      `verifyOutput(outPath: string, expectedSectionOrder: DocSection[]): Promise<{ bytes: number; routeCount: number }>`.
+      Reads the file via `node:fs/promises.readFile` + `stat`. Applies
+      the checks below. Throws a descriptive `Error` on ANY failure so
+      the prebuild script exits non-zero and `next build` aborts —
+      that is the drift gate the spec's `outcomes.desired` require:
+        - **File exists and is non-empty.** `stat.size > 0`.
+        - **H1 shape.** The first line starts with exactly `# `.
+        - **Blockquote shape.** The first line after the H1 that is
+          not blank starts with `> `.
+        - **Section headings.** The document contains exactly one
+          `## <label>` for each of the four DOCS_CATEGORIES labels,
+          in `expectedSectionOrder`. No extra H2s, no missing H2s,
+          no reordering.
+        - **Link lines.** Every bullet under an H2 matches the
+          pattern
+          `^- \[[^\]]+\]\(https://aidemd\.dev/docs/[^)]+\)(:.+)?$`.
+          Captures: title, url, optional description. A bullet that
+          fails this regex is a spec violation.
+        - **URL shape.** No link URL ends in `.md`. No link URL is
+          relative (does not start with `/` alone, does not start
+          with `.`). Every URL starts with
+          `https://aidemd.dev/docs/<section>/` where `<section>` is
+          one of the four DOCS_CATEGORIES `urlSegment` values. Any
+          deviation throws.
+        - **Section has at least one link.** Each of the four H2
+          sections must be followed by at least one bullet line
+          before the next H2. An empty section means the walk broke.
+        - **No abandoned mascot names.** The document must NOT match
+          `/AIDEY/i` or the standalone token ` AID ` (case-
+          sensitive, with word boundaries) — covers overview copy,
+          link descriptions, and any accidental leak.
+        - **No companion-file advertisement.** The document must
+          NOT contain any of: `/llms-full.txt`, `llms-full.txt`,
+          `/ai.txt`, or the phrase "full version". The root spec's
+          single-entry-point contract is absolute.
+      On success, returns `{ bytes, routeCount }` where `routeCount`
+      is the total number of bullet lines matched. The render
+      orchestrator logs both in its summary line.
+
+### 8. Implement the render orchestrator (end-to-end pipeline)
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/services/service-layer`, `coding-playbook/architecture/folder-structure`
+
+- [x] 8a. Create `src/service/llmsTxt/renderLlmsTxt/index.ts`. Default
+      export: `renderLlmsTxt(): Promise<void>`. Orchestrator JSDoc
+      narrates the pipeline end-to-end. Pipeline sequence (each step
+      carries an inline comment):
+        1. Import and call `buildRegistry` from `@/service/docsRegistry`
+           to get the deterministically-ordered `DocRegistry`.
+        2. `groups = await loadRouteGroups(registry)` — enriches each
+           route with title+description via `getDocMeta`.
+        3. Import `llmsTxtConfig` from `@/service/llmsTxt`. (Local
+           import — same module's sibling.)
+        4. `document = composeDocument(llmsTxtConfig, groups)` — pure
+           string assembly.
+        5. `outPath = path.resolve(process.cwd(), llmsTxtConfig.filesystemPath)`
+        6. Ensure the parent directory exists (`mkdir({ recursive:
+           true })` on `path.dirname(outPath)`) — a defensive guard
+           against a fresh clone where `public/` is absent.
+        7. `writeFile(outPath, document, { encoding: 'utf8' })`.
+        8. `metrics = await verifyOutput(outPath,
+              DOCS_CATEGORIES.map(c => c.section))`
+        9. `console.log` a single build-log line of the form
+           `"llms.txt rendered — <routeCount> links, <bytes> bytes"`
+           so CI output carries the verification result.
+      Any thrown error from a helper bubbles; the prebuild script
+      exits non-zero and `next build` aborts. That is the gate.
+
+- [x] 8b. Create `src/service/llmsTxt/renderLlmsTxt/run.mjs` — the
+      three-line ESM shim. Imports the compiled TS entry and awaits
+      it. Exact same pattern (and rationale) as
+      `src/service/socialShare/renderOgImage/run.mjs`: the npm
+      script targets a stable `.mjs` entry, `tsx` transpiles the
+      imported `.ts` on the fly. No inline logic in the shim beyond
+      import + call + `process.exit(0)` on success (or allow the
+      unhandled rejection to exit non-zero on failure — Node's
+      default behavior).
+
+### 9. Wire the npm script and prebuild hook
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [x] 9a. Edit `package.json`:
+        - Add `"llms:render": "node --import tsx src/service/llmsTxt/renderLlmsTxt/run.mjs"`
+          to `scripts`.
+        - Extend `"prebuild"` from the current
+          `"npm run og:render"` to
+          `"npm run og:render && npm run llms:render"`.
+          The `&&` chain is intentional: if og:render fails we want
+          llms:render to be skipped (not silently run against a
+          stale og.png); if llms:render fails, `next build` must
+          abort. No `||` fallbacks anywhere in the chain.
+- [x] 9b. Run `npm run llms:render` in isolation from the module's
+      working directory. Verify: exits 0, writes
+      `public/llms.txt`, and logs the
+      `"llms.txt rendered — <N> links, <B> bytes"` line. N MUST
+      equal the current total route count (33 today; the plan
+      documents the number but does not hardcode it anywhere —
+      the registry produces whatever it finds).
+
+### 10. Unit tests for pure logic
+
+Read: `coding-playbook/workflow/testing`, `coding-playbook/foundations/conventions`
+
+Vitest is already configured; `src/service/**/*.test.ts` is in the
+include glob (see `vitest.config.ts`). Tests are co-located next to
+their subject. Prefer factory functions over inline literals for
+fixtures; mock at module level; `vi.clearAllMocks()` between cases.
+
+- [x] 10a. `src/service/llmsTxt/llmsTxtConfig/index.test.ts` — asserts
+        the returned config's string fields match the spec verbatim
+        (productName, outputPath, origin), the object is frozen, and
+        none of the preamble paragraphs contain any of: `AIDEY`,
+        ` AID `, `!`, or the adjectives `seamless`, `revolutionary`,
+        `cutting-edge`, `game-changing` (case-insensitive substring
+        checks — the brand-voice guard from the root intent and the
+        undesired outcome on marketing copy).
+- [x] 10b. `src/service/llmsTxt/renderLlmsTxt/composeDocument/renderLink/index.test.ts`
+        — parameterized:
+          - Entry with non-empty description → line is
+            `- [Title](https://…): desc`.
+          - Entry with empty description → line is
+            `- [Title](https://…)` (no trailing colon-space).
+          - Entry with title containing `[` or `]` → rendered
+            verbatim; the format is the llmstxt.org bullet, not a
+            sanitized markdown dialect.
+- [x] 10c. `src/service/llmsTxt/renderLlmsTxt/composeDocument/index.test.ts`
+        — feeds a synthetic LlmsTxtConfig and a hand-built two-
+        section RouteGroup array through `composeDocument` and
+        asserts the output string:
+          - Starts with `# ` on line one.
+          - Contains exactly one `> ` line.
+          - Has the three preamble paragraphs separated by blank
+            lines with no intervening headings.
+          - Has the two H2 sections in the order the input array
+            specified.
+          - Ends in a single `\n`.
+- [x] 10d. `src/service/llmsTxt/renderLlmsTxt/verifyOutput/index.test.ts`
+        — parameterized with `vi.mock('node:fs/promises', …)` and
+        synthetic document fixtures:
+          - Fully valid document → returns `{ bytes, routeCount }`,
+            does not throw.
+          - Missing H1 → throws "llms.txt missing H1".
+          - Missing blockquote → throws "llms.txt missing
+            blockquote".
+          - Wrong section order (methodology before skills is correct;
+            skills before methodology is wrong) → throws "llms.txt
+            section order mismatch".
+          - Link with `.md` extension → throws "llms.txt link has
+            .md extension".
+          - Relative link (`(./foo)`) → throws.
+          - Link missing `https://aidemd.dev` prefix → throws.
+          - Empty section (H2 followed immediately by next H2) →
+            throws.
+          - Document containing `AIDEY` → throws.
+          - Document containing ` AID ` token → throws.
+          - Document containing `/llms-full.txt` → throws.
+        All fixtures built via a factory function
+        `makeDocumentFixture({ … })` — centralizes defaults so each
+        test varies one dimension.
+- [x] 10e. `src/service/docsRegistry/getDocMeta/index.test.ts` was
+        already added in step 1c — re-confirm it passes alongside
+        the new llmsTxt tests.
+- [x] 10f. Run `npm run test:unit` and confirm all llmsTxt tests
+        and the new getDocMeta tests pass. Zero failing tests before
+        moving on.
+
+### 11. End-to-end verification against the built output
+
+Read: `coding-playbook/workflow/testing`, `coding-playbook/foundations/conventions`
+
+This step runs the full render + build pipeline and validates against
+the spec's `outcomes.desired` — file existence, one-canonical-file
+rule, shape adherence, URL shape, drift. The implementor executes
+these as shell commands during the session; they are not automated
+tests but are the acceptance gate for the plan. Do NOT start a dev
+server — the user runs `npm run dev` on port 3001 themselves. This
+verification uses `npm run build` and static inspection of `out/`.
+
+- [x] 11a. Run `npm run build`. Confirm the console output shows
+        `og:render` running first, `llms:render` running second,
+        and both succeeding before `next build` begins. Any order
+        swap means the `&&` chain in `prebuild` is wrong.
+- [x] 11b. Inspect `out/llms.txt`:
+          - Exists at `out/llms.txt` (Next copies from `public/`).
+          - First line is `# AIDE — Autonomous Intent-Driven Engineering`.
+          - Second non-blank line starts with `> ` and contains
+            both `AIDE` and `@aidemd-mcp/server`.
+          - Contains exactly four `## ` H2 headings in the order
+            Methodology, Commands, Agents, Skills.
+          - Every bullet line matches
+            `- [<title>](https://aidemd.dev/docs/<section>/<slug>): <desc>`
+            or the no-description variant — no `.md` extensions,
+            no relative links, no bare slugs.
+          - Total bullet count equals `DocRegistry.routes.length`
+            at build time (33 today). Record the exact count in the
+            build log so future drift is visible.
+          - grep for `AIDEY`, ` AID `, `llms-full.txt`, `ai.txt` —
+            zero matches.
+- [x] 11c. Inspect the HTTP content-type story: `out/llms.txt` is
+        a real `.txt` file on disk, so GitHub Pages (and any static
+        host) serves it as `text/plain; charset=utf-8` by default.
+        No redirect, no HTML wrapper, no dynamic route. Confirm
+        `out/llms.txt` is NOT wrapped in `<html>` or `<body>` tags —
+        static inspection is enough; no network request needed.
+- [x] 11d. Cross-check drift-resistance: touch any docs markdown
+        file (e.g. `.aide/docs/aide-spec.md`) by adding a throwaway
+        blank line, re-run `npm run build`, confirm `out/llms.txt`
+        regenerated and the file is identical except for whatever
+        derived content changed (title/description if frontmatter
+        changed, nothing otherwise). Revert the throwaway edit.
+
+### 12. Align the intent spec with migration reality
+
+Read: `coding-playbook/foundations/conventions`
+
+- [x] Append a one-line entry under the spec's References section
+      (not the body, not the frontmatter) noting that the plan
+      landed and `public/llms.txt` is now the canonical artifact.
+      Do not edit the `.aide` intent body otherwise — the spec is
+      already authoritative and the whole point of AIDE is that the
+      spec does not drift with implementation details.
+
+## Decisions
+
+- **Build-time integration is a `prebuild` npm script chained after
+  `og:render`, not a Next plugin, not `generateStaticParams`, not a
+  runtime route.** The `prebuild` hook is the house pattern on this
+  project — `src/service/socialShare` established it, `og.png` lives
+  in `public/`, and Next's static export copies `public/` into `out/`
+  verbatim. Following the same pattern for `llms.txt` is the
+  cheapest, most obvious path and keeps both static assets subject
+  to the same drift-resistance discipline: if `npm run build`
+  succeeds, both artifacts are fresh. Chaining with `&&` (rather than
+  two sequential commands or a Node-level orchestrator) keeps the
+  diff to `package.json` minimal and preserves exit-code semantics:
+  a failure in og:render aborts llms:render aborts next build.
+
+- **Consume docsRegistry via its public API, never a second walk.**
+  The spec's drift-resistance outcome and the root intent's
+  filesystem-driven-docs contract both require a single source of
+  truth for the 33-route list. `docsRegistry.buildRegistry` is that
+  source; `llmsTxt` imports it and filters/groups its output. The
+  horizontal-isolation rule from the playbook's folder-structure
+  note (`services never import a neighboring service's internals`)
+  is satisfied because the import is of a public export, not a
+  reach into `docsRegistry/walkDocsRoot/` or any helper subfolder.
+
+- **Descriptions come from a new frontmatter-only accessor on
+  docsRegistry (`getDocMeta`), not from `renderDoc`.** The spec's
+  Strategy decision on link-format says "descriptions come from
+  whichever is already available in the registry." `renderDoc`
+  satisfies that requirement but it also runs a Shiki markdown
+  render — ~hundreds of ms per route for 33 routes — which is
+  wasted work when we only need the YAML `description` field.
+  Adding `getDocMeta` as a sibling accessor keeps the parsing
+  concern inside docsRegistry (single-responsibility for
+  filesystem reads and frontmatter parsing) while exposing a
+  cheap read for llmsTxt's use case. It is declared as a
+  prerequisite and shipped in step 1 of the plan, ahead of the
+  llmsTxt steps that consume it. An alternative — having llmsTxt
+  call `renderDoc` and discard the HTML — would double the
+  build's Shiki work and violate separation of concerns (llmsTxt
+  does not need any markdown-to-HTML output).
+
+- **Section labels come from `SECTION_INDEX_META`, not hardcoded
+  strings.** `DOCS_CATEGORIES[i].label` uses `"docs"` for the
+  methodology section (because it is the marketing/nav label), which
+  is wrong for the H2 heading of the methodology link list. The
+  llms.txt H2 headings must match the site's docs-area section
+  headings exactly (the intent's strategy decision #5: four
+  sections "in the canonical DOCS_CATEGORIES order — Methodology,
+  Commands, Agents, Skills"). `SECTION_INDEX_META[section].label`
+  already carries `"Methodology"`, `"Commands"`, `"Agents"`,
+  `"Skills"` — exactly the strings the spec's Good examples show.
+  Reading from `SECTION_INDEX_META` single-sources both surfaces
+  and makes future label changes land in both places at once.
+
+- **URL composition is `origin + route.urlPath`, not a format
+  string in llmsTxt.** `docsRegistry` already produces
+  `urlPath: "/docs/<section>/<slug>"` — the exact shape the spec
+  requires. Prepending the literal origin from config is the
+  minimum transformation; anything more (reconstructing the URL
+  from section + slug, using a URL template) would re-introduce a
+  place where the llms.txt URL shape could drift from the deployed
+  site's actual routes. The `.aide` spec's bad examples call out
+  this exact failure mode (URLs that look valid but 404).
+
+- **Module-local types file (`src/service/llmsTxt/types.ts`), not
+  `src/types/llmsTxt.ts`.** The playbook centralizes types in
+  `src/types/` when they are shared across modules (e.g.
+  `src/types/docs.ts` is read by docsRegistry, DocsSidebar, page
+  components, and now llmsTxt). The three llmsTxt shapes
+  (`LlmsTxtConfig`, `LinkEntry`, `RouteGroup`) are purely internal
+  to this module — no other code imports them. Keeping them local
+  avoids polluting the global types surface and honors the
+  "keep shared code as close to its consumers as possible"
+  escalation rule from the folder-structure note. If a future
+  module (a sitemap generator, say) needs `LinkEntry`, the type
+  lifts to `src/types/` at that point — not preemptively.
+
+- **`verifyOutput` gates on shape + drift + forbidden substrings,
+  not on exact-string equality.** Tempting to snapshot the entire
+  file and fail on any diff, but that approach fails immediately
+  when any docs description or title legitimately changes. The
+  verifier checks structural invariants (H1 present, blockquote
+  present, four H2s in correct order, every link shape-valid) and
+  the four forbidden-substring classes the spec calls out
+  (`AIDEY`, ` AID `, `/llms-full.txt`, `.md` URLs). This matches
+  the pattern `src/service/socialShare/renderOgImage/verifyOutput/`
+  established — structural gates at build time, not snapshot
+  equality.
+
+- **One H2 per category, in the four-category order, even if a
+  category is empty.** The spec Good examples show four H2s
+  (Methodology, Commands, Agents, Skills) and the frontmatter
+  calls out "conflating the four categories into one section"
+  as a failure. If docsRegistry one day reports zero skills
+  routes, the verifier throws (empty section) — which is the
+  correct behavior: either skills are missing from the package
+  (a real bug the build should catch) or the registry broke
+  (also a real bug the build should catch). Silently emitting
+  three H2s would hide both.
+
+- **The composer is split into one-responsibility helpers
+  (renderHeading, renderBlockquote, renderPreamble,
+  renderSection, renderLink) inside a `composeDocument/`
+  orchestrator folder.** Five helpers for five distinct
+  line-shapes is the right granularity — each is
+  independently testable, each has a single JSDoc-able
+  responsibility, and the orchestrator reads top-to-bottom as
+  the exact llms.txt document order (heading → blockquote →
+  preamble → sections). Inlining everything in a single
+  `composeDocument/index.ts` would produce a ~80-line function
+  that reviews as a wall of string concatenations; aggressive
+  modularization per the progressive-disclosure convention is
+  the playbook default and there is no reason to deviate.
+
+- **No `design/` subfolder (unlike `socialShare`).** The
+  socialShare precedent keeps an in-repo HTML design source
+  because the rendered artifact is a binary image that must be
+  byte-faithful to the HTML. llms.txt has no visual artifact,
+  no fonts, no binary output — the source of truth IS the text
+  the composer assembles at render time. There is nothing to
+  check in.
+
+- **No snapshot test on the full rendered llms.txt.** Snapshot
+  tests for this artifact would break on every docs edit
+  (legitimate or otherwise) and train the implementor to
+  blanket-`--update-snapshots` when they should be reading the
+  diff. The structural verifier in step 7 catches all the
+  failure modes the spec lists; the unit tests in step 10
+  cover the pure logic. A snapshot would add cost without
+  catching anything the verifier misses.
+
+- **Playbook notes referenced in Read lists:**
+  `coding-playbook/foundations/conventions` (naming, JSDoc,
+  helper placement, progressive disclosure, early returns,
+  code hygiene), `coding-playbook/architecture/folder-structure`
+  (orchestrator/helper pattern, cascading domain structure,
+  horizontal isolation, aggressive modularization),
+  `coding-playbook/services/service-layer` (services return
+  plain data, never framework types; no I/O in pure helpers),
+  `coding-playbook/workflow/testing` (Vitest co-location,
+  factory functions, `vi.mock` at module level, parameterized
+  tests), `coding-playbook/workflow/type-system` (literal
+  types for drift guards, DTO discipline).

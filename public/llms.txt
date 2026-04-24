@@ -1,0 +1,54 @@
+# AIDE — Autonomous Intent-Driven Engineering
+
+> The canonical home of the AIDE methodology and the @aidemd-mcp/server package — a short `.aide` intent spec lives next to the code it governs, and that spec is the contract every agent plans, builds, and QAs against.
+
+AIDE (Autonomous Intent-Driven Engineering) treats intent as a first-class artifact. A short `.aide` doc sits next to each orchestrator, declares the module's scope, intent, and outcomes, and becomes the contract downstream agents work from. `@aidemd-mcp/server` is the MCP server that ships AIDE as a set of commands, subagents, and skills a Claude Code (or compatible) host can install in one step.
+
+If you are an agent operating inside a codebase that ships `.aide` files, this methodology governs how you read those specs, plan from them, build against them, and validate your output. The docs below are the authoritative reference for every stage of that pipeline.
+
+To install the methodology into a host project, run `npx @aidemd-mcp/server init`. To browse the docs in a human-readable form, visit https://aidemd.dev/.
+
+## Methodology
+
+- [AIDE Methodology Doc Hub](https://aidemd.dev/docs/methodology/index): AIDE ships nine canonical agents that aide_init installs to .claude/agents/aide/.
+- [AIDE Spec](https://aidemd.dev/docs/methodology/aide-spec): Autonomous Intent-Driven Engineering (AIDE) puts intent at the center of everything.
+- [AIDE Template](https://aidemd.dev/docs/methodology/aide-template): For agents: this file is a scaffold, not a reference.
+- [plan.aide Spec](https://aidemd.dev/docs/methodology/plan-aide): The architect's implementation plan.
+- [todo.aide Spec](https://aidemd.dev/docs/methodology/todo-aide): The QA re-alignment document.
+- [Progressive Disclosure](https://aidemd.dev/docs/methodology/progressive-disclosure): Code structured so understanding deepens on demand, not all at once.
+- [Agent-Readable Code](https://aidemd.dev/docs/methodology/agent-readable-code): The outcome of progressive disclosure.
+- [Automated QA](https://aidemd.dev/docs/methodology/automated-qa): The verification loop of AIDE.
+- [Cascading Alignment](https://aidemd.dev/docs/methodology/cascading-alignment): The AIDE intent tree is a hierarchy of .aide specs: root intent at the top, module specs below, submodule specs below those.
+
+## Commands
+
+- [/aide — Orchestrator](https://aidemd.dev/docs/commands/aide): Conversational entry point for the full AIDE pipeline.
+- [/aide:align — Alignment Phase](https://aidemd.dev/docs/commands/aide/align): Verify spec-vs-spec alignment across the intent tree.
+- [/aide:build — Build Phase](https://aidemd.dev/docs/commands/aide/build): Execute the architect's implementation plan.
+- [/aide:fix — Fix Phase](https://aidemd.dev/docs/commands/aide/fix): Work one unchecked item from the todo.aide checklist.
+- [/aide:init — Interactive Project Bootstrap](https://aidemd.dev/docs/commands/aide/init): Bootstrap AIDE into this project by calling aide_init and walking the user through each step interactively.
+- [/aide:plan — Plan Phase](https://aidemd.dev/docs/commands/aide/plan): Translate the intent spec into a step-by-step implementation plan.
+- [/aide:qa — QA Phase](https://aidemd.dev/docs/commands/aide/qa): Verify actual output against the intent spec.
+- [/aide:refactor — Refactor Phase](https://aidemd.dev/docs/commands/aide/refactor): Audit existing code against the coding playbook and refactor to close convention drift.
+- [/aide:research — Research Phase (Optional)](https://aidemd.dev/docs/commands/aide/research): Fill the brain with durable domain knowledge the synthesizer can later draw from.
+- [/aide:spec — Spec Phase](https://aidemd.dev/docs/commands/aide/spec): Produce the .aide intent spec frontmatter only.
+- [/aide:synthesize — Synthesize Phase](https://aidemd.dev/docs/commands/aide/synthesize): Read the intent spec's frontmatter and the brain's research, then fill in the .aide body sections (Context, Strategy, Good examples, Bad examples).
+- [/aide:update-playbook — Playbook Maintenance](https://aidemd.dev/docs/commands/aide/update-playbook): Help the user add new conventions, modify existing ones, or reorganize sections in their coding playbook.
+- [/aide:upgrade — Interactive Methodology Upgrade](https://aidemd.dev/docs/commands/aide/upgrade): Bring this project's AIDE methodology artifacts up to date with canonical by calling aide_upgrade and walking the user through each drifted category interactively.
+
+## Agents
+
+- [aide-aligner](https://aidemd.dev/docs/agents/aide/aide-aligner): Use this agent when you need to verify that specs across the intent tree are internally consistent — comparing child outcomes against ancestor outcomes to detect intent drift. This agent walks the full ancestor chain, compares outcomes at each level, and produces todo.aide at any node where drift is found. It does NOT check code against specs (that is QA) and does NOT rewrite spec outcomes.
+- [aide-architect](https://aidemd.dev/docs/agents/aide/aide-architect): Use this agent when a complete .aide spec needs to be translated into an implementation plan. This agent reads the spec, consults the coding playbook, scans the codebase, and produces plan.aide with checkboxed steps. It does NOT write code or delegate to other agents.
+- [aide-auditor](https://aidemd.dev/docs/agents/aide/aide-auditor): Use this agent when existing, working code needs to be reviewed for drift from coding playbook conventions. This agent reads the implementation, consults the coding playbook, and produces plan.aide with refactoring steps. It does NOT write code or delegate to other agents.
+- [aide-domain-expert](https://aidemd.dev/docs/agents/aide/aide-domain-expert): Use this agent when the brain needs domain knowledge before the spec body can be filled. This agent does volume research — web, vault, external sources — and persists findings to the brain filed by domain, not by project. It does NOT fill the .aide spec or delegate to other agents.
+- [aide-explorer](https://aidemd.dev/docs/agents/aide/aide-explorer): Use this agent for read-only investigation of the AIDE codebase — finding code, tracing bugs, answering questions about how modules work, or understanding the cascading intent tree. This agent understands the AIDE methodology, uses aide_discover for .aide file lookups, and navigates code using progressive disclosure. It does NOT write code, edit files, or delegate to other agents.
+- [aide-implementor](https://aidemd.dev/docs/agents/aide/aide-implementor): Use this agent when you have plan.aide ready and need to execute it into working code (build mode), or when you need to fix exactly one todo.aide item (fix mode). This agent reads the plan, writes code, runs tests, and checks boxes. It does NOT make architectural decisions or delegate to other agents.
+- [aide-qa](https://aidemd.dev/docs/agents/aide/aide-qa): Use this agent when implementation is complete and needs to be verified against the .aide intent spec. This agent compares actual output against outcomes.desired and outcomes.undesired, then produces todo.aide with issues found. It does NOT propose solutions or delegate to other agents.
+- [aide-spec-writer](https://aidemd.dev/docs/agents/aide/aide-spec-writer): Use this agent when you need to write the .aide intent spec frontmatter from a user interview. This agent captures intent — scope, outcomes, failure modes — and produces the frontmatter contract that every downstream phase works from. It does NOT fill body sections, write code, or delegate to other agents.
+- [aide-strategist](https://aidemd.dev/docs/agents/aide/aide-strategist): Use this agent when the .aide frontmatter is complete and the brain has research — this agent synthesizes that research into the spec's body sections (Context, Strategy, Good/Bad examples, References). It reads from the brain, not the web. It does NOT delegate to other agents.
+
+## Skills
+
+- [/brain — Access Vault Knowledge](https://aidemd.dev/docs/skills/brain/SKILL): General-purpose interface to the user's Obsidian vault. Reads the vault's root CLAUDE.md and follows its navigation instructions to find and return vault content relevant to the user's request — research, project context, environment, identity, references, or any other vault content. Use this skill for any vault query that is not specifically about coding conventions.
+- [/study-playbook — Load Coding Playbook Context](https://aidemd.dev/docs/skills/study-playbook/SKILL): Load relevant coding-playbook sections from the Obsidian vault for the current task. Navigates the playbook hub top-down: reads the index, identifies which sections apply, drills into section hubs, then reads the specific child notes needed. Use this skill whenever you need to look up coding conventions, patterns, or architecture decisions before writing or reviewing code. Do NOT trigger for non-coding vault work.

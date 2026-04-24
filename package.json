@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
-    "prebuild": "npm run og:render",
+    "prebuild": "npm run og:render && npm run llms:render",
     "build": "next build",
     "start": "next start",
     "preview": "next build && npx serve out -p 4321",
     "og:render": "node --import tsx src/service/socialShare/renderOgImage/run.mjs",
+    "llms:render": "node --import tsx src/service/llmsTxt/renderLlmsTxt/run.mjs",
     "test:unit": "vitest run",
     "test:visual": "playwright test --config=tests/playwright.config.ts",
     "docs:verify": "node scripts/docs-verify.mjs"

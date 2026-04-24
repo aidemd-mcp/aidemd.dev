@@ -38,12 +38,12 @@ export default function parseDocFrontmatter(
       };
     }
 
-    // If no explicit title in frontmatter, derive from H1 and strip it.
+    // Prefer explicit title, then H1, then name (agent convention — no H1), then slug.
     const h1 = data.title ? undefined : deriveFromFirstH1(content);
     const bodyStripped = h1 ? stripFirstH1(content) : content;
 
     const frontmatter: DocFrontmatter = {
-      title: data.title ?? h1 ?? slug,
+      title: data.title ?? h1 ?? data.name ?? slug,
       description: data.description,
       published: data.published,
       commit: data.commit,
