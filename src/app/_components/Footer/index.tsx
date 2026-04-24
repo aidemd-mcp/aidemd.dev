@@ -50,6 +50,14 @@ export default function Footer() {
           linkedin <span aria-hidden="true">↗</span>
         </a>
         <a
+          href="https://discord.gg/N4NqMXuvTR"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-[color:var(--color-fg)] transition-colors"
+        >
+          discord <span aria-hidden="true">↗</span>
+        </a>
+        <a
           href="/privacy"
           className="hover:text-[color:var(--color-fg)] transition-colors"
         >

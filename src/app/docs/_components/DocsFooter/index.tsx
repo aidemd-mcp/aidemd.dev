@@ -53,6 +53,14 @@ export default function DocsFooter() {
           linkedin <span aria-hidden="true">↗</span>
         </a>
         <a
+          href="https://discord.gg/N4NqMXuvTR"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'inherit', textDecoration: 'none' }}
+        >
+          discord <span aria-hidden="true">↗</span>
+        </a>
+        <a
           href="/privacy"
           style={{ color: 'inherit', textDecoration: 'none' }}
         >
