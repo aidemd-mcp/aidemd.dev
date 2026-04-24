@@ -6,6 +6,7 @@ import walkDocsRoot from './walkDocsRoot';
 import orderRoutes from './orderRoutes';
 import parseDocFrontmatter from './parseDocFrontmatter';
 import resolveCommitHash from './resolveCommitHash';
+import resolvePublishedDate from './resolvePublishedDate';
 import renderMarkdown from './renderMarkdown';
 import getHighlighter from '@/lib/shiki';
 
@@ -74,6 +75,6 @@ export async function renderDoc(route: DocRoute): Promise<RenderedDoc> {
     frontmatter,
     bodyHtml,
     commit,
-    published: frontmatter.published ?? '',
+    published: frontmatter.published || resolvePublishedDate(route.absPath),
   };
 }

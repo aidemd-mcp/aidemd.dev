@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import cn from "@/lib/cn";
 import TrafficLights from "./TrafficLights";
 
@@ -48,60 +51,76 @@ const NAV_LINKS = [
  * (block md:hidden) so the hamburger appears after the docs link.
  */
 export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   return (
     <header
-      className="flex items-center gap-[10px] px-[16px] py-[10px] bg-[color:var(--color-card)] border-b border-[color:var(--color-border)]"
+      className="w-full bg-[color:var(--color-card)] border-b border-[color:var(--color-border)]"
       style={sticky ? { position: 'sticky', top: 0, zIndex: 10, height: 44 } : undefined}
       aria-label="Site header"
     >
-      <TrafficLights />
-      <span
-        className="ml-[18px] text-[12px] text-[color:var(--color-dim)] hidden md:inline"
-        aria-hidden="true"
-      >
-        aidemd.dev — zsh
-      </span>
-      <nav
-        className="ml-auto flex items-center gap-[20px] text-[11px] text-[color:var(--color-dim)]"
-        aria-label="Main navigation"
-      >
-        {NAV_LINKS.map(({ label, href, external, mobileVisible }) => {
-          const isActive =
-            !external && (active as string) === label;
-          const visibilityClass = mobileVisible ? "" : "hidden md:inline";
-          return external ? (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn("hover:text-[color:var(--color-fg)] transition-colors", visibilityClass)}
-            >
-              {label}
-            </a>
-          ) : (
-            <Link
-              key={label}
-              href={href}
-              className={cn(
-                "hover:text-[color:var(--color-fg)] transition-colors pb-[2px]",
-                isActive
-                  ? "text-[color:var(--color-fg)] border-b-2 border-[color:var(--color-accent)]"
-                  : "",
-                visibilityClass,
-              )}
-            >
-              {label}
-            </Link>
-          );
-        })}
-        {/* Hamburger slot: only rendered in docs variant, only visible below md: */}
-        {hamburgerSlot && (
-          <div className="md:hidden">
-            {hamburgerSlot}
-          </div>
-        )}
-      </nav>
+      {/* Inner wrapper: caps content at layout-max-width, centers it, carries the flex row */}
+      <div className="max-w-[var(--layout-max-width)] mx-auto flex items-center gap-[10px] px-[16px] py-[10px] h-full">
+        <Link
+          href="/"
+          className="flex items-center hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)] rounded-sm"
+          aria-label="Home"
+        >
+          <TrafficLights />
+          <span
+            className={cn(
+              "ml-[18px] text-[12px] hidden md:inline",
+              isHome
+                ? "text-[color:var(--color-fg)]"
+                : "text-[color:var(--color-dim)]",
+            )}
+            aria-hidden="true"
+          >
+            aidemd.dev — zsh
+          </span>
+        </Link>
+        <nav
+          className="ml-auto flex items-center gap-[20px] text-[11px] text-[color:var(--color-dim)]"
+          aria-label="Main navigation"
+        >
+          {NAV_LINKS.map(({ label, href, external, mobileVisible }) => {
+            const isActive =
+              !external && (active as string) === label;
+            const visibilityClass = mobileVisible ? "" : "hidden md:inline";
+            return external ? (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn("hover:text-[color:var(--color-fg)] transition-colors", visibilityClass)}
+              >
+                {label}
+              </a>
+            ) : (
+              <Link
+                key={label}
+                href={href}
+                className={cn(
+                  "hover:text-[color:var(--color-fg)] transition-colors pb-[2px]",
+                  isActive
+                    ? "text-[color:var(--color-fg)] border-b-2 border-[color:var(--color-accent)]"
+                    : "",
+                  visibilityClass,
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
+          {/* Hamburger slot: only rendered in docs variant, only visible below md: */}
+          {hamburgerSlot && (
+            <div className="md:hidden">
+              {hamburgerSlot}
+            </div>
+          )}
+        </nav>
+      </div>
     </header>
   );
 }

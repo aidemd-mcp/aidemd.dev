@@ -35,9 +35,10 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
   // /docs/agents/ → section='agents', slug=undefined
   // /docs/ → both undefined
   const parts = pathname.replace(/\/$/, '').split('/').filter(Boolean);
-  // parts[0]='docs', parts[1]=section, parts[2]=slug
+  // parts[0]='docs', parts[1]=section, parts[2..n]=slug segments
   const sectionPart = parts[1];
-  const slugPart = parts[2];
+  // Join all segments after the section to support nested slugs (e.g. 'aide/align')
+  const slugPart = parts.slice(2).join('/') || undefined;
 
   const activeSection: DocSection | undefined =
     sectionPart && VALID_SECTIONS.has(sectionPart) ? (sectionPart as DocSection) : undefined;
@@ -106,7 +107,7 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
                     >
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span>{route.slug}.md</span>
+                    <span>{route.slug.replace(/\//g, ' / ')}</span>
                   </Link>
                 );
               })}

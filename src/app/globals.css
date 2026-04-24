@@ -18,6 +18,9 @@
   /* Typography */
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
+  /* Layout */
+  --layout-max-width: 1280px;
+
   /* Spacing scale — 4/8/12/14/16/18/20/24/28/32/40/44/60/64/80 px */
   --space-4: 4px;
   --space-8: 8px;

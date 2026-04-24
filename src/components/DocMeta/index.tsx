@@ -20,8 +20,7 @@ export default function DocMeta({ published, commit, slug }: DocMetaProps) {
         padding: '14px 18px',
         background: 'var(--color-card)',
         border: '1px solid var(--color-border)',
-        borderLeft: '2px solid var(--color-accent)',
-        borderRadius: 4,
+        borderRadius: 6,
         fontSize: 12,
         marginBottom: 28,
       }}

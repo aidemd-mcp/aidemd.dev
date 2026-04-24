@@ -20,7 +20,6 @@ export default function ExpoSpeechBubble({ title, body, onDismiss }: ExpoSpeechB
         padding: '14px 16px',
         background: 'var(--color-card)',
         border: '1px solid var(--color-border)',
-        marginBottom: '12px',
         pointerEvents: 'auto',
       }}
     >
@@ -69,20 +68,20 @@ export default function ExpoSpeechBubble({ title, body, onDismiss }: ExpoSpeechB
         {body}
       </p>
 
-      {/* Arrow — right-bottom, points toward the sprite below-right */}
+      {/* Arrow — right edge, points RIGHT toward the sprite at face-height */}
       <div
         aria-hidden
         style={{
           position: 'absolute',
           right: '-6px',
-          bottom: '22px',
+          top: '28px',
           width: '12px',
           height: '12px',
           background: 'var(--color-card)',
           border: '1px solid var(--color-border)',
           transform: 'rotate(-45deg)',
+          borderTop: 'none',
           borderLeft: 'none',
-          borderBottom: 'none',
         }}
       />
     </div>

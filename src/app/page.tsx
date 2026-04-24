@@ -34,7 +34,7 @@ const websiteSchema = {
 
 export default function HomePage() {
   return (
-    <main>
+    <>
       {/* JSON-LD structured data — Organization + WebSite */}
       <script
         id="ld-org"
@@ -47,7 +47,9 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
 
-      <TopBar />
+      <TopBar sticky />
+
+      <main className="max-w-[var(--layout-max-width)] mx-auto">
 
       {/* Hero owns its own section+padding — no wrapper padding added here */}
       <SectionObserver id="hero">
@@ -141,5 +143,6 @@ export default function HomePage() {
 
       <Footer />
     </main>
+    </>
   );
 }

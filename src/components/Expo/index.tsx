@@ -22,8 +22,9 @@ export default function Expo() {
         zIndex: 20,
         pointerEvents: 'none',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: '10px',
       }}
     >
       {/* Speech bubble — only when not dismissed */}
