@@ -113,6 +113,7 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
               <Link
                 key={label}
                 href={href}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   "hover:text-[color:var(--color-fg)] transition-colors pb-[2px]",
                   isActive

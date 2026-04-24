@@ -99,18 +99,20 @@ export default async function DocsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
         {groupedBySection.map(({ section, label, items }) => (
-          <section key={section}>
-            <div
+          <section key={section} aria-label={label}>
+            <h2
               style={{
                 fontSize: 11,
-                color: 'var(--color-dim-2)',
+                color: 'var(--color-dim-text)',
                 letterSpacing: 1.5,
                 textTransform: 'uppercase',
                 marginBottom: 12,
+                fontWeight: 'inherit',
+                margin: '0 0 12px',
               }}
             >
               # {label}
-            </div>
+            </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {items.map(({ route, frontmatter }, i) => (
                 <DocsIndexCard

@@ -18,7 +18,7 @@ export default function Breadcrumb({ segments }: BreadcrumbProps) {
     <div
       style={{
         fontSize: 12,
-        color: 'var(--color-dim)',
+        color: 'var(--color-dim-text)',
         letterSpacing: 2,
         marginBottom: 10,
         display: 'flex',
@@ -34,7 +34,7 @@ export default function Breadcrumb({ segments }: BreadcrumbProps) {
           {seg.href ? (
             <Link
               href={seg.href}
-              style={{ color: 'var(--color-dim)', textDecoration: 'none' }}
+              style={{ color: 'var(--color-dim-text)', textDecoration: 'none' }}
             >
               {seg.label}
             </Link>

@@ -51,6 +51,8 @@ export default function Typewriter({ text, speed = 40 }: TypewriterProps) {
 
   return (
     <span className="relative block">
+      {/* Screen-reader exposure — static, announced once, never updated */}
+      <span className="sr-only">{text}</span>
       {/* Reserve final box dimensions — invisible but occupies space */}
       <span
         className="block"
@@ -62,8 +64,7 @@ export default function Typewriter({ text, speed = 40 }: TypewriterProps) {
       {/* Visible overlay — absolutely positioned over the reserved space */}
       <span
         className="absolute inset-0 block"
-        aria-live="polite"
-        aria-label={text}
+        aria-hidden="true"
       >
         {displayed}
         <span

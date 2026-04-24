@@ -12,12 +12,20 @@ export default function DocsFooter() {
         display: 'flex',
         justifyContent: 'space-between',
         fontSize: 11,
-        color: 'var(--color-dim-2)',
+        color: 'var(--color-dim-text)',
       }}
     >
       <span>
-        © 2026 TetsuKodai Group LLC ·{' '}
-        <span style={{ color: 'var(--color-accent)' }}>●</span> canonical
+        © 2026{' '}
+        <a
+          href="https://tetsukod.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'inherit', textDecoration: 'none' }}
+        >
+          TetsuKodai Group LLC
+        </a>{' '}
+        · <span style={{ color: 'var(--color-accent)' }}>●</span> canonical
       </span>
       <nav style={{ display: 'flex', gap: 20 }} aria-label="Docs footer navigation">
         <a
@@ -35,6 +43,14 @@ export default function DocsFooter() {
           style={{ color: 'inherit', textDecoration: 'none' }}
         >
           github ↗
+        </a>
+        <a
+          href="https://www.linkedin.com/in/jacob-carpenter-nodejs/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'inherit', textDecoration: 'none' }}
+        >
+          linkedin <span aria-hidden="true">↗</span>
         </a>
         <a
           href="/privacy"

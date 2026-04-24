@@ -34,7 +34,7 @@ export default function PrevNext({ prev, next }: PrevNextProps) {
             background: 'var(--color-card)',
           }}
         >
-          <div style={{ fontSize: 11, color: 'var(--color-dim)', marginBottom: 4 }}>← prev</div>
+          <div style={{ fontSize: 11, color: 'var(--color-dim-text)', marginBottom: 4 }}>← prev</div>
           <div style={{ fontSize: 14, color: 'var(--color-accent)' }}>{prev.title}</div>
         </Link>
       ) : (
@@ -53,7 +53,7 @@ export default function PrevNext({ prev, next }: PrevNextProps) {
             textAlign: 'right',
           }}
         >
-          <div style={{ fontSize: 11, color: 'var(--color-dim)', marginBottom: 4 }}>next →</div>
+          <div style={{ fontSize: 11, color: 'var(--color-dim-text)', marginBottom: 4 }}>next →</div>
           <div style={{ fontSize: 14, color: 'var(--color-accent)' }}>{next.title}</div>
         </Link>
       ) : (

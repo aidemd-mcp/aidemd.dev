@@ -47,6 +47,7 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
 
   return (
     <aside
+      aria-label="Documentation"
       style={{
         width: 280,
         borderRight: '1px solid var(--color-border)',
@@ -59,25 +60,26 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
         flexShrink: 0,
       }}
     >
-      {groupedRoutes.map(({ section, label, routes }) => {
-        const isActiveSection = activeSection === section;
-        return (
-          <div key={section}>
-            {/* Section header */}
-            <div
-              style={{
-                padding: '0 24px 8px',
-                fontSize: 11,
-                color: isActiveSection ? 'var(--color-accent)' : 'var(--color-dim-2)',
-                letterSpacing: 1.5,
-                textTransform: 'uppercase',
-                marginTop: 20,
-              }}
-            >
-              # {label}
-            </div>
-            {/* Route rows */}
-            <nav>
+      <nav aria-label="Documentation sections">
+        {groupedRoutes.map(({ section, label, routes }) => {
+          const isActiveSection = activeSection === section;
+          return (
+            <div key={section}>
+              {/* Section header */}
+              <h2
+                style={{
+                  padding: '0 24px 8px',
+                  fontSize: 11,
+                  color: isActiveSection ? 'var(--color-accent)' : 'var(--color-dim-text)',
+                  letterSpacing: 1.5,
+                  textTransform: 'uppercase',
+                  margin: '20px 0 0',
+                  fontWeight: 'inherit',
+                }}
+              >
+                # {label}
+              </h2>
+              {/* Route rows */}
               {routes.map((route, i) => {
                 const routeKey = `${route.section}/${route.slug}`;
                 const isActive = currentKey === routeKey;
@@ -85,6 +87,7 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
                   <Link
                     key={routeKey}
                     href={route.urlPath}
+                    aria-current={isActive ? 'page' : undefined}
                     style={{
                       display: 'flex',
                       alignItems: 'baseline',
@@ -99,7 +102,7 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
                   >
                     <span
                       style={{
-                        color: 'var(--color-dim-2)',
+                        color: 'var(--color-dim-text)',
                         width: 14,
                         flexShrink: 0,
                         fontSize: 11,
@@ -111,10 +114,10 @@ export default function SidebarShell({ groupedRoutes }: SidebarShellProps) {
                   </Link>
                 );
               })}
-            </nav>
-          </div>
-        );
-      })}
+            </div>
+          );
+        })}
+      </nav>
 
       {/* Expo teach-pose promo card */}
       <div

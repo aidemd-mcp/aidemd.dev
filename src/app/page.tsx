@@ -12,44 +12,13 @@ import Comparison from "./_components/Comparison";
 import Quickstart from "./_components/Quickstart";
 import Footer from "./_components/Footer";
 
-// JSON-LD structured data payloads
-const orgSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "TetsuKodai Group LLC",
-  url: "https://aidemd.dev",
-  contactPoint: {
-    "@type": "ContactPoint",
-    url: "https://github.com/aidemd-mcp/server/issues",
-    contactType: "customer support",
-  },
-};
-
-const websiteSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "aidemd.dev",
-  url: "https://aidemd.dev",
-};
-
 export default function HomePage() {
   return (
     <>
-      {/* JSON-LD structured data — Organization + WebSite */}
-      <script
-        id="ld-org"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
-      />
-      <script
-        id="ld-website"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-      />
-
+      <a href="#main" className="skip-link">Skip to main content</a>
       <TopBar sticky />
 
-      <main className="max-w-[var(--layout-max-width)] mx-auto">
+      <main id="main" className="max-w-[var(--layout-max-width)] mx-auto">
 
       {/* Hero owns its own section+padding — no wrapper padding added here */}
       <SectionObserver id="hero">

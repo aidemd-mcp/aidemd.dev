@@ -34,7 +34,8 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
   // Derive active state from pathname (same logic as SidebarShell)
   const parts = pathname.replace(/\/$/, '').split('/').filter(Boolean);
   const sectionPart = parts[1];
-  const slugPart = parts[2];
+  // Join all segments after the section to support nested slugs (e.g. 'aide/align')
+  const slugPart = parts.slice(2).join('/') || undefined;
 
   const activeSection: DocSection | undefined =
     sectionPart && VALID_SECTIONS.has(sectionPart) ? (sectionPart as DocSection) : undefined;
@@ -58,6 +59,20 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
     };
   }, [isOpen]);
 
+  // Close on Escape key — dialog-pattern keyboard contract (WCAG 2.1 / ARIA dialog)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        close();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, close]);
+
   if (!isOpen) return null;
 
   return (
@@ -79,7 +94,7 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Navigation menu"
+        aria-labelledby="docs-drawer-title"
         style={{
           position: 'fixed',
           top: 0,
@@ -105,6 +120,7 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
           }}
         >
           <span
+            id="docs-drawer-title"
             style={{
               fontSize: 12,
               color: 'var(--color-dim)',
@@ -131,65 +147,65 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
         </div>
 
         {/* Category groups */}
-        <div style={{ paddingTop: 8 }}>
+        <nav aria-label="Documentation sections" style={{ paddingTop: 8 }}>
           {groupedRoutes.map(({ section, label, routes }) => {
             const isActiveSection = activeSection === section;
             return (
               <div key={section}>
                 {/* Section header */}
-                <div
+                <h2
                   style={{
                     padding: '0 24px 8px',
                     fontSize: 11,
-                    color: isActiveSection ? 'var(--color-accent)' : 'var(--color-dim-2)',
+                    color: isActiveSection ? 'var(--color-accent)' : 'var(--color-dim-text)',
                     letterSpacing: 1.5,
                     textTransform: 'uppercase',
-                    marginTop: 20,
+                    margin: '20px 0 0',
+                    fontWeight: 'inherit',
                   }}
                 >
                   # {label}
-                </div>
+                </h2>
 
                 {/* Route rows */}
-                <nav>
-                  {routes.map((route, i) => {
-                    const routeKey = `${route.section}/${route.slug}`;
-                    const isActive = currentKey === routeKey;
-                    return (
-                      <Link
-                        key={routeKey}
-                        href={route.urlPath}
+                {routes.map((route, i) => {
+                  const routeKey = `${route.section}/${route.slug}`;
+                  const isActive = currentKey === routeKey;
+                  return (
+                    <Link
+                      key={routeKey}
+                      href={route.urlPath}
+                      aria-current={isActive ? 'page' : undefined}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: 12,
+                        padding: '7px 24px',
+                        fontSize: 13,
+                        color: isActive ? 'var(--color-accent)' : 'var(--color-fg)',
+                        background: isActive ? 'rgba(61,107,74,0.12)' : 'transparent',
+                        borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span
                         style={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          gap: 12,
-                          padding: '7px 24px',
-                          fontSize: 13,
-                          color: isActive ? 'var(--color-accent)' : 'var(--color-fg)',
-                          background: isActive ? 'rgba(61,107,74,0.12)' : 'transparent',
-                          borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
-                          textDecoration: 'none',
+                          color: 'var(--color-dim-text)',
+                          width: 14,
+                          flexShrink: 0,
+                          fontSize: 11,
                         }}
                       >
-                        <span
-                          style={{
-                            color: 'var(--color-dim-2)',
-                            width: 14,
-                            flexShrink: 0,
-                            fontSize: 11,
-                          }}
-                        >
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <span>{route.slug}.md</span>
-                      </Link>
-                    );
-                  })}
-                </nav>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span>{route.slug}.md</span>
+                    </Link>
+                  );
+                })}
               </div>
             );
           })}
-        </div>
+        </nav>
 
         {/* Expo promo card */}
         <div

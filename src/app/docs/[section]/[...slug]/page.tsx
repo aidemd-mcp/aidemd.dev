@@ -44,11 +44,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!route) return { title: 'Not Found' };
 
+  const { frontmatter, published } = await renderDoc(route);
+  const description =
+    frontmatter.description ?? `${route.title} — AIDE canonical documentation`;
+
   return {
     title: route.title,
-    description: `${route.title} — AIDE canonical documentation`,
+    description,
     alternates: {
       canonical: `https://aidemd.dev${route.urlPath}`,
+    },
+    openGraph: {
+      type: 'article',
+      publishedTime: published,
+      modifiedTime: published,
     },
   };
 }
@@ -75,15 +84,32 @@ export default async function DocLeafPage({ params }: PageProps) {
   const prev = idx > 0 ? sortedRoutes[idx - 1] : undefined;
   const next = idx < sortedRoutes.length - 1 ? sortedRoutes[idx + 1] : undefined;
 
+  const techArticleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: route.title,
+    datePublished: published,
+    dateModified: published,
+    author: { '@type': 'Organization', name: 'TetsuKodai Group LLC' },
+    isPartOf: { '@type': 'WebSite', url: 'https://aidemd.dev' },
+    mainEntityOfPage: `https://aidemd.dev${route.urlPath}`,
+  };
+
   return (
-    <DocsTemplate
-      route={route}
-      frontmatter={frontmatter}
-      commit={commit}
-      published={published}
-      renderedHtml={bodyHtml}
-      prev={prev}
-      next={next}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleSchema) }}
+      />
+      <DocsTemplate
+        route={route}
+        frontmatter={frontmatter}
+        commit={commit}
+        published={published}
+        renderedHtml={bodyHtml}
+        prev={prev}
+        next={next}
+      />
+    </>
   );
 }

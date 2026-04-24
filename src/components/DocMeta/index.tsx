@@ -34,10 +34,10 @@ export default function DocMeta({ published, commit, slug }: DocMetaProps) {
           minWidth: 0,
         }}
       >
-        <div style={{ color: 'var(--color-dim)' }}>Published</div>
+        <div style={{ color: 'var(--color-dim-text)' }}>Published</div>
         <div style={{ minWidth: 0, overflow: 'hidden' }}>{published || '—'}</div>
 
-        <div style={{ color: 'var(--color-dim)' }}>Source commit</div>
+        <div style={{ color: 'var(--color-dim-text)' }}>Source commit</div>
         <div style={{ minWidth: 0 }}>
           <span
             style={{
@@ -52,7 +52,7 @@ export default function DocMeta({ published, commit, slug }: DocMetaProps) {
           </span>
         </div>
 
-        <div style={{ color: 'var(--color-dim)' }}>Cite as</div>
+        <div style={{ color: 'var(--color-dim-text)' }}>Cite as</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <span
             style={{

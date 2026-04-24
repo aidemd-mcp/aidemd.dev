@@ -52,23 +52,17 @@ export default function VaultBrain() {
             onSelect={() => setActiveTab("playbook")}
           />
         </div>
-        <div>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {files.map((file) => (
-            <div
+            <li
               key={file.path}
-              className="font-mono text-[12px] text-[color:var(--color-fg)] cursor-pointer transition-[border-left] duration-[120ms]"
-              style={{ padding: "8px 16px", borderLeft: "2px solid transparent" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderLeft = "2px solid var(--color-accent)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderLeft = "2px solid transparent";
-              }}
+              className="font-mono text-[12px] text-[color:var(--color-fg)]"
+              style={{ padding: "8px 16px" }}
             >
               {file.path.split("/").pop()}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
       {/* Right content */}

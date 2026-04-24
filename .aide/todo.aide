@@ -1,14 +1,13 @@
 ---
 status: closed
-description: >
-  QA pass 2026-04-24: all outcomes verified after Session 1 (GitHub-style
-  edge-anchored TopBar + docs layout refactor) and Session 2 (universal
-  custom scrollbar CSS). No open issues.
 intent: >
-  Wide-viewport chrome anchoring (outcomes.desired[1]);
-  custom scrollbars on all scroll containers (outcomes.desired[2]);
-  no centered-column chrome drift (outcomes.undesired[1]);
-  no OS-native scrollbars (outcomes.undesired[2]).
+  Four real gaps from the SEO refactor pass: a systemic canonical/sitemap
+  trailing-slash mismatch on all 34 non-section-index routes (ISSUE-01);
+  a missed --color-dim-text swap in DocsSidebarDrawer row numerals (ISSUE-02);
+  a broken active-state slug match in DocsSidebarDrawer for nested routes
+  that silenced aria-current on agents/commands pages in the mobile drawer
+  (ISSUE-03); and three category <h2> surfaces that were promoted to headings
+  in the refactor but still used --color-dim-2 at 11px, failing WCAG AA (ISSUE-04).
 misalignment: []
 ---
 
@@ -16,27 +15,23 @@ misalignment: []
 
 ## Issues
 
-*(none — all outcomes satisfied)*
+(none — all outcomes satisfied)
 
 ## Retro
 
-Prior ISSUE-01 (OS-native scrollbar on sidebar) is resolved: Session 2 added
-`* { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }`
-plus WebKit `::-webkit-scrollbar*` rules globally in `src/app/globals.css` (lines
-242–268), covering body, sidebar, code blocks, and all future overflow regions.
-Computed values confirmed via Playwright: `scrollbar-width: thin`,
-`scrollbar-color: rgba(232, 223, 206, 0.12) rgba(0, 0, 0, 0)` on `document.body`
-and all elements.
+All four issues from the prior QA run were resolved and confirmed via post-build verification.
 
-Prior wide-viewport chrome drift (non-issue in previous pass) is now a named
-desired outcome — and the implementation satisfies it cleanly. At 1920px: header
-inner wrapper has `max-width: none`, brand cluster left edge at 16px, nav right
-edge at 1894px (16px from the header right). Docs layout uses a full-width flex
-row with no centering container above the sidebar — the `<aside>` genuinely
-touches the viewport-left edge.
+**ISSUE-01 (trailing-slash mismatch) — CLOSED.** `src/app/sitemap.ts` now normalises every `urlPath` from `walkDocsRoot` to end with `/` before constructing the `<loc>` URL. A `diff` of all `<loc>` values in `out/sitemap.xml` against all `rel="canonical"` `href` values in `out/**/*.html` produces zero differences. The `/privacy/` entry is also correctly trailed. All 40 sitemap entries now match their canonical counterparts exactly.
 
-**Dev-server note (not a code failure):** On the current session the `.next` cache
-has stale vendor chunks (`tailwind-merge.js` not found), blocking all
-`/docs/[section]/[...slug]` routes with a 500. A dev server restart (`npm run dev`)
-will rebuild the chunks and restore docs rendering. The source code is correct;
-this is a cache staleness artifact only.
+**ISSUE-02 (drawer numeral contrast token) — CLOSED.** `DocsSidebarDrawer` row numeral span at line 193 now uses `--color-dim-text` (0.72 alpha), matching `SidebarShell` at line 105. No `--color-dim-2` appears anywhere in `DocsSidebarDrawer`. The only remaining `--color-dim-2` in the docs area is the decorative `# tip:` comment block in `SidebarShell` lines 159–163 — a non-semantic decorative surface, correctly staying at dim-2.
+
+**ISSUE-03 (drawer slug mismatch for nested routes) — CLOSED.** `DocsSidebarDrawer` now uses `parts.slice(2).join('/')` (same as `SidebarShell`) to derive `slugPart`. Reasoning through a nested example: for `/docs/agents/aide/aide-architect/`, after trailing-slash strip and split, `parts = ['docs','agents','aide','aide-architect']`; `sectionPart = 'agents'`; `slugPart = 'aide/aide-architect'`; `currentKey = 'agents/aide/aide-architect'`. The corresponding `routeKey = ${route.section}/${route.slug} = 'agents/aide/aide-architect'` (slug is the relative path from root with no extension). The keys match, so `aria-current="page"` fires correctly for all nested-slug routes in the mobile drawer.
+
+**ISSUE-04 (promoted-heading contrast) — CLOSED.** All three category `<h2>` surfaces now use `--color-dim-text` in the dim branch and `--color-accent` in the active branch: `docs/page.tsx` line 106, `SidebarShell` line 73, `DocsSidebarDrawer` line 160. The accent state is preserved — the conditional `isActiveSection ? 'var(--color-accent)' : 'var(--color-dim-text)'` is intact in both sidebar components, and `docs/page.tsx` uses `--color-dim-text` unconditionally because the docs index has no per-section active state concept.
+
+**Regression sweep — CLEAN.** Build produces zero errors. Static export at `out/` is intact: 4 docs sections, 33 leaf routes, 38 total docs HTML files. JSON-LD present on home page. Skip-link present (2 matches). `theme-color` is `#0d0b08`. All outbound and canonical URLs verified. No dim-2 in any semantic text position was inadvertently touched.
+
+**What to watch for next time:**
+- The `SidebarShell` ↔ `DocsSidebarDrawer` mirror relationship is an ongoing maintenance hazard. Any future token sweep or logic change on one component must explicitly name the other as a required follow-up. Consider extracting shared logic into a hook or a shared `CategoryBlock` component to make the mirror structural rather than procedural.
+- The decorative `# tip:` block at `SidebarShell` lines 157–167 intentionally uses `--color-dim-2`. Future sweeps should not promote it — it is not a semantic text surface and its lower contrast is correct for its decorative role.
+- The trailing-slash normalisation in `sitemap.ts` is a guard against `walkDocsRoot` output. If `walkDocsRoot` is ever refactored to emit trailing slashes natively, the guard becomes a no-op but stays harmless. If the guard is ever removed, re-run the canonical-vs-sitemap diff before shipping.

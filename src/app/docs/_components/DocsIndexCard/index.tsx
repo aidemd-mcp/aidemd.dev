@@ -33,7 +33,7 @@ export default function DocsIndexCard({ route, frontmatter, index }: DocsIndexCa
         fontSize: 14,
       }}
     >
-      <span style={{ color: 'var(--color-dim)', fontSize: 12 }}>
+      <span style={{ color: 'var(--color-dim-text)', fontSize: 12 }}>
         {String(index + 1).padStart(2, '0')}
       </span>
       {/* min-width: 0 allows the 1fr grid cell to shrink below its content size */}
@@ -45,7 +45,7 @@ export default function DocsIndexCard({ route, frontmatter, index }: DocsIndexCa
           <span
             style={{
               display: 'block',
-              color: 'var(--color-dim)',
+              color: 'var(--color-dim-text)',
               fontSize: 12,
               marginTop: 2,
               overflow: 'hidden',
@@ -57,7 +57,7 @@ export default function DocsIndexCard({ route, frontmatter, index }: DocsIndexCa
           </span>
         )}
       </span>
-      <span style={{ color: 'var(--color-dim)', fontSize: 11 }}>read →</span>
+      <span style={{ color: 'var(--color-dim-text)', fontSize: 11 }}>read →</span>
     </Link>
   );
 }

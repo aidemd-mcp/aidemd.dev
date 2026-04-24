@@ -44,10 +44,21 @@ export default function TreeNode({ node, depth }: TreeNodeProps) {
     if (node.preview) setShowPreview((prev) => !prev);
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleClick();
+    }
+  }
+
   return (
     <div style={{ userSelect: "none" }}>
       <div
         onClick={isClickable ? handleClick : undefined}
+        onKeyDown={isClickable ? handleKeyDown : undefined}
+        role={isClickable ? "button" : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        aria-expanded={isClickable && hasChildren ? open : undefined}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "var(--color-hover)";
         }}

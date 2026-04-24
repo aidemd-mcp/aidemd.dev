@@ -28,6 +28,7 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
   return (
     <DocsDrawerProvider>
       <div className="min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-fg)]">
+        <a href="#main" className="skip-link">Skip to main content</a>
         <ActiveAwareTopBar />
         {/*
          * Wide-viewport layout: sidebar anchored to viewport-left edge, main
@@ -50,6 +51,7 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
             <DocsSidebar />
           </Suspense>
           <main
+            id="main"
             className="flex-1 min-w-0 flex justify-center"
             style={{ paddingTop: 40, paddingBottom: 80 }}
           >
