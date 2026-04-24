@@ -10,6 +10,7 @@ coverage/
 .env.production
 
 .claude/settings.local.json
+.mcp.json
 
 # Debug logs
 npm-debug.log*
