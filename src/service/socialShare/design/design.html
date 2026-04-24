@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1200" />
+<title>AIDEMD.DEV — social share preview</title>
+<style>
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: block;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: block;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+  }
+  :root {
+    --bg: #0d0b08;
+    --card: #16120d;
+    --fg: #e8dfce;
+    --dim: rgba(232,223,206,0.55);
+    --dim2: rgba(232,223,206,0.35);
+    --border: rgba(232,223,206,0.12);
+    --accent: #3d6b4a;
+    --todo: #d6b25a;
+    --plan: #7aa6d6;
+  }
+  html, body { margin: 0; padding: 0; background: #2a2520; }
+  body {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    color: var(--fg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 30px 0;
+  }
+  * { box-sizing: border-box; }
+
+  /* ---- the preview ---- */
+  .og {
+    width: 1200px;
+    height: 630px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  /* subtle dotted grid backdrop */
+  .og::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(232,223,206,0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: 11px 11px;
+    pointer-events: none;
+  }
+  /* vignette */
+  .og::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 80% at 30% 40%, transparent 40%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+
+  /* top chrome bar */
+  .chrome {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 46px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 10px;
+    z-index: 2;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.r { background: #ff5f56; }
+  .dot.y { background: #ffbd2e; }
+  .dot.g { background: #27c93f; }
+  .prompt {
+    margin-left: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .prompt .sigil { color: var(--accent); margin-right: 6px; }
+  .prompt .path { color: var(--dim); }
+  .chrome .meta {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--dim2);
+    display: flex;
+    gap: 18px;
+    letter-spacing: 1px;
+  }
+  .chrome .meta .live::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* main stage */
+  .stage {
+    position: absolute;
+    inset: 46px 0 0 0;
+    display: grid;
+    grid-template-columns: 1fr 440px;
+    z-index: 2;
+  }
+
+  /* left: copy column */
+  .copy {
+    padding: 54px 0 54px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .tag {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .tag .hash { color: var(--accent); }
+
+  .headline {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 1.02;
+    letter-spacing: -1.4px;
+    color: var(--fg);
+    margin: 0 0 18px;
+  }
+  .headline .accent { color: var(--accent); }
+  .headline .caret {
+    display: inline-block;
+    width: 14px;
+    height: 56px;
+    background: var(--accent);
+    vertical-align: -8px;
+    margin-left: 6px;
+    animation: blink 1s steps(2, end) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .sub {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--dim);
+    max-width: 540px;
+    margin: 0 0 28px;
+  }
+  .sub em { color: var(--fg); font-style: normal; }
+
+  /* token chips */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 6px 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 3px;
+    color: var(--fg);
+  }
+  .chip .k { color: var(--dim); }
+  .chip .v { color: var(--accent); font-weight: 600; }
+
+  /* footer of left column */
+  .foot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--dim);
+  }
+  .brand {
+    font-weight: 700;
+    color: var(--fg);
+    letter-spacing: 0.5px;
+  }
+  .brand .dot-i { color: var(--accent); }
+  .foot .sep { color: var(--dim2); }
+  .foot .meta { color: var(--dim2); font-size: 11px; letter-spacing: 1.5px; }
+
+  /* right: mascot column */
+  .mascot {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 30px 0 0;
+  }
+
+  /* terminal-style speech bubble */
+  .bubble {
+    position: absolute;
+    top: 60px;
+    left: -20px;
+    width: 230px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    z-index: 3;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    bottom: 24px;
+    width: 12px;
+    height: 12px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transform: rotate(-45deg);
+  }
+  .bubble .who {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .bubble .msg {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--fg);
+  }
+  .bubble .msg em { color: var(--accent); font-style: normal; }
+
+  .expo {
+    height: 500px;
+    width: auto;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.55));
+    position: relative;
+    z-index: 2;
+  }
+
+  /* accent corner marks (like crop registration) */
+  .mark {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--accent);
+    z-index: 4;
+    opacity: 0.6;
+  }
+  .mark.tl { top: 56px; left: 10px; border-right: none; border-bottom: none; }
+  .mark.tr { top: 56px; right: 10px; border-left: none; border-bottom: none; }
+  .mark.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+  .mark.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+  /* ---- handoff notes ---- */
+  .notes {
+    width: 1200px;
+    background: #fffdf7;
+    color: #2a1f18;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 20px 26px;
+    border-radius: 4px;
+  }
+  .notes h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: 1px; color: #3d6b4a; }
+  .notes code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+  .notes ul { margin: 0; padding-left: 20px; }
+  .notes li { margin-bottom: 4px; }
+  .frame-label {
+    width: 1200px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(232,223,206,0.7);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <div class="frame-label">
+    <span># og-image · aidemd.dev</span>
+    <span>1200 × 630</span>
+  </div>
+
+  <div class="og" id="og">
+    <!-- top chrome bar -->
+    <div class="chrome">
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
+      <span class="prompt"><span class="sigil">$</span>aidemd.dev<span class="path">/intent-is-the-source</span></span>
+      <span class="meta">
+        <span class="live">LIVE</span>
+        <span>v0.1.0</span>
+      </span>
+    </div>
+
+    <!-- registration corner marks -->
+    <span class="mark tl"></span>
+    <span class="mark tr"></span>
+    <span class="mark bl"></span>
+    <span class="mark br"></span>
+
+    <div class="stage">
+      <!-- left column: copy -->
+      <div class="copy">
+        <div>
+          <div class="tag"><span class="hash">##</span> canonical docs · the .aide methodology</div>
+          <h1 class="headline">
+            intent is<br/>
+            <span class="accent">the source.</span><span class="caret"></span>
+          </h1>
+          <p class="sub">
+            A byte-faithful, timestamped record of how <em>intent</em> becomes code. Every <em>.aide</em> file is a contract — scope, outcomes, guardrails — that cascades through your stack.
+          </p>
+
+          <div class="chips">
+            <span class="chip"><span class="k">scope:</span> <span class="v">&nbsp;narrowed</span></span>
+            <span class="chip"><span class="k">outcomes:</span> <span class="v">&nbsp;declared</span></span>
+            <span class="chip"><span class="k">brain:</span> <span class="v">&nbsp;obsidian</span></span>
+          </div>
+        </div>
+
+        <div class="foot">
+          <span class="brand">AIDEMD<span class="dot-i">.</span>DEV</span>
+          <span class="sep">/</span>
+          <span>install with one line</span>
+          <span class="sep">·</span>
+          <span class="meta">© 2026 TETSUKODAI GROUP LLC</span>
+        </div>
+      </div>
+
+      <!-- right column: expo -->
+      <div class="mascot">
+        <div class="bubble">
+          <div class="who">EXPO SAYS:</div>
+          <div class="msg">the <em>.aide</em> is the contract — <em>read the docs</em> to see why.</div>
+        </div>
+        <img class="expo" src="./expo-wave.png" alt="expo waving" />
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3># handoff notes for your agent</h3>
+    <ul>
+      <li>Render target: <code>1200 × 630</code> PNG. Capture the <code>.og</code> element only (no labels, no notes).</li>
+      <li>Source: <code>assets/expo-wave.png</code> — keep the same filename once deployed to <code>public/</code>.</li>
+      <li>Font: <code>JetBrains Mono</code> (already used site-wide). Embed or self-host before static export so OG cards render outside the browser.</li>
+      <li>Meta tags to add to every page's <code>&lt;head&gt;</code>:
+        <pre style="margin:8px 0 0;padding:10px;background:#0d0b08;color:#e8dfce;border-radius:4px;overflow:auto;font-size:12px;">&lt;meta property="og:image" content="https://aidemd.dev/og.png" /&gt;
+&lt;meta property="og:image:width" content="1200" /&gt;
+&lt;meta property="og:image:height" content="630" /&gt;
+&lt;meta property="og:title" content="AIDEMD.DEV — intent is the source" /&gt;
+&lt;meta property="og:description" content="A byte-faithful record of the .aide methodology. Intent becomes code." /&gt;
+&lt;meta name="twitter:card" content="summary_large_image" /&gt;
+&lt;meta name="twitter:image" content="https://aidemd.dev/og.png" /&gt;</pre>
+      </li>
+      <li>If you want a per-page variant, swap the <code>&lt;h1&gt;</code>, the chip row, and the bubble copy; everything else stays.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

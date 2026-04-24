@@ -1,0 +1,35 @@
+---
+intent: "outcomes.desired[0] (og.png is sRGB), outcomes.undesired[0] (not sRGB causes silent consumer downgrade)"
+misalignment:
+  - implementation-drift
+  - test-gap
+description: >
+  og.png has no sRGB color-space chunk — Playwright default PNG output is untagged;
+  verifyOutput does not gate on the chunk; spec's explicit sRGB guarantee is unmet.
+---
+
+# QA Re-alignment Document
+
+## Issues
+
+- [x] `public/og.png` contains no `sRGB`, `gAMA`, or `iCCP` PNG chunk — the file is color-space-untagged (only `IHDR` + `IDAT` × 51 + `IEND`). Playwright's `page.locator('.og').screenshot({type:'png'})` does not embed a color space chunk by default.
+  - File: `src/service/socialShare/renderOgImage/captureOgElement/index.ts` (post-capture pipeline)
+  - Traces to: `outcomes.desired[0]` ("sRGB color space") and `outcomes.undesired[0]` ("not sRGB — any of which causes at least one unfurl consumer to silently downgrade, crop, or refuse the card")
+  - Misalignment: `implementation-drift`
+  - Fix: Added `src/service/socialShare/renderOgImage/tagSrgb/index.ts` — splices a 13-byte sRGB chunk after IHDR using raw Buffer ops and `node:zlib` `crc32`. `captureOgElement` calls `tagSrgb(outPath)` immediately after the Playwright screenshot.
+
+- [x] `verifyOutput` validates PNG signature, dimensions (1200×630), and byte size (<300 KB) but has no assertion for the presence of an sRGB color space chunk — leaving the sRGB guarantee ungated at build time.
+  - File: `src/service/socialShare/renderOgImage/verifyOutput/index.ts` (lines 38–63)
+  - Traces to: `outcomes.desired[0]` ("sRGB color space") and `outcomes.undesired[0]`
+  - Misalignment: `test-gap`
+  - Fix: Added `hasSrgbColorSpace(buffer)` chunk walker — walks PNG chunks after IHDR until `IEND`, returns true on `sRGB` or `iCCP`. `verifyOutput` throws a descriptive error if neither is found. Tests updated: fixture `makePngHeader` now used for the no-color-space negative case; new `makePngHeaderWithSrgb` factory used for all passing cases.
+
+## Retro
+
+Both failures trace to the same root gap: the plan's step 4d (`verifyOutput`) enumerates the exact checks it performs (bytes, dims, PNG signature) but does not mention sRGB chunk verification, and step 4c (`captureOgElement`) documents only the selector-based screenshot call without specifying a post-capture color-space tagging step. The spec's "sRGB color space" guarantee was carried through as a prose constraint but was not converted into a concrete build gate.
+
+What would have caught this earlier:
+
+- **Plan-phase**: step 4d's checklist should have listed `sRGB chunk present` alongside `bytes > MAX_BYTES` and `width !== 1200` as a named throw condition. A reviewer reading the plan could then have flagged that Playwright's default PNG output is untagged.
+- **Implementation-phase**: a one-shot manual check of the generated PNG's chunk structure (the same `node -e` used in this QA pass) before marking step 9a done would have surfaced the missing chunk immediately.
+- The misalignment is minor in practice — untagged PNG is treated as sRGB by all modern unfurl consumers including Twitter/X, Slack, and iMessage — but the spec is explicit, and the build gate should be complete.

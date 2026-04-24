@@ -1,0 +1,600 @@
+---
+description: Implementation plan for the social share preview module — build-time Playwright render of one canonical 1200×630 og.png plus App Router metadata wiring.
+intent: >
+  Build the social share preview module at src/service/socialShare — move the
+  in-repo HTML design source into the module, self-host JetBrains Mono so the
+  render does not depend on Google Fonts, wire a Playwright prebuild script
+  that screenshots the .og element to public/og.png at 1200×630 under 300 KB,
+  export an ogImage metadata config from the orchestrator, and extend the
+  root layout's metadata so every statically-exported page emits the full
+  Open Graph and Twitter Card tag set pointing at the one canonical image.
+---
+
+## Project Structure
+
+Annotated tree of the module after the plan executes, rooted at
+`src/service/socialShare/`. Everything inside this tree is new except where
+marked `[existing]`.
+
+```
+src/service/socialShare/
+├── .aide                              ← [existing] intent spec
+├── plan.aide                          ← [existing] this file
+├── index.ts                           ← orchestrator: exports ogImage metadata config
+│                                          consumed by app/layout.tsx. Shape:
+│                                          export const ogImage: OgImageConfig
+│                                          export default ogImage
+├── ogImageConfig/
+│   └── index.ts                       ← () => OgImageConfig (pure constant builder,
+│                                          centralizes the canonical URL, dimensions,
+│                                          alt text, title, description, site name)
+├── renderOgImage/
+│   ├── index.ts                       ← () => Promise<void>  (node-only script entry
+│   │                                       invoked by npm run og:render — launches
+│   │                                       Playwright, screenshots .og, verifies size)
+│   ├── launchBrowser/
+│   │   └── index.ts                   ← () => Promise<{ browser, page }>
+│   │                                       (chromium.launch + newPage at 1200×630)
+│   ├── loadDesignSource/
+│   │   └── index.ts                   ← (page: Page) => Promise<void>
+│   │                                       (resolves file:// URL to design.html,
+│   │                                       page.goto, waits for networkidle + fonts)
+│   ├── captureOgElement/
+│   │   └── index.ts                   ← (page: Page, outPath: string) => Promise<void>
+│   │                                       (page.locator('.og').screenshot to outPath)
+│   └── verifyOutput/
+│       └── index.ts                   ← (outPath: string) =>
+│                                          Promise<{ bytes: number; width: number;
+│                                                    height: number }>
+│                                       (stat + PNG header parse; throws if
+│                                        bytes > 307200, dims !== 1200×630)
+└── design/
+    ├── design.html                    ← byte-level source of truth for the card
+    │                                      (moved from handoff-bundle/social-share.html;
+    │                                      <link> to Google Fonts replaced with local
+    │                                      @font-face referencing ./fonts/*.woff2;
+    │                                      <img> src rewritten to ../../../../public/expo-wave.png
+    │                                      resolved relative to this file)
+    ├── expo-wave.png                  ← design-source copy of the mascot asset
+    │                                      (referenced by design.html via relative path;
+    │                                      public/expo-wave.png remains the shipped asset)
+    └── fonts/
+        ├── JetBrainsMono-Regular.woff2    ← weight 400
+        ├── JetBrainsMono-Medium.woff2     ← weight 500
+        ├── JetBrainsMono-SemiBold.woff2   ← weight 600
+        └── JetBrainsMono-Bold.woff2       ← weight 700
+```
+
+Changes outside the module:
+
+```
+public/
+├── og.png                             ← NEW, generated artifact — 1200×630 PNG, sRGB,
+│                                          < 300 KB. Written by renderOgImage. Not
+│                                          hand-edited, not checked in as a source.
+├── expo-wave.png                      ← [existing] unchanged; shipped copy.
+└── ...                                ← [existing] unchanged.
+
+src/app/layout.tsx                     ← [existing, modified] — metadata.openGraph and
+                                           metadata.twitter extended from the ogImage
+                                           config exported by src/service/socialShare.
+                                           No other behavior changes.
+
+src/types/
+└── socialShare.ts                     ← NEW — OgImageConfig type (title, description,
+                                           siteName, url, imageUrl, width, height, alt)
+
+package.json                           ← [existing, modified] —
+                                           + devDependency: "playwright" (^1.50.x,
+                                             aligned to existing @playwright/test)
+                                           + scripts.og:render: "node src/service/
+                                             socialShare/renderOgImage/run.mjs"
+                                             (thin ESM wrapper that imports and
+                                             invokes the compiled TS entry; see
+                                             step 5 Decisions)
+                                           + scripts.prebuild: "npm run og:render"
+
+handoff-bundle/                        ← REMOVED entirely after step 2. The design
+                                          source, the mascot copy, and the handoff
+                                          markdown all migrate — no read-only archive
+                                          is retained. Git history is the archive.
+```
+
+The `design/` folder sits next to the orchestrator because it is a build-time
+input to a specific helper (`renderOgImage/loadDesignSource`) and is only
+read, never re-exported. Keeping it inside `src/service/socialShare/`
+guarantees Next.js never emits it as a route (anything under `public/` would
+be routable; anything under `src/service/` is not).
+
+## Prerequisites
+
+- `public/expo-wave.png` must exist at its current path. It is already present
+  — no work required, but the render script depends on it for the shipped asset
+  referenced by the generated OG image's implicit alt content. If absent, the
+  root intent's Expo-everywhere outcome breaks before this plan runs.
+- `@playwright/test` is already a devDependency (1.50.1). The raw `playwright`
+  package adds the chromium launcher API; step 5 installs it.
+- The Chromium browser binary must be present on any machine that executes
+  `npm run build` — `npm ci` does not install it. The canonical command is
+  `npx playwright install chromium` (add `--with-deps` on Linux to also
+  install the OS libraries Chromium needs: libnss3, libnspr4, libatk1.0-0,
+  libatspi2.0-0, libxkbcommon0, etc.). Local dev machines must run this
+  command once after a fresh clone. GitHub Actions runners are fresh every
+  job, so the workflow itself must install the browser — step 6 adds the
+  step that satisfies this prerequisite automatically for CI.
+- Node 22 + npm 10 on the build host (per root environment). `node:fs/promises`
+  and native ESM are assumed.
+- The dev server on port 3001 is not a prerequisite for the build — `og.png`
+  is rendered from a static `file://` URL, not the running site. The dev
+  server is only used in step 9 for QA visual verification.
+
+## Plan
+
+### 1. Lift types and centralize the ogImage config
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [x] 1a. Create `src/types/socialShare.ts` exporting an `OgImageConfig` type
+      with fields: `title: string`, `description: string`, `siteName: string`,
+      `url: string` (canonical site URL), `imageUrl: string` (absolute URL of
+      og.png on the deployed site), `imagePath: string` (site-root path, e.g.
+      `/og.png`), `width: 1200`, `height: 630`, `alt: string`. Width and
+      height are literal types so TypeScript rejects any drift from the spec
+      dimensions. No runtime logic in this file.
+- [x] 1b. Create `src/service/socialShare/ogImageConfig/index.ts` — a default
+      export returning a frozen `OgImageConfig`. Hard-coded constants from the
+      spec and handoff:
+        - `title`: `"AIDEMD.DEV — intent is the source"`
+        - `description`: `"A byte-faithful record of the .aide methodology. Every .aide is a contract — scope, outcomes, guardrails — that cascades through your stack."`
+        - `siteName`: `"AIDEMD.DEV"`
+        - `url`: `"https://aidemd.dev/"`
+        - `imageUrl`: `"https://aidemd.dev/og.png"`
+        - `imagePath`: `"/og.png"`
+        - `width`: `1200`
+        - `height`: `630`
+        - `alt`: `"Expo, the AIDEMD mascot, waving next to the tagline 'intent is the source.'"`
+      The alt string is byte-identical to the spec's "Good examples" section;
+      drift here re-leaks the abandoned mascot names.
+- [x] 1c. Create `src/service/socialShare/index.ts` — the orchestrator. It
+      imports `ogImageConfig`, calls it once at module load, and exports both
+      the resolved config as a named export `ogImage` and as the default
+      export. No render-script wiring here; the orchestrator's single
+      responsibility is handing the metadata config to `app/layout.tsx`.
+      JSDoc on the orchestrator names its consumer explicitly and notes that
+      the render script at `renderOgImage` is a sibling helper reached only
+      via npm scripts, never imported by this orchestrator (keeps Playwright
+      out of the Next build graph).
+
+### 2. Migrate the design source into the module
+
+Read: `coding-playbook/architecture/folder-structure`, `.aide/docs/agent-readable-code`
+
+- [x] 2a. Create `src/service/socialShare/design/` and move (`git mv`)
+      `handoff-bundle/social-share.html` to
+      `src/service/socialShare/design/design.html`. Rename during the move —
+      the file is now the canonical design source, not a handoff artifact.
+- [x] 2b. Move `handoff-bundle/assets/expo-wave.png` to
+      `src/service/socialShare/design/expo-wave.png` via `git mv`. This is the
+      copy the design HTML resolves against during render. The shipped
+      `public/expo-wave.png` is a separate, pre-existing file and is left
+      alone.
+- [x] 2c. Edit `design/design.html`:
+      - Remove the three `<link>` elements that load Google Fonts
+        (`preconnect` × 2, `stylesheet`).
+      - Add a `<style>` block (or inline into the existing one) with four
+        `@font-face` declarations for JetBrains Mono weights 400/500/600/700
+        pointing at `./fonts/JetBrainsMono-{Regular,Medium,SemiBold,Bold}.woff2`
+        with `font-display: block` (block instead of swap — we need final
+        glyphs at capture time, not a fallback).
+      - Rewrite `<img class="expo" src="assets/expo-wave.png" ...>` to
+        `src="./expo-wave.png"` so the path resolves relative to the new
+        location.
+      - Leave everything else (the `.og` element markup, tokens, layout,
+        handoff `.notes` scaffolding) byte-identical. The scaffolding stays
+        because the render script captures the `.og` element by selector, so
+        the surrounding frame-label and notes block are safe build-time
+        context.
+- [x] 2d. Delete `handoff-bundle/HANDOFF-social-share.md` and the now-empty
+      `handoff-bundle/assets/` folder, then delete `handoff-bundle/` itself.
+      Git history preserves the markdown as the archival reference; keeping
+      it at the repo root would confuse future readers into editing it
+      instead of the spec.
+
+### 3. Self-host JetBrains Mono woff2 files
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`
+
+- [x] 3a. Download the four JetBrains Mono weights (400/500/600/700) as woff2
+      from the official `JetBrains/JetBrainsMono` GitHub releases (latest
+      tagged release) — `JetBrainsMono-Regular.woff2`,
+      `JetBrainsMono-Medium.woff2`, `JetBrainsMono-SemiBold.woff2`,
+      `JetBrainsMono-Bold.woff2`. Place under
+      `src/service/socialShare/design/fonts/`.
+      Rationale for woff2 (not ttf): same glyph metrics, ~3× smaller on disk,
+      same Chromium rendering. The `layout.tsx` uses `next/font/google` for
+      the site itself — that path is unchanged and unrelated. These four
+      files are build-time render inputs only; they never reach `public/`.
+- [x] 3b. Verify the font faces load with zero network in DevTools by running
+      `file:///…/design.html` in a browser with network throttling set to
+      "offline" and confirming the headline glyph metrics match a
+      network-online load. This is a manual one-shot check done during
+      implementation; it does not become an automated test.
+
+### 4. Build the render pipeline helpers
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`, `.aide/docs/progressive-disclosure`
+
+Each of these is an independent helper folder under
+`src/service/socialShare/renderOgImage/`. They are written as `.mts` (native
+Node ESM TypeScript, run via `node --experimental-strip-types` or compiled —
+see step 5 Decisions for the exact execution strategy). Each file has JSDoc
+on every function, default export, folder name = function name. Playwright's
+`chromium`, `Browser`, `Page`, `Locator` types come from `playwright`.
+
+- [x] 4a. `renderOgImage/launchBrowser/index.ts` — default export
+      `launchBrowser(): Promise<{ browser: Browser; page: Page }>`. Launches
+      Chromium headless, opens a new page with viewport `{ width: 1200,
+      height: 630, deviceScaleFactor: 1 }`. `deviceScaleFactor: 1` is
+      non-negotiable — 2× would produce a 2400×1200 capture that the
+      verify step would reject.
+- [x] 4b. `renderOgImage/loadDesignSource/index.ts` — default export
+      `loadDesignSource(page: Page): Promise<void>`. Resolves the absolute
+      path to `design/design.html` relative to this file via `import.meta.url`
+      + `fileURLToPath`, converts to a `file://` URL, calls `page.goto` with
+      `waitUntil: 'networkidle'`, then awaits `document.fonts.ready` via
+      `page.evaluate`. The fonts-ready wait is a belt-and-suspenders guard
+      on top of `font-display: block`; the headline's `-1.4px` letter
+      spacing is the spec's highest-risk metric if a fallback swaps in mid-
+      capture.
+- [x] 4c. `renderOgImage/captureOgElement/index.ts` — default export
+      `captureOgElement(page: Page, outPath: string): Promise<void>`. Calls
+      `page.locator('.og').screenshot({ path: outPath, omitBackground: false,
+      type: 'png' })`. Selector-based capture (not viewport-clipped) is
+      mandated by the spec's Strategy decision #2 — the design HTML
+      intentionally wraps the card in scaffolding.
+- [x] 4d. `renderOgImage/verifyOutput/index.ts` — default export
+      `verifyOutput(outPath: string): Promise<{ bytes: number; width: number;
+      height: number }>`. Reads the PNG file, parses the PNG IHDR chunk (bytes
+      16–24 after the 8-byte signature) to extract width/height as
+      big-endian uint32, `fs.stat` for bytes. Throws a descriptive error if
+      any of: `bytes > 307200` (300 × 1024), `width !== 1200`,
+      `height !== 630`, or the PNG signature bytes (`89 50 4E 47 0D 0A 1A 0A`)
+      don't match. No image-processing library dependency — raw buffer reads
+      only. Returns the metrics on success so the orchestrator can log them.
+
+### 5. Wire the render orchestrator and npm scripts
+
+Read: `coding-playbook/foundations/conventions`, `coding-playbook/architecture/folder-structure`, `coding-playbook/services/service-layer`
+
+- [x] 5a. `renderOgImage/index.ts` — default export
+      `renderOgImage(): Promise<void>`. Orchestrator JSDoc narrates the
+      pipeline end-to-end. Pipeline sequence:
+        1. `launchBrowser()` → `{ browser, page }`
+        2. `loadDesignSource(page)`
+        3. Resolve `outPath = path.resolve(process.cwd(), 'public/og.png')`
+        4. `captureOgElement(page, outPath)`
+        5. `browser.close()` (in a `try/finally` around steps 2–4 so a
+           failure does not leak the Chromium process)
+        6. `metrics = await verifyOutput(outPath)`
+        7. `console.log` one line of the form `"og.png rendered — <w>×<h>,
+           <bytes> bytes"` so build logs carry the verification result.
+      Any thrown error from a helper bubbles; the surrounding `prebuild`
+      script exits non-zero and `next build` aborts. That is the drift gate.
+- [x] 5b. Create `src/service/socialShare/renderOgImage/run.mjs` — a
+      three-line ESM shim that `await import`s the compiled render
+      orchestrator and calls it. Rationale: the `prebuild` hook runs before
+      `next build`, so no bundler has processed our TypeScript yet. The
+      shim lets the npm script point at a stable `.mjs` entry while the
+      render logic lives in `.ts` files that are type-checked and testable
+      alongside the rest of `src/service/`. The shim compiles TS on the fly
+      via `tsx` (already a transitive dep of `@playwright/test`) — invoked
+      as `node --import tsx ./run.mjs`. If `tsx` is not present directly,
+      add it as a devDependency in 5c.
+- [x] 5c. Edit `package.json`:
+        - Add `"playwright": "^1.50.1"` to `devDependencies` (version
+          locked to the existing `@playwright/test`).
+        - Add `"tsx": "^4.19.0"` to `devDependencies` if not already
+          resolvable.
+        - Add `"og:render": "node --import tsx src/service/socialShare/renderOgImage/run.mjs"`
+          to `scripts`.
+        - Add `"prebuild": "npm run og:render"` to `scripts`. npm
+          automatically runs `prebuild` before `build` — no other wiring
+          needed.
+- [x] 5d. Run `npx playwright install chromium` once locally and document
+      the command in the module's JSDoc on `renderOgImage/index.ts`
+      (not in a README — the contract lives with the code). The JSDoc
+      note should reference step 6 below as the CI counterpart, so a
+      reader following the module's contract sees both halves of the
+      browser-install story in one place.
+
+### 6. Install the Chromium browser in CI before build
+
+Read: `coding-playbook/workflow/ci`, `coding-playbook/foundations/conventions`
+
+Without this step, the first deploy after this plan lands fails: GitHub
+Actions' `ubuntu-latest` runner has no Chromium binary, so `npm run build`
+triggers `prebuild` → `og:render` → `chromium.launch()` → ENOENT. The
+install step must sit between `npm ci` and `npm run build`, and it must
+use `--with-deps` on Linux to pull the OS libraries Chromium links
+against (libnss3, libnspr4, libatk1.0-0, libatspi2.0-0, libxkbcommon0,
+libxcomposite1, libxdamage1, libxrandr2, libgbm1, libasound2, etc. —
+the exact set is managed by the Playwright installer, so we don't
+enumerate it in the workflow).
+
+- [x] 6a. Edit `.github/workflows/deploy.yml`. Insert a new step named
+      `Install Playwright browsers` between the existing `Install
+      dependencies` step (`npm ci`) and the existing `Build` step
+      (`npm run build`). The step runs `npx playwright install
+      --with-deps chromium`. Use exactly `chromium` (not the default
+      all-browsers install) — the render pipeline only launches
+      Chromium, and pulling Firefox + WebKit triples download time
+      and disk footprint for zero benefit.
+- [x] 6b. Do NOT add browser caching for v1. Rationale is recorded
+      under Decisions. A first pass ships without `actions/cache@v4`;
+      if deploy time on the `Install Playwright browsers` step
+      exceeds ~60 seconds consistently, caching becomes a follow-up
+      task — not part of this plan. Keep the workflow diff minimal.
+- [x] 6c. Verify the edit by re-reading the workflow file top-to-bottom.
+      The job ordering must be: Checkout → Set up Node → Install
+      dependencies → Install Playwright browsers → Build → Upload
+      Pages artifact. Any other ordering breaks the build: if the
+      browser install runs before `npm ci`, `npx` cannot find the
+      Playwright CLI; if it runs after `npm run build`, the render
+      has already failed.
+
+### 7. Extend layout.tsx to consume the ogImage config
+
+Read: `coding-playbook/client/seo`, `coding-playbook/foundations/conventions`
+
+- [x] 7. Edit `src/app/layout.tsx`:
+      - Import `{ ogImage }` from `@/service/socialShare`.
+      - In the existing `export const metadata: Metadata = { ... }`:
+          - Extend `metadata.openGraph.images` with a single entry:
+            `{ url: ogImage.imagePath, width: ogImage.width, height: ogImage.height, alt: ogImage.alt }`.
+            Use `imagePath` (site-root relative) so Next resolves against
+            `metadataBase` — which is already set to
+            `new URL("https://aidemd.dev")` — producing the absolute URL
+            the spec requires (`https://aidemd.dev/og.png`).
+          - Update `metadata.openGraph.title` to `ogImage.title` and
+            `metadata.openGraph.description` to `ogImage.description`.
+            These mirror the handoff's copy exactly.
+          - Update `metadata.openGraph.siteName` to `ogImage.siteName`.
+          - Extend `metadata.twitter` to include `images: [ogImage.imagePath]`
+            and `title: ogImage.title`, `description: ogImage.description`.
+            `card: "summary_large_image"` is already set — leave it.
+      - Do not replace the existing `metadata.title.template` /
+        `metadata.title.default` / `metadata.description` — those continue
+        to drive per-page titles via Next's merge semantics. Per-page
+        `metadata` exports that supply their own `openGraph.title` or
+        `description` inherit everything else (including `images`), which
+        satisfies the spec's "per-page overrides permitted as an additive
+        nicety" contract without any additional work.
+      - Everything else in `layout.tsx` — GTM, `CanonicalTag`,
+        `ExpoTipProvider`, `Expo`, font variable — is unchanged.
+
+### 8. Unit tests for pure logic
+
+Read: `coding-playbook/workflow/testing`, `coding-playbook/foundations/conventions`
+
+Vitest is already configured; `src/service/**/*.test.ts` is in the include
+glob. Tests are co-located next to their subject.
+
+- [x] 8a. `src/service/socialShare/ogImageConfig/index.test.ts` — asserts:
+        - Returned object's literal string fields match the spec exactly
+          (title, description, siteName, url, imageUrl, imagePath, alt).
+        - `width === 1200`, `height === 630`.
+        - `alt` contains the substring `"Expo"` and does NOT contain
+          `"Aidey"` or `" AID "` (regex, case-sensitive — the abandoned-
+          name prohibition in the root intent applies to shipped output,
+          and this is shipped output via meta tags).
+        - Repeated calls return identical references (`Object.isFrozen`
+          check — drift guard).
+- [x] 8b. `src/service/socialShare/index.test.ts` — asserts that the
+      orchestrator re-exports `ogImage` and its default export deep-equals
+      the return of `ogImageConfig()`. Guards against future refactors
+      where someone rewires the orchestrator to transform the config.
+- [x] 8c. `src/service/socialShare/renderOgImage/verifyOutput/index.test.ts`
+      — parameterized with `vi.mock('node:fs/promises', …)` and a set of
+      synthetic PNG byte fixtures:
+        - Valid 1200×630 PNG under 300 KB → returns metrics, does not throw.
+        - 1200×630 PNG at 400 KB → throws "og.png exceeds 300 KB ceiling".
+        - 2400×1200 PNG → throws "og.png dimensions 2400×1200, expected
+          1200×630".
+        - Missing PNG signature → throws "og.png is not a valid PNG".
+        - Missing file → throws.
+      Fixtures are constructed as `Buffer.from([...signature, ...ihdr])`
+      in a factory function (`makePngHeader(width, height)`); no real
+      image library.
+- [x] 8d. Run `npm run test:unit` and confirm all socialShare tests pass.
+
+### 9. Integration verification against the built output
+
+Read: `coding-playbook/workflow/testing`, `coding-playbook/client/seo`
+
+This step runs the full render + build pipeline and validates against the
+spec's `outcomes.desired` — file existence, dimensions, byte size, every-
+page meta coverage, one-canonical-image rule. The implementor executes
+these as shell commands during the session; they are not automated tests
+but are the acceptance gate for the plan. Local execution assumes the
+one-time `npx playwright install chromium` has already been run on this
+machine (per Prerequisites); CI coverage is provided by step 6.
+
+- [x] 9a. Run `npm run og:render` in isolation. Verify it exits 0, writes
+      `public/og.png`, and logs the `"og.png rendered — 1200×630, <N> bytes"`
+      line with N < 307200. If N is close to the ceiling (> 280 KB),
+      flag it in Decisions and note follow-up on palette/compression —
+      do not downgrade the PNG silently.
+- [x] 9b. Run `npm run build`. Confirm the `prebuild` hook fires first
+      (npm prints `> prebuild`), `og:render` runs, then `next build`
+      completes. Check the `out/` directory:
+        - `out/og.png` exists (Next copies from `public/`).
+        - `out/index.html` contains all of: `og:image` with value
+          `https://aidemd.dev/og.png`, `og:image:width` 1200,
+          `og:image:height` 630, `og:image:alt` with the Expo alt string,
+          `og:title`, `og:description`, `og:site_name`, `og:type` website,
+          `twitter:card` summary_large_image, `twitter:image` with the
+          canonical URL, `twitter:title`, `twitter:description`.
+        - Sample three docs pages (one from each of `docs/`, `docs/agents/`,
+          `docs/commands/`) in `out/` and grep the same meta-tag set. Any
+          page missing any of those tags is a spec violation under
+          `undesired` outcome #3.
+        - Grep every `*.html` under `out/` for `og:image` content values
+          other than `https://aidemd.dev/og.png`. Zero matches required
+          (enforces the one-canonical-card contract).
+- [x] 9c. Use Playwright MCP against `http://localhost:3001/og.png` (dev
+      server, port 3001, already running per session context — do NOT
+      start a server). Navigate to the image URL directly in the MCP
+      browser, take a screenshot, and side-by-side compare with
+      `src/service/socialShare/design/design.html`'s `.og` element in
+      the same browser at 1200 CSS width. Visually confirm: chrome bar
+      height 46px, three window dots, prompt text, LIVE + v0.1.0 on the
+      right; left column carries the `## canonical docs · the .aide
+      methodology` tag, the `intent is / the source.` headline with the
+      second line in `#3d6b4a`, subhead with italicized accents, three
+      chips, footer; right column carries the speech bubble and Expo
+      waving; four corner registration marks in forest green. Any
+      deviation indicates a font or asset resolution failure in the
+      render pipeline.
+- [x] 9d. Add a one-line entry under the spec's References noting that
+      `handoff-bundle/` has been migrated (`mv` destinations listed).
+      Do not edit the `.aide` intent body otherwise — the spec's
+      frontmatter and strategy are already authoritative.
+
+## Decisions
+
+- **Playwright as a devDependency, never a runtime dependency.** The
+  `playwright` package is added under `devDependencies` alongside the
+  existing `@playwright/test`. The render orchestrator is invoked only by
+  the `og:render` npm script (via `prebuild`), never imported by any
+  file under `src/app/`. This keeps the static export's runtime footprint
+  untouched and prevents Playwright from being traced into the bundle.
+  The root intent's "zero runtime Node dependency" rule is load-bearing
+  here and this wiring preserves it.
+
+- **Design source lives at `src/service/socialShare/design/`, not in
+  `public/` and not at the repo root.** Files under `public/` are emitted
+  as routable URLs by the static export — `social-share.html` at the
+  repo root or under `public/` would leak to `https://aidemd.dev/social-share.html`,
+  an explicit violation of the spec's Strategy decision #3 and the
+  frontmatter's "design source is build-time input, not a public page"
+  guardrail. Files under `src/service/` are never routable under Next's
+  App Router. Nesting the design inside the module it belongs to also
+  keeps the cascading domain structure honest — the module owns every
+  artifact it depends on except the shipped `public/expo-wave.png`.
+
+- **Fonts live at `design/fonts/*.woff2`, referenced by relative `@font-face`
+  declarations inside `design.html`.** The alternative (shared font files
+  at `src/assets/fonts/` referenced by both `layout.tsx` and the design)
+  was rejected because `layout.tsx` already uses `next/font/google` for
+  JetBrains Mono at runtime — the two paths do not need to share disk
+  files, and duplicating the woff2 into the design folder localizes the
+  social-share module's dependencies. woff2 chosen over ttf for disk
+  footprint (~3× smaller) with identical Chromium rendering.
+  `font-display: block` (not `swap`) is deliberate: we need the real
+  glyphs at screenshot time, not a fallback swap, and the `networkidle`
+  wait plus `document.fonts.ready` wait in `loadDesignSource` closes the
+  race.
+
+- **`handoff-bundle/` is removed, not retained as a read-only archive.**
+  Git history preserves the original files. Keeping a parallel copy at
+  the repo root after migration would train future contributors to edit
+  the wrong file (the stale copy) instead of the canonical design source
+  inside the module. The spec's "regenerating the image is a single
+  command" contract depends on there being exactly one design source;
+  two copies is two sources of truth, which is zero.
+
+- **Orchestrator exports a metadata config object, not Next `Metadata`
+  directly.** `src/service/socialShare/index.ts` exports an
+  `OgImageConfig` — a plain-data DTO — and `layout.tsx` composes that
+  config into its own `Metadata` export. This is a service-layer
+  discipline decision (services return plain data, not framework types)
+  consistent with the playbook's service-layer note. It also keeps the
+  social-share module importable by anything that needs the config
+  (e.g., a future `generateMetadata` on a docs page that wants the
+  title template) without pulling `next` into this module's type graph.
+
+- **PNG only, no WebP fallback.** The spec names PNG as the one canonical
+  format. WebP would save bytes but Twitter/X's unfurl path is the
+  bottleneck and it prefers PNG; an alternate format multiplies the
+  surface where a consumer silently downgrades. Single format, single
+  asset, single URL — every layer of the pipeline is designed around
+  the one-canonical-card contract.
+
+- **Renderer verifies output byte-by-byte, not via an image library.**
+  `verifyOutput` parses the PNG IHDR chunk manually and `fs.stat`s the
+  file. Adding `sharp` or `pngjs` would pull a native build step into a
+  build-time script for three fields we can read with four lines of
+  buffer indexing. The verification is a gate (pass/fail), not a
+  transform — no library buys us anything.
+
+- **`prebuild` hook, not a post-commit hook or a manual step.** The spec
+  lists "rendered card drifting from the design source" as an undesired
+  outcome, and the only defense the spec accepts is automatic
+  regeneration. `prebuild` ties regeneration to `next build`, which is
+  the command that produces every deploy artifact. Manual / post-commit
+  hooks depend on humans running them; the spec explicitly rejects
+  that failure mode.
+
+- **`--with-deps` on the CI Playwright install, not a bare
+  `npx playwright install chromium`.** GitHub Actions' `ubuntu-latest`
+  image does not ship with every shared library Chromium links against
+  (libnss3, libnspr4, libatk1.0-0, libatspi2.0-0, libxkbcommon0,
+  libxcomposite1, libxdamage1, libxrandr2, libgbm1, libasound2, and
+  friends). A bare install downloads the browser binary but leaves it
+  unable to launch, producing a cryptic `error while loading shared
+  libraries` at `chromium.launch()` time. `--with-deps` lets the
+  Playwright installer `apt-get install` the exact set it needs — this
+  is Playwright's canonical recommendation for CI and offloads the
+  library-set maintenance burden to the upstream tool. The local
+  dev-machine instruction in step 5d omits `--with-deps` because macOS
+  and Windows resolve these libraries through a different path and the
+  flag is a no-op (or warning) there.
+
+- **No browser cache in the CI workflow for v1.** `actions/cache@v4`
+  keyed on the `@playwright/test` version from `package.json` would
+  shave ~30–60 seconds off the browser install on every run by reusing
+  `~/.cache/ms-playwright/`. It's a known pattern and it works. But:
+  the site deploys on pushes to `main`, not on every PR, so we are not
+  paying this cost on a hot loop. The cache introduces one more moving
+  part (cache key hashing, cache restore step, confirmation that the
+  binary restored under `--with-deps` still has its OS libraries —
+  which are apt-installed separately from the browser and are NOT
+  cached by Playwright's own cache dir). The minimal-diff workflow
+  ships first; caching becomes a follow-up if deploy times prove
+  painful. If caching is later added, the canonical key is
+  `playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}`
+  scoped to `~/.cache/ms-playwright`, paired with a conditional that
+  still runs `--with-deps` when the cache hits (OS libraries aren't
+  cached, only the browser binary is).
+
+- **Install `chromium` only, not all browsers.** `npx playwright install
+  --with-deps chromium` downloads ~140 MB of Chromium plus its OS
+  libraries. The default `npx playwright install` (no browser argument)
+  pulls Chromium + Firefox + WebKit — roughly 3× the footprint and
+  3× the download time — for zero benefit here. The render pipeline
+  launches Chromium exclusively via `chromium.launch()` in
+  `launchBrowser/index.ts`; Firefox and WebKit would never be
+  exercised. The narrow install is also the pattern `@playwright/test`
+  uses internally when its config specifies only one browser project.
+
+- **Test the pure logic, gate the rendered artifact with build-time
+  verification.** Vitest covers `ogImageConfig` and `verifyOutput` (pure
+  functions with easy fixtures). The Playwright-driven render is not
+  unit-tested — mocking `page.locator('.og').screenshot` would test the
+  mock, not the capture. The render is instead gated by
+  `verifyOutput` at every build: if the generated PNG is not 1200×630
+  PNG under 300 KB, `next build` aborts. This is the same pattern
+  `docs-verify.mjs` uses for the docs registry — a build-time check
+  that runs against real output.
+
+- **Playbook notes referenced in Read lists are:**
+  `coding-playbook/foundations/conventions` (naming, JSDoc, helper
+  placement, progressive disclosure), `coding-playbook/architecture/folder-structure`
+  (orchestrator/helper pattern, cascading domain structure, horizontal
+  isolation), `coding-playbook/services/service-layer` (services return
+  plain data, no framework types), `coding-playbook/client/seo`
+  (App Router `metadata` patterns, per-page override semantics),
+  `coding-playbook/workflow/testing` (Vitest co-location, factory
+  functions, module-level mocks), `coding-playbook/workflow/ci`
+  (GitHub Actions step ordering, install-before-build contracts,
+  minimal-diff workflow edits).

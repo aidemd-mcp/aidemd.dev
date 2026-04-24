@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
+    "prebuild": "npm run og:render",
     "build": "next build",
     "start": "next start",
     "preview": "next build && npx serve out -p 4321",
+    "og:render": "node --import tsx src/service/socialShare/renderOgImage/run.mjs",
     "test:unit": "vitest run",
     "test:visual": "playwright test --config=tests/playwright.config.ts",
     "docs:verify": "node scripts/docs-verify.mjs"
@@ -32,7 +34,11 @@
     "@types/node": "^22.14.0",
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.3.5",
+    "playwright": "^1.50.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.4",
+    "to-ico": "^1.1.5",
+    "tsx": "^4.19.0",
     "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   }

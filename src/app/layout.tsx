@@ -5,6 +5,7 @@ import { ExpoTipProvider } from "@/components/Expo/ExpoTipContext";
 import Expo from "@/components/Expo";
 import GlobalScripts from "@/components/GlobalScripts";
 import CanonicalTag from "@/components/CanonicalTag";
+import { ogImage } from "@/service/socialShare";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 
@@ -26,16 +27,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "https://aidemd.dev",
-    siteName: "aidemd.dev",
-    title: "aidemd.dev — The AIDE Methodology",
-    description:
-      "aidemd.dev is the public, canonical home of the AIDE methodology and the @aidemd-mcp/server package.",
+    siteName: ogImage.siteName,
+    title: ogImage.title,
+    description: ogImage.description,
+    images: [
+      {
+        url: ogImage.imagePath,
+        width: ogImage.width,
+        height: ogImage.height,
+        alt: ogImage.alt,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "aidemd.dev — The AIDE Methodology",
-    description:
-      "aidemd.dev is the public, canonical home of the AIDE methodology and the @aidemd-mcp/server package.",
+    title: ogImage.title,
+    description: ogImage.description,
+    images: [ogImage.imagePath],
   },
 };
 
