@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { ExpoTipProvider } from "@/components/Expo/ExpoTipContext";
-import Expo from "@/components/Expo";
 import GlobalScripts from "@/components/GlobalScripts";
 import { ogImage } from "@/service/socialShare";
 
@@ -102,10 +100,7 @@ export default function RootLayout({
             />
           </noscript>
         )}
-        <ExpoTipProvider>
-          {children}
-          <Expo />
-        </ExpoTipProvider>
+        {children}
       </body>
     </html>
   );

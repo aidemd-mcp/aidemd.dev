@@ -11,10 +11,12 @@ import CliDemo from "./_components/CliDemo";
 import Comparison from "./_components/Comparison";
 import Quickstart from "./_components/Quickstart";
 import Footer from "./_components/Footer";
+import { ExpoTipProvider } from "@/components/Expo/ExpoTipContext";
+import Expo from "@/components/Expo";
 
 export default function HomePage() {
   return (
-    <>
+    <ExpoTipProvider>
       <a href="#main" className="skip-link">Skip to main content</a>
       <TopBar sticky />
 
@@ -112,6 +114,7 @@ export default function HomePage() {
 
       <Footer />
     </main>
-    </>
+    <Expo />
+    </ExpoTipProvider>
   );
 }

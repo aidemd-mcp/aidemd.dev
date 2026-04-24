@@ -62,7 +62,7 @@ export default function DocsTemplate({
       <DocMeta
         published={published}
         commit={commit}
-        slug={route.slug}
+        urlPath={route.urlPath}
       />
 
       <div

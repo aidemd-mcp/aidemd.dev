@@ -2,8 +2,9 @@
 scope: src/components/Expo
 description: Expo mascot — fixed bottom-right sprite with scroll-contextual speech bubble tips driven by IntersectionObserver.
 intent: >
-  Expo is the site's resident domain expert. Its dual job is to personify the
-  AIDE methodology (Domain Expert framing) and to surface scroll-contextual
+  Expo is the site's resident domain expert, scoped to the marketing landing
+  page (`/`) only — not global across the site. Its dual job is to personify
+  the AIDE methodology (Domain Expert framing) and to surface scroll-contextual
   guidance as the visitor moves through the marketing sections. A tip and pose
   keyed to the current visible section appear in a speech bubble pinned to the
   fixed sprite. Expo is ambient, never intrusive: it never blocks content, never
@@ -18,11 +19,13 @@ outcomes:
     - The page-level floating sprite renders at 140px wide; a sidebar variant renders at 58px wide.
     - The speech bubble is 280px wide with a right-bottom arrow; it appears and disappears without layout shift.
     - No string anywhere in this module — component names, alt text, speech bubble title, inline comments in shipped files — says "AIDEY" or uses "AID" as a standalone mascot name.
+    - "Mascot renders only on the marketing landing page route (`/`); ExpoTipProvider + Expo are mounted inside `src/app/page.tsx`, not in the root layout."
   undesired:
     - Chatbot UX — the mascot is ambient guidance, not a conversational interface. No input field, no send button, no chat history.
     - The mascot wrapper intercepting pointer events and blocking clicks on underlying content (pointer-events-none on the wrapper is load-bearing).
     - Any tip title or body string containing "AIDEY", "aidey", or standalone "AID" as a mascot name.
     - Layout shift when the speech bubble appears or disappears (dimensions must not push sibling content).
+    - "Mascot rendering on docs pages (`/docs/*`) or any non-landing route — mounting Expo or ExpoTipProvider in `src/app/layout.tsx` is a regression."
 ---
 
 ## Context

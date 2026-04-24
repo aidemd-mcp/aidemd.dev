@@ -3,7 +3,7 @@ import CopyButton from '@/components/CodeBlock/CopyButton';
 interface DocMetaProps {
   published: string;
   commit: string;
-  slug: string;
+  urlPath: string;
 }
 
 /**
@@ -11,8 +11,8 @@ interface DocMetaProps {
  * 2-col grid: 100px label column / 1fr value column.
  * Cite-as URL is click-to-copy via CopyButton.
  */
-export default function DocMeta({ published, commit, slug }: DocMetaProps) {
-  const citeUrl = `https://aidemd.dev/docs/${slug}?v=${commit}`;
+export default function DocMeta({ published, commit, urlPath }: DocMetaProps) {
+  const citeUrl = `https://aidemd.dev${urlPath}?v=${commit}`;
 
   return (
     <div
