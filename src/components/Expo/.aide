@@ -1,0 +1,83 @@
+---
+scope: src/components/Expo
+description: Expo mascot — fixed bottom-right sprite with scroll-contextual speech bubble tips driven by IntersectionObserver.
+intent: >
+  Expo is the site's resident domain expert. Its dual job is to personify the
+  AIDE methodology (Domain Expert framing) and to surface scroll-contextual
+  guidance as the visitor moves through the marketing sections. A tip and pose
+  keyed to the current visible section appear in a speech bubble pinned to the
+  fixed sprite. Expo is ambient, never intrusive: it never blocks content, never
+  auto-opens after the visitor dismisses it, and never reads like a chatbot.
+  Clicking the sprite after dismissal re-opens the bubble, giving the visitor
+  control at all times.
+outcomes:
+  desired:
+    - Pose and tip string are resolved from EXPO_TIPS keyed on the active SectionId from ExpoTipContext; switching sections updates both without a page reload.
+    - The bubble is dismissed per-session on close; it never auto-opens a second time after dismissal. Clicking the sprite toggles the bubble back on.
+    - "The mascot wrapper is positioned fixed bottom-right (bottom: 24px, right: 24px, z-index: 20) with pointer-events-none so underlying page content remains fully clickable."
+    - The page-level floating sprite renders at 140px wide; a sidebar variant renders at 58px wide.
+    - The speech bubble is 280px wide with a right-bottom arrow; it appears and disappears without layout shift.
+    - No string anywhere in this module — component names, alt text, speech bubble title, inline comments in shipped files — says "AIDEY" or uses "AID" as a standalone mascot name.
+  undesired:
+    - Chatbot UX — the mascot is ambient guidance, not a conversational interface. No input field, no send button, no chat history.
+    - The mascot wrapper intercepting pointer events and blocking clicks on underlying content (pointer-events-none on the wrapper is load-bearing).
+    - Any tip title or body string containing "AIDEY", "aidey", or standalone "AID" as a mascot name.
+    - Layout shift when the speech bubble appears or disappears (dimensions must not push sibling content).
+---
+
+## Context
+
+Expo is the Domain Expert personification of the AIDE methodology. The name is not arbitrary — AIDE is a double entendre for Autonomous Intent-Driven Engineering and AI Domain Expert, and Expo occupies the Domain Expert half on the site. Shipping the bubble with any reference to "AIDEY" (the design-handoff draft name) or the interim "AID" would undo this positioning: the visitor would come away with no coherent brand signal for who the mascot is.
+
+The mascot must be ambient. Marketing pages are already dense with interactive elements (pipeline stage selector, intent-tree, vault-brain tabs, CLI demo). Expo is additive context — a hint about what the visible section means — not a feature that demands attention. The non-blocking constraint (pointer-events-none on the wrapper) is therefore structural, not cosmetic: a fixed element that intercepts clicks anywhere in the bottom-right quadrant actively breaks the page for visitors who scroll to that area.
+
+The scroll-contextual tip system works through a shared context (`ExpoTipContext`) that holds the `activeSection` SectionId. Section wrapper components (`SectionObserver`) use IntersectionObserver to call `setActiveSection` when their section enters the viewport threshold. Expo reads `activeSection` and resolves the matching tip from `EXPO_TIPS`. This decouples the mascot from the section layout: the mascot never knows which component is on screen, only which `SectionId` is active.
+
+## Strategy
+
+**Tip resolution is a pure lookup.** `EXPO_TIPS[activeSection]` yields the tip and pose. No derivation, no fallback chain, no string interpolation. The lookup is guaranteed to succeed because `EXPO_TIPS` is typed as `Record<SectionId, ExpoTip>` — every `SectionId` has an entry.
+
+**Dismissal state lives in `ExpoTipContext`, not in the Expo component.** This keeps the dismissed flag accessible to any future consumer (e.g. a docs sidebar variant) without prop drilling. Default is `false` (visible). Once set to `true`, it is never reset automatically — only by user interaction (clicking the sprite).
+
+**pointer-events-none on the wrapper; pointer-events-auto on the bubble and sprite only.** The fixed wrapper covers a corner of the viewport. Without `pointer-events: none` on the wrapper, the covered area becomes a click dead zone for any underlying content. The bubble and sprite button need `pointer-events: auto` to remain interactive.
+
+**Float animation runs on the sprite at all times.** The `expoFloat` keyframe (already in globals.css) runs 4s ease-in-out infinite. It applies to the sprite image, not the bubble, so the bubble does not bob when visible. The animation plays even when the bubble is dismissed — the floating sprite signals that something interactive is there.
+
+**Speech bubble arrow is a rotated square pseudo-element positioned at right-bottom.** A 12×12 box rotated -45deg, positioned -6px from the right edge and 22px from the bottom, creates the pointing arrow. The bubble background (`var(--color-card)`) and border (`1px solid var(--color-border)`) both apply to the arrow element so it blends seamlessly.
+
+**The speech bubble does not use a portal.** It renders as a sibling of the sprite button inside the fixed wrapper. Fixed positioning on the wrapper handles viewport anchoring; the bubble does not need its own stacking context.
+
+## Good examples
+
+A correctly rendered Expo mascot on the hero section:
+
+```
+                        ┌────────────────────────────────────┐
+                        │ hey — i'm Expo              ×      │
+                        │                                     │
+                        │ your domain expert. i walk you      │
+                        │ through how intent becomes code,    │
+                        │ one stage at a time.                │
+                        │                              ▲      │
+                        └────────────────────────────────────┘
+                                                     [sprite]
+```
+
+The `×` button is in the top-right corner. The arrow points down-right toward the sprite. The sprite floats gently. Clicking anywhere in the page content area behind the mascot still registers (pointer-events-none wrapper).
+
+After dismissal, the sprite floats alone in the bottom-right corner. Clicking it re-opens the bubble for the current section.
+
+## Bad examples
+
+A mascot wrapper with `pointer-events: auto` (the default) that intercepts clicks on page content behind the bottom-right corner — any link, button, or interactive element in that area becomes unreachable until the user scrolls away.
+
+A speech bubble title reading "AIDEY says: the .aide is the contract" — "AIDEY" is the abandoned design-handoff draft name. The correct title for the threeLayerModel section is "the .aide is the contract" with no mascot name in the title.
+
+A bubble that auto-opens each time the visitor loads the page even after they dismissed it in the previous scroll — the dismissed flag must persist for the session.
+
+A bubble that causes layout shift when it appears because its dimensions were not accounted for in the fixed wrapper — content below or beside the mascot shifts position.
+
+## References
+
+- `.aide/intent.aide` -- mascot naming rule (Expo, never AIDEY/AID), pointer-events-none requirement, scroll-contextual tips via IntersectionObserver, never blocks content / never auto-opens on load
+- `design_handoff_aidemd_site/prototypes/aidey.jsx` -- original tip copy (rewritten s/AIDEY/Expo/g) and IntersectionObserver scroll-contextual pattern

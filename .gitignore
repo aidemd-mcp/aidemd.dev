@@ -2,10 +2,12 @@ node_modules/
 .next/
 out/
 coverage/
+.lighthouse/
 
 .env
 .env.local
 .env.*.local
+.env.production
 
 .claude/settings.local.json
 
@@ -26,3 +28,14 @@ next-env.d.ts
 
 .DS_Store
 Thumbs.db
+
+# Playwright / test artifacts
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# Local scratch / debug captures
+/*.png
+/bash.exe.stackdump
+/cli-demo-*.md
+/pipeline-snapshot.yml

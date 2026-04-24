@@ -1,0 +1,90 @@
+---
+scope: src/service/docsRegistry
+description: Build-time filesystem walker that discovers all markdown docs across four content roots and produces a deterministically-ordered 33-route registry with commit hashes and rendered HTML.
+intent: >
+  Walk four content roots (.aide/docs/, .claude/commands/, .claude/agents/,
+  .claude/skills/) at build time, discover every .md file with zero exclusions,
+  derive stable URL paths and slugs, inject per-file commit hashes from git,
+  and return a deterministically-ordered DocRegistry that Next.js can hand
+  directly to generateStaticParams. Every discovered file becomes a route — the
+  registry is the single source of truth that makes drift between the shipped
+  package contents and the rendered site structurally impossible.
+outcomes:
+  desired:
+    - Every .md file under the four content roots becomes a DocRoute with a stable urlPath, an absPath, a git commit hash (or 'uncommitted' for untracked files), and a deterministic order value.
+    - "The total route count is exactly 33: 9 methodology, 13 commands (aide.md + 12 subcommands under aide/), 9 agents, 2 skills."
+    - Routes are ordered deterministically — section priority follows DOCS_CATEGORIES array order (methodology first, skills last), index.md sorts first within its section, then alphabetical by slug — so generateStaticParams output is stable across builds.
+    - The orchestrator memoizes its output via a module-level cache so repeated calls within a single build return the same DocRegistry instance without re-walking the filesystem.
+    - "getByKey accepts a DocRouteKey of the form `section/slug` and returns the matching route or undefined."
+  undesired:
+    - Any hardcoded list of doc filenames or slugs anywhere in the service — if a new .md file is added under a content root and the site is rebuilt, that file must appear as a new route automatically.
+    - Silent failures — a file that exists on disk but is missing from the registry, or a commit hash that silently defaults to an empty string instead of 'uncommitted'.
+    - Non-deterministic ordering — routes whose sort position changes between builds (e.g. sorted by mtime or inode order) break stable URL generation and make diffing the registry impossible.
+    - A route whose urlPath does not match the pattern /docs/{methodology,commands,agents,skills}/<slug>.
+---
+
+## Context
+
+The site's docs area renders directly from this repository's filesystem — the markdown files that ship with `@aidemd-mcp/server` are the docs. The registry is the build-time bridge between raw filesystem entries and Next.js static routes. It must discover files, not enumerate them, because the guarantee "add a file, get a route" is structural: it must be impossible to add a doc without it appearing on the site.
+
+Four content roots exist today: `.aide/docs/` (9 methodology docs), `.claude/commands/` (13 commands — one top-level `aide.md` plus 12 subcommands under `aide/`), `.claude/agents/` (9 agents, all under `aide/`), `.claude/skills/` (2 skills — one `SKILL.md` per skill subfolder). Each root maps to one DocSection discriminant and one URL segment under `/docs/`.
+
+The commit hash per file is the cite-as versioning mechanism the root intent spec calls non-negotiable. Every docs URL is permanently citable at `https://aidemd.dev/docs/<slug>?v=<commit>`, which means the registry must inject commit hashes at build time, not at request time.
+
+## Strategy
+
+**Walk the filesystem recursively with zero exclusion rules.** Use the Node 22 `readdir` recursive API and filter only by `isFile() && name.endsWith('.md')`. No allowlist, no denylist, no pattern matching beyond the extension filter. Adding a file automatically adds a route.
+
+**Derive slugs from relative paths.** Strip the `.md` extension and replace OS path separators with `/`. The path relative to `absRoot` is the canonical slug. A file at `.aide/docs/aide-spec.md` has slug `aide-spec`; a file at `.claude/commands/aide/align.md` has slug `aide/align`. This rule is lossless and reversible.
+
+**Special-case index.md for sort position only, not for URL derivation.** The slug for `index.md` is `index` (not empty string). It sorts first within its section so the section root page is always the first route.
+
+**Inject commit hashes via `git log -1` per file.** Run synchronously at build time; wrap in a module-level Map cache keyed on absPath so each file is shelled out to git at most once per build. Return `'uncommitted'` on empty stdout — this is a named sentinel, not a silent default.
+
+**Sort routes in three tiers: section priority, index-first, alphabetical slug.** Section priority is derived from the position of the category in DOCS_CATEGORIES (lower index = higher priority). Within a section, `index.md` (slug === 'index') sorts before all other slugs. Within the same section at the same index-or-not tier, sort alphabetically by slug. Assign the final `order` integer after sorting.
+
+**Memoize at the orchestrator level.** A module-level `let cached` variable holds the DocRegistry after the first call. All subsequent calls return the cached value. This prevents redundant filesystem walks when Next.js calls `generateStaticParams` and page components in the same build process.
+
+**Accept a Highlighter instance as input to renderMarkdown.** The markdown-to-HTML pipeline (remark to rehype to shiki) takes a prebuilt Highlighter so the highlighter singleton from step 5 can be shared across all 33 routes rather than constructed once per render.
+
+## Good examples
+
+A correctly discovered and ordered route for the methodology index:
+
+```
+{ section: 'methodology', slug: 'index', title: 'AIDE', urlPath: '/docs/methodology/index', absPath: '/abs/path/.aide/docs/index.md', order: 0 }
+```
+
+A correctly discovered route for a nested command:
+
+```
+{ section: 'commands', slug: 'aide/align', title: 'Align', urlPath: '/docs/commands/aide/align', absPath: '/abs/path/.claude/commands/aide/align.md', order: 14 }
+```
+
+A correctly resolved commit hash for a committed file:
+
+```
+commit: 'b75834c'
+```
+
+A correctly resolved commit hash for an untracked file:
+
+```
+commit: 'uncommitted'
+```
+
+## Bad examples
+
+A route whose slug is derived from the filename only, ignoring the subfolder: `.claude/commands/aide/align.md` producing slug `align` instead of `aide/align`. This collapses the namespace and produces URL collisions when two different subfolders have files with the same name.
+
+A registry that returns `commit: ''` when git returns empty stdout. This is a silent default — the cite-as URL would read `?v=` with no hash, which looks like a bug rather than a named state.
+
+A route with `urlPath: '/docs/aide/align'` instead of `/docs/commands/aide/align`. This omits the section segment and breaks the URL structure that the nav relies on.
+
+An ordering that changes between builds because the filesystem returned files in inode order rather than alphabetical order. Any non-deterministic ordering breaks the stable-params guarantee.
+
+## References
+
+- `.aide/intent.aide` -- root intent spec; establishes the "zero exclusions" filesystem walk requirement, the cite-as URL commit hash contract, and the four content roots
+- `src/data/docsCategories.ts` -- section priority order used by orderRoutes; single source of truth for absRoot paths and urlSegment values
+- `src/types/docs.ts` -- DocRoute, DocRegistry, DocRouteKey, DocSection types the registry must satisfy

@@ -1,0 +1,36 @@
+---
+intent: >
+  Fix 1 (sessionStorage dismissal) introduced a React hydration mismatch: the
+  server renders ExpoTipContext with dismissed=false (no sessionStorage access),
+  but the client hydrates reading sessionStorage='1' from a prior session,
+  causing a structural divergence (ExpoSpeechBubble absent on client, present
+  in server HTML). This also causes visual test flakiness because sessionStorage
+  state varies run-to-run.
+misalignment:
+  - implementation-drift
+  - test-gap
+---
+
+## Issues
+
+- [x] **src/components/Expo/ExpoTipContext/index.tsx:43** — `useState(() => readSessionDismissed())` fires during SSR as `false` (window === undefined early return), then fires on the client as `true` when sessionStorage='1', producing a server/client structure mismatch: ExpoSpeechBubble renders server-side but not client-side. React throws "Expected server HTML to contain a matching <button> in <div>" hydration error on every page load after the user has dismissed the bubble once.
+      Traces to: `src/components/Expo/.aide outcomes.desired[2]` ("dismissed per-session; never auto-opens a second time") — the outcome is behaviourally met, but the implementation path violates the SSR contract. Also trips `outcomes.undesired[*]` indirectly: hydration failure causes "entire root will switch to client rendering," degrading Lighthouse and potentially the Expo tip display.
+      Misalignment: `implementation-drift`
+
+- [x] **tests/fixtures/1440.spec.ts** — Visual tests do not clear sessionStorage before each run. After the user (or a prior test run) has dismissed the Expo bubble, `sessionStorage.getItem('expo-dismissed') === '1'` persists across browser sessions in the Playwright browser context. The golden snapshots were captured with the bubble visible; subsequent runs see it hidden, producing ~19 000 pixel diffs on all three fixtures (home, docs-index, docs-aide-spec). The hydration mismatch from Issue 1 compounds this: the bubble position in the first paint differs from the hydrated state.
+      Traces to: root `outcomes.desired[1]` ("pixel-for-pixel against design references at 1440px") — visual tests are the enforcement mechanism for this outcome; flaky tests provide no enforcement.
+      Misalignment: `test-gap`
+
+## Notes (non-blocking)
+
+- **Strategy drift (informational):** Root `## Strategy` says "Use GA4 with a production measurement ID, loaded via `next/script` strategy `afterInteractive`." The implementation uses GTM (`GTM-M24M4PPV`) loaded via `afterInteractive`, with GA4 configured inside the container. The outcome (GA4 analytics, afterInteractive, DNT respected) is satisfied. The Strategy section was not updated to reflect the GTM mechanism. Not blocking — the spec outcome is met — but the strategy text now misrepresents the implementation. Worth a one-line update to `## Strategy` if the spec is ever revised.
+
+- **Expo sub-spec `## Strategy` still omits sessionStorage:** The first QA retro identified a plan-gap (dismissal persistence mechanism unnamed). The retro was recorded but the sub-spec Strategy section was not updated to name sessionStorage as the persistence layer. Now that sessionStorage is the chosen mechanism AND it has introduced a hydration bug, the strategy description is doubly stale. Not a new finding — echoes the prior retro — but the hydration issue is.
+
+- **`aidey` in shipped JS bundle (internal comment only):** `out/_next/static/chunks/app/layout.js` contains a JSDoc comment referencing `aidey.jsx` as the tip-data source. This is a developer comment inside a minification artifact, not user-visible copy, alt text, or any string a search engine could surface. The undesired outcome targets "copy, alt text, filenames under public/, component identifiers, tooltip strings, or any string a user or search engine could see" — a comment inside compiled JS does not meet that threshold. Non-issue.
+
+## Retro
+
+**Issue 1 (hydration mismatch):** The fix correctly identified sessionStorage as the persistence mechanism but did not address the SSR/client divergence. The standard React pattern for browser-only state that must not cause hydration errors is to initialise with the server-safe default (`false`) and then sync from sessionStorage in a `useEffect` — this makes the first render identical on server and client, then the client corrects itself on mount. A spec rule in the Expo sub-spec strategy that said "dismissal state must initialise to `false` on the server and sync from sessionStorage after mount via useEffect" would have caught this before implementation. Stage: `implementation-drift` (the implementor chose `useState` lazy init, which reads sessionStorage at render time, not after mount).
+
+**Issue 2 (visual test flakiness):** The visual test fixture has no `storageState` reset or explicit `sessionStorage.clear()` before each test. A `beforeEach` hook or Playwright `storageState: { cookies: [], origins: [] }` project option would isolate runs. The test-gap was partially identified in the prior QA retro (hypothesis (a): sessionStorage state varies run-to-run), but no fix was implemented. The hydration bug makes this doubly urgent: even with storage cleared, if the server and client renders differ structurally, the screenshot will capture an inconsistent state.

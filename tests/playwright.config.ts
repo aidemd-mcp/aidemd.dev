@@ -13,6 +13,10 @@ export default defineConfig({
     baseURL: 'http://localhost:4321',
     viewport: { width: 1440, height: 900 },
     trace: 'on-first-retry',
+    // Start every test with a clean browser storage state so sessionStorage
+    // values from prior runs (e.g. expo-dismissed='1') do not leak in and
+    // hide the Expo speech bubble, causing golden-snapshot drift.
+    storageState: { cookies: [], origins: [] },
   },
 
   expect: {

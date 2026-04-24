@@ -1,0 +1,89 @@
+{
+  "name": "aide-theme",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#0a0906",
+    "editor.foreground": "#e8dfce"
+  },
+  "tokenColors": [
+    {
+      "name": "Keywords, storage, language constants",
+      "scope": [
+        "keyword",
+        "keyword.control",
+        "keyword.operator",
+        "keyword.other",
+        "storage",
+        "storage.type",
+        "storage.modifier",
+        "constant.language"
+      ],
+      "settings": {
+        "foreground": "#3d6b4a"
+      }
+    },
+    {
+      "name": "Strings",
+      "scope": [
+        "string",
+        "string.quoted",
+        "string.template",
+        "string.regexp",
+        "punctuation.definition.string"
+      ],
+      "settings": {
+        "foreground": "#d6b25a"
+      }
+    },
+    {
+      "name": "Variables, functions",
+      "scope": [
+        "variable",
+        "variable.other",
+        "variable.parameter",
+        "entity.name.function",
+        "support.function"
+      ],
+      "settings": {
+        "foreground": "#e8dfce"
+      }
+    },
+    {
+      "name": "Comments",
+      "scope": [
+        "comment",
+        "comment.line",
+        "comment.block",
+        "punctuation.definition.comment"
+      ],
+      "settings": {
+        "foreground": "rgba(232,223,206,0.55)"
+      }
+    },
+    {
+      "name": "Punctuation (non-string)",
+      "scope": [
+        "punctuation",
+        "punctuation.separator",
+        "punctuation.terminator",
+        "punctuation.accessor",
+        "punctuation.definition.parameters",
+        "punctuation.definition.block",
+        "punctuation.definition.tag"
+      ],
+      "settings": {
+        "foreground": "rgba(232,223,206,0.55)"
+      }
+    },
+    {
+      "name": "Tags and headings",
+      "scope": [
+        "entity.name.tag",
+        "markup.heading"
+      ],
+      "settings": {
+        "foreground": "#3d6b4a"
+      }
+    }
+  ]
+}

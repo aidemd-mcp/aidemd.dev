@@ -7,7 +7,7 @@ intent: >
   .claude/agents/, and .claude/skills/ (zero hardcoded lists), Shiki pre-renders
   syntax highlighting at build time with a custom theme keyed off the handoff
   accent palette, and the Expo mascot (renamed from AIDEY) drives scroll-
-  contextual tips via IntersectionObserver. Ships to GitHub Pages with GA4
+  contextual tips via IntersectionObserver. Ships to GitHub Pages with GA4 via GTM
   afterInteractive, footer-dot canonical signal, and per-docs cite-as URLs
   pinned to commit hash.
 ---
@@ -173,7 +173,7 @@ aidemd.dev/                           ← scope root (. in intent.aide)
 │   │   ├── DocMeta/
 │   │   │   └── index.tsx             (props: { published: string, commit: string, slug: string }) => JSX -- 2px accent left-border card; Published | Source commit (chip) | Cite as (click-to-copy)
 │   │   ├── GlobalScripts/
-│   │   │   └── index.tsx             () => JSX | null -- emits GA4 next/script afterInteractive tags when NEXT_PUBLIC_GA4_ID is set; respects navigator.doNotTrack via inline gtag config
+│   │   │   └── index.tsx             () => JSX | null -- loads GTM container via next/script afterInteractive when NEXT_PUBLIC_GTM_ID is set; DNT guard prevents container load when doNotTrack=1 (GA4 fires inside GTM)
 │   │   └── CanonicalTag/
 │   │       └── index.tsx             [client] () => null -- usePathname + useEffect to set <link rel="canonical"> (static export can't do this server-side)
 │   ├── data/                         [new] static constant data ported from shared.jsx + new comparison copy
@@ -228,7 +228,7 @@ aidemd.dev/                           ← scope root (. in intent.aide)
 ├── vitest.config.ts                  [new] environment: node; include: [src/service/**/*.test.ts, src/lib/**/*.test.ts]; alias @ → src
 ├── package.json                      [new] next@14, react@18, tailwindcss@4, @tailwindcss/postcss@4, shiki@1, unified, remark-parse, remark-gfm, remark-rehype, rehype-raw, rehype-stringify, gray-matter, clsx, tailwind-merge, vitest, @playwright/test. Scripts: dev, build, start, preview (serves out/ via `npx serve out`), test:unit, test:visual, docs:verify
 ├── .gitignore                        [new] node_modules, .next, out, .env*.local, coverage
-├── .env.example                      [new] NEXT_PUBLIC_GA4_ID= (empty by default; script tag omitted when unset)
+├── .env.example                      [new] NEXT_PUBLIC_GTM_ID=GTM-M24M4PPV (production container baked in; GTM snippet omitted when unset)
 ├── .nvmrc                            [new] 22
 ├── CLAUDE.md                         [existing]
 └── README.md                         [existing]
@@ -426,11 +426,11 @@ Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventi
 
 **Acceptance:** `/docs` renders the index with all 33 pages grouped. Every `/docs/{section}/{slug}` route exists, renders the DocsTemplate with the file's content, shows a real commit hash in DocMeta, and the Cite as URL click-to-copy works. Visual diff against `docs.html` + `docs-aide-spec.html` at 1440px is zero.
 
-### 11. Build GA4 GlobalScripts, CanonicalTag, sitemap, robots, and not-found page
+### 11. Build GTM GlobalScripts (GA4 via GTM), CanonicalTag, sitemap, robots, and not-found page
 
 Read: `coding-playbook/client/seo`
 
-- [x] 11a. Create `src/components/GlobalScripts/index.tsx` -- server. Reads `process.env.NEXT_PUBLIC_GA4_ID`; if unset, returns `null`. Otherwise renders two `next/script` tags: (1) `<Script src={\`https://www.googletagmanager.com/gtag/js?id=${id}\`} strategy="afterInteractive" />`, (2) `<Script id="ga4-init" strategy="afterInteractive">{\`...gtag config string...\`}</Script>`. Init string respects DNT: check `navigator.doNotTrack === '1' || window.doNotTrack === '1'` before `gtag('config', id)` -- when DNT on, omit the config call (the gtag.js library still loads but no events fire without a config).
+- [x] 11a. Create `src/components/GlobalScripts/index.tsx` -- server. Reads `process.env.NEXT_PUBLIC_GTM_ID`; if unset, returns `null`. Otherwise renders one `<Script id="gtm-init" strategy="afterInteractive">` tag with the GTM container snippet. GA4 is configured inside the GTM container (GTM-M24M4PPV), not loaded via gtag.js directly. DNT guard (Option A): the entire GTM init snippet is wrapped in a `navigator.doNotTrack === '1'` check — when DNT is on the container never loads. Also requires the GTM noscript iframe in `layout.tsx` `<body>` for fallback.
 - [x] 11b. Create `src/components/CanonicalTag/index.tsx` -- client. `usePathname` + `useEffect` to set/refresh `<link rel="canonical" href={\`https://aidemd.dev${pathname === '/' ? '' : pathname}\`}>`. Static export cannot inject server-side canonical tags (next/metadata's alternates.canonical works but requires SSG + Node rendering per-route; our per-route metadata in docs uses alternates.canonical but this client component is the root-layout fallback for /).
 - [x] 11c. Add `src/app/sitemap.ts` -- `export default async function sitemap(): Promise<MetadataRoute.Sitemap>` that returns `/` + `/docs` + every route from `buildRegistry()`.
 - [x] 11d. Add `public/robots.txt` -- `User-agent: *\nAllow: /\nSitemap: https://aidemd.dev/sitemap.xml`.
@@ -438,7 +438,7 @@ Read: `coding-playbook/client/seo`
 
 **Traces to:** intent.aide "GA4 with a production measurement ID, loaded via next/script strategy afterInteractive", "respect standard do-not-track behavior", "static export deployable to GitHub Pages".
 
-**Acceptance:** With `NEXT_PUBLIC_GA4_ID` unset, `npm run build` succeeds and the output contains no gtag references. With the var set (simulated via `.env.local`), the gtag script tag renders in `<head>` with `strategy="afterInteractive"`. Every route page has a `<link rel="canonical">` in its rendered HTML.
+**Acceptance:** With `NEXT_PUBLIC_GTM_ID` unset, `npm run build` succeeds and the output contains no GTM references. With `NEXT_PUBLIC_GTM_ID=GTM-M24M4PPV` injected (via `.env.local` for local dev, or the `GTM_ID` repo secret in CI — see `.github/workflows/deploy.yml`), the built `out/index.html` contains the GTM init snippet and `gtm.js?id=GTM-M24M4PPV`. DNT guard is present in the snippet. Every route page has a `<link rel="canonical">` in its rendered HTML.
 
 ### 12. Compose the marketing page (src/app/page.tsx) and wire SectionObserver + ExpoTipProvider
 
@@ -480,10 +480,10 @@ Read: `coding-playbook/workflow/testing`, `coding-playbook/client/components`
 
 Read: `coding-playbook/client/components`
 
-- [ ] 15a. Convert `DocsSidebar` from sticky-left into a Radix/lightweight drawer below the `md:` breakpoint. Below 768px, render a `<button>` in TopBar (docs variant only) with a hamburger glyph that toggles an overlay drawer containing the sidebar content. The desktop sidebar uses `hidden md:block`; the drawer uses `block md:hidden`. No new dependencies -- implement with `useState` + a transparent-overlay div.
-- [ ] 15b. Marketing-page 2-column grids (Hero, IntentTree) collapse to single-column below `md:` via `grid-cols-1 md:grid-cols-2`. Pipeline row of 6 stage buttons wraps onto 2 rows of 3 below `md:`.
-- [ ] 15c. Verify at 375px: no horizontal scroll on `/`, `/docs`, `/docs/methodology/aide-spec`. TopBar collapses to `docs` + hamburger at the smallest sizes.
-- [ ] 15d. Expo mascot sprite shrinks to 80px below `md:` and the bubble shifts to `max-width: calc(100vw - 120px)`.
+- [x] 15a. Convert `DocsSidebar` from sticky-left into a Radix/lightweight drawer below the `md:` breakpoint. Below 768px, render a `<button>` in TopBar (docs variant only) with a hamburger glyph that toggles an overlay drawer containing the sidebar content. The desktop sidebar uses `hidden md:block`; the drawer uses `block md:hidden`. No new dependencies -- implement with `useState` + a transparent-overlay div.
+- [x] 15b. Marketing-page 2-column grids (Hero, IntentTree) collapse to single-column below `md:` via `grid-cols-1 md:grid-cols-2`. Pipeline row of 6 stage buttons wraps onto 2 rows of 3 below `md:`.
+- [x] 15c. Verify at 375px: no horizontal scroll on `/`, `/docs`, `/docs/methodology/aide-spec`. TopBar collapses to `docs` + hamburger at the smallest sizes.
+- [x] 15d. Expo mascot sprite shrinks to 80px below `md:` and the bubble shifts to `max-width: calc(100vw - 120px)`.
 
 **Traces to:** intent.aide "mobile viewport (375px) is best-effort: responsive down, sidebar collapses to drawer below 768px, but not a strict Lighthouse gate".
 
@@ -493,10 +493,10 @@ Read: `coding-playbook/client/components`
 
 Read: `coding-playbook/client/seo`, `coding-playbook/foundations/conventions`
 
-- [ ] 16a. Run `npm run build` → `npm run preview` → open Lighthouse in Chrome at 1440px with throttling off for desktop scoring. Capture all 4 category scores. Target ≥ 95.
-- [ ] 16b. If any category is < 95, diagnose (common causes: unminified CSS, oversized images, missing alt text, contrast on dim text). Fix at the source -- never add workarounds. No visual regressions allowed as part of the fix.
-- [ ] 16c. Run the definition-of-done checklist from `design_handoff_aidemd_site/README.md` lines 244-252: (i) marketing page identical to Terminal.html at 1440px (covered by test:visual), (ii) docs index + both written doc pages identical (covered), (iii) 6 remaining doc pages rendered from real `.aide/docs/*.md` (covered -- they ARE the source), (iv) interactions work (manual pass with Playwright screenshot + click automation), (v) mobile responsive to 375px (covered in step 15), (vi) Lighthouse ≥ 95 (covered in 16a), (vii) no CLS on hero (typewriter reserves final box).
-- [ ] 16d. Search the built `out/` directory for the literal string "aidey" (case-insensitive). Expected: zero hits. `grep -ri aidey out/ || true` -- empty output is the pass. The only references allowed anywhere are in `design_handoff_aidemd_site/`, which is never shipped.
+- [x] 16a. Run `npm run build` → `npm run preview` → open Lighthouse in Chrome at 1440px with throttling off for desktop scoring. Capture all 4 category scores. Target ≥ 95.
+- [x] 16b. If any category is < 95, diagnose (common causes: unminified CSS, oversized images, missing alt text, contrast on dim text). Fix at the source -- never add workarounds. No visual regressions allowed as part of the fix.
+- [x] 16c. Run the definition-of-done checklist from `design_handoff_aidemd_site/README.md` lines 244-252: (i) marketing page identical to Terminal.html at 1440px (covered by test:visual), (ii) docs index + both written doc pages identical (covered), (iii) 6 remaining doc pages rendered from real `.aide/docs/*.md` (covered -- they ARE the source), (iv) interactions work (manual pass with Playwright screenshot + click automation), (v) mobile responsive to 375px (covered in step 15), (vi) Lighthouse ≥ 95 (covered in 16a), (vii) no CLS on hero (typewriter reserves final box).
+- [x] 16d. Search the built `out/` directory for the literal string "aidey" (case-insensitive). Expected: zero hits. `grep -ri aidey out/ || true` -- empty output is the pass. The only references allowed anywhere are in `design_handoff_aidemd_site/`, which is never shipped.
 
 **Traces to:** intent.aide "scores at least 95 in all four Lighthouse categories on a 1440px desktop run", "AIDEY or AID anywhere in shipped output ... is a spec violation".
 
@@ -514,7 +514,7 @@ Shiki pre-renders syntax highlighting at build time into static HTML with inline
 
 ### Why Next.js App Router over Astro
 
-The handoff README suggested Astro as an alternative. App Router wins because (1) the intent.aide and handoff both reference Next.js 14 App Router + MDX, (2) `next/script` afterInteractive has well-understood semantics for the GA4 load, (3) `generateStaticParams` + `output: 'export'` produces the same static artifact as Astro with less tooling divergence, (4) the team's existing muscle memory is Next. No behavioral advantage to Astro here.
+The handoff README suggested Astro as an alternative. App Router wins because (1) the intent.aide and handoff both reference Next.js 14 App Router + MDX, (2) `next/script` afterInteractive has well-understood semantics for the GTM load (GA4 fires inside the GTM container), (3) `generateStaticParams` + `output: 'export'` produces the same static artifact as Astro with less tooling divergence, (4) the team's existing muscle memory is Next. No behavioral advantage to Astro here.
 
 ### Why CSS variables + Tailwind v4 @theme tokens instead of per-component CSS
 

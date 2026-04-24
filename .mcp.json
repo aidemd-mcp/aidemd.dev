@@ -2,20 +2,15 @@
   "mcpServers": {
     "aide": {
       "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "@aidemd-mcp/server"
-      ]
+      "args": ["/c", "npx", "@aidemd-mcp/server"]
     },
     "obsidian": {
       "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "@bitbonsai/mcpvault",
-        "D:\\Code\\Me\\my-brain"
-      ]
+      "args": ["/c", "npx", "@bitbonsai/mcpvault", "D:\\Code\\Me\\my-brain"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }

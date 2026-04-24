@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ExpoTipProvider } from "@/components/Expo/ExpoTipContext";
+import Expo from "@/components/Expo";
+import GlobalScripts from "@/components/GlobalScripts";
+import CanonicalTag from "@/components/CanonicalTag";
+
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -40,13 +46,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={jetbrainsMono.variable}>
-      {/*
-       * GlobalScripts (GA4 via next/script afterInteractive) and CanonicalTag
-       * (footer-dot authority signal) are built in step 11 and imported here
-       * once they exist. Omitting them for now keeps this step self-contained.
-       */}
       <body className="bg-[color:var(--color-bg)] text-[color:var(--color-fg)] font-mono">
-        {children}
+        <GlobalScripts />
+        {GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
+        <CanonicalTag />
+        <ExpoTipProvider>
+          {children}
+          <Expo />
+        </ExpoTipProvider>
       </body>
     </html>
   );
