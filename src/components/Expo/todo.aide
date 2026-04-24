@@ -1,0 +1,28 @@
+---
+intent: >
+  Two viewport-geometry defects: the hero tip never renders on page load because the
+  center-band IntersectionObserver fires threeLayerModel before hero can, and the
+  quickstart section is geometrically unreachable by the observer at any scroll position —
+  meaning two SectionIds never surface their tips to the visitor.
+misalignment:
+  - implementation-drift
+  - spec-gap
+---
+
+# QA Re-alignment Document
+
+## Issues
+
+- [x] `src/app/page.tsx:24` + `src/app/_components/SectionObserver/index.tsx:43` — Hero tip never shows on page load. At a 1273px viewport the center band (rootMargin -45%) spans px 573–700 from the viewport top. The hero section occupies absolute px 44–551 and ends 22px above where the band begins. ThreeLayerModel (absolute 564–855) overlaps the band at scroll=0 and fires immediately, overriding the `hero` default in ExpoTipContext. Visitors never see "hey — i'm Expo".
+  Traces to: `outcomes.desired[0]` — tip keyed on active SectionId; `outcomes.desired[1]` — ambient guidance framing depends on hero tip being the entry tip
+  Misalignment: `implementation-drift` (rootMargin value correct for mid-page sections but too aggressive for the tall hero-at-top layout), `spec-gap` (spec did not define a behavioral invariant for the first-load section)
+
+- [x] `src/app/page.tsx:107` + `src/app/_components/SectionObserver/index.tsx:43` — Quickstart tip is geometrically unreachable. Quickstart section sits at absolute top 3695px (height 237px). Max scroll is 2746px. At max scroll the center band top is 2746+573=3319px and band bottom is 3446px. Quickstart starts at 3695 — 249px below the band bottom at full scroll. No scroll position can bring the quickstart section into the center band; the `quickstart` SectionId tip ("that's it!") never fires.
+  Traces to: `outcomes.desired[0]` — "switching sections updates both without a page reload" implies every section's tip is reachable
+  Misalignment: `implementation-drift` (short trailing section + narrow band + limited page height combine to create a dead zone), `spec-gap` (no invariant stated for sections near the bottom of a page shorter than 2×viewport)
+
+## Retro
+
+**Hero section (issue 1):** The rootMargin fix from the prior QA pass (-45% replacing -30%) correctly improved mid-page section sync but overcorrected for the top-of-page case. The hero section is short and flush with the top of the page; a 45% inset leaves it entirely above the center band on large viewports. The spec's behavioral invariant ("tip changes when the section's top edge crosses the viewport midpoint") is violated for section 1 because the hero section's top edge is already above the midpoint at load. A Playwright test asserting that the initial visible tip title equals "hey — i'm Expo" at scroll=0 would have caught this immediately.
+
+**Quickstart section (issue 2):** A geometric pre-flight check — `sectionBottom > scrollHeight - vh * 0.55` — would flag any trailing section that cannot reach the center band. The spec gap is that no behavioral invariant was defined for sections near the page bottom. The implementor should either widen the band (reduce rootMargin inset) for bottom sections, or treat the last section specially (e.g., fire on exit of the second-to-last section rather than entry of the last).

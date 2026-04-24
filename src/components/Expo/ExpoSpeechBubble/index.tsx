@@ -68,13 +68,13 @@ export default function ExpoSpeechBubble({ title, body, onDismiss }: ExpoSpeechB
         {body}
       </p>
 
-      {/* Arrow — right edge, points RIGHT toward the sprite at face-height */}
+      {/* Arrow — bottom-right corner, points down-right toward the sprite */}
       <div
         aria-hidden
         style={{
           position: 'absolute',
           right: '-6px',
-          top: '28px',
+          bottom: '22px',
           width: '12px',
           height: '12px',
           background: 'var(--color-card)',

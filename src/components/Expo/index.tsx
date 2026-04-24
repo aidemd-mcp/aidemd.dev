@@ -36,10 +36,10 @@ export default function Expo() {
         />
       )}
 
-      {/* Sprite button — clicking re-opens bubble when dismissed */}
+      {/* Sprite button — clicking toggles bubble visibility */}
       <button
-        onClick={() => setDismissed(false)}
-        aria-label="Open Expo tip"
+        onClick={() => setDismissed(!dismissed)}
+        aria-label="Toggle Expo tip"
         style={{
           background: 'none',
           border: 'none',
