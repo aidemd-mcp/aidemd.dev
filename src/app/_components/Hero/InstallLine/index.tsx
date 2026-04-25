@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-const DISPLAY_CMD = "$ npx @aidemd-mcp/server init";
-const COPY_CMD = "npx @aidemd-mcp/server init";
+const DISPLAY_CMD = "$ npx @aidemd-mcp/server@latest init";
+const COPY_CMD = "npx @aidemd-mcp/server@latest init";
 
 /**
  * Install command line with copy-to-clipboard.
@@ -36,7 +36,7 @@ export default function InstallLine() {
     >
       <span className="text-[color:var(--color-accent)]">$</span>
       <span className="flex-1 text-[color:var(--color-fg)]">
-        npx @aidemd-mcp/server init
+        {DISPLAY_CMD.replace(/^\$ /, "")}
       </span>
       <span
         className="text-[11px] text-[color:var(--color-dim)] ml-[4px] min-w-[56px] text-right"
