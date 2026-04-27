@@ -18,18 +18,45 @@ This is your only first call. No `Read`, no `aide_discover`, no other tool.
 
 The brain is the pipeline's durable memory. If it isn't wired, the pipeline can't run.
 
-- **`brain.status === 'ok'`** — continue to Step 3.
-- **Anything else** (`no-mcp-entry`, `invalid-path`) — STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Instead, invoke `/aide:brain config` directly using the `Skill` tool:
+`aide_info` returns one of four `brain.status` values. Branch on them exactly:
+
+- **`ok`** — continue to Step 3.
+
+- **`no-brain-aide`** — the `brain.aide` config file is missing. STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line, conversational tone — e.g.:
+
+  > The brain config file (`brain.aide`) is missing — let's set that up first.
+
+  Then invoke the config flow:
 
   ```
   Skill(skill="aide:brain", args="config")
   ```
 
-  Briefly tell the user what you're doing first — one line, conversational tone, no scary "boot halted" framing. Example:
+  The config flow scaffolds `brain.aide` and syncs it into `.mcp.json`. After it returns, halt — the user must run `npx aidemd-mcp sync` and then re-run `/aide`.
 
-  > Brain isn't wired up yet — let's get that set up first.
+- **`no-mcp-entry`** — the brain backend is not wired into `.mcp.json`. STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line — e.g.:
 
-  Then call the Skill tool. The `/aide:brain config` command owns the entire wiring flow: vault path prompts, hint pickers, `.mcp.json` merging, vault seeding, restart messaging. After it returns, the orchestrator does NOT continue — `/aide:brain config` ends with a restart instruction, and the user must re-run `/aide` after Claude Code restarts so the obsidian MCP server picks up the new path.
+  > The brain isn't wired up yet — let's fix that first.
+
+  Then invoke the config flow:
+
+  ```
+  Skill(skill="aide:brain", args="config")
+  ```
+
+  After the skill returns, halt — the skill itself handles the sync and asks the user to restart.
+
+- **`mcp-drift`** — `brain.aide` and `.mcp.json` disagree about the brain entry. STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line — e.g.:
+
+  > Brain config is out of sync — let's fix that first.
+
+  Then invoke the config flow:
+
+  ```
+  Skill(skill="aide:brain", args="config")
+  ```
+
+  After the skill returns, halt — the skill itself handles the sync and asks the user to restart.
 
 ### Step 3 — Outdated artifacts (passive notification)
 
