@@ -1,6 +1,6 @@
 # /aide:brain — Brain Interface
 
-General-purpose interface to the project's brain, plus a `config` mode for wiring the brain on first install (or repointing it at a different vault).
+General-purpose interface to the project's brain, plus a `config` mode for wiring the brain on first install (or repointing it at a different location).
 
 The brain is backend-agnostic: it might be Obsidian today and something else tomorrow. The `aide_brain` MCP tool is the single source of truth for *which* MCP tools to call to reach this project's brain — never hardcode a backend tool name.
 
@@ -10,8 +10,8 @@ The brain is backend-agnostic: it might be Obsidian today and something else tom
 
 `$ARGUMENTS` controls which mode runs:
 
-- **`config`** (or `config <path>`) — run the brain wiring flow. Use this when `/aide` reports the brain isn't wired yet, or when you want to point at a different vault.
-- **Anything else (or no arguments)** — general brain interaction. Reach the brain via `aide_brain`, follow the entry-point file's navigation rules, and fulfill the user's request (search notes, save findings, look up research, etc.).
+- **`config`** (or `config <path>`) — run the brain wiring flow. Use this when `/aide` reports the brain isn't wired yet, or when you want to point at a different location.
+- **Anything else (or no arguments)** — general brain interaction. Reach the brain via `aide_brain`, follow the entry-point file's navigation rules, and fulfill the user's request (search the brain, save findings, look up research, etc.).
 
 ---
 
@@ -41,103 +41,61 @@ Return what you found, or write what they asked you to write, synthesized in res
 
 ---
 
-## Mode 2: Config — Wire the Brain Vault (`/aide:brain config`)
+## Mode 2: Config — Wire the Brain (`/aide:brain config`)
 
-When `$ARGUMENTS` starts with `config`, run the brain wiring flow. This is the single source for everything brain-wiring related — `/aide` does not duplicate any of this logic; it just routes here.
+When `$ARGUMENTS` starts with `config`, run the brain wiring flow. This is a thin router — it does not parse `$ARGUMENTS` or branch on backend identity. Every integration-specific decision (what arguments mean, how to ask the user, how to edit `brain.aide`, how to run sync) lives in the integration's `config` section inside `brain.aide`. This command retrieves that section and executes it verbatim.
 
-`.aide/config/brain.aide` is the single editable file that owns the brain config. This mode scaffolds it when missing and routes `.mcp.json` mutation through the sync CLI binary — the only surface allowed to write `.mcp.json` directly.
+**Every step below is mandatory.** Do not skip Step 3 because you think you know what `brain.status` means. `brain.status` is a status code, not a runbook. The runbook lives in the integration prose retrieved in Step 3, and it is the only authoritative source for what to do next. If you find yourself drafting "next steps" for the user from your own understanding of the status code, you have skipped Step 3 — go back and call `aide_brain({ kind: "config" })`.
 
-### Step 1 — Gather state
+### Step 1 — Call `aide_info`
 
-Call `aide_info` and read three fields off `brain`: `brain.status`, `brain.name`, and `brain.hints`. Note that `brain.name` is absent on the `no-brain-aide` branch — that variant carries only `status` and `hints`. The other three variants (`ok`, `no-mcp-entry`, `mcp-drift`) all carry `name`; read it only when the branch is one of those three.
+Call `aide_info`. Read `brain.status` and `brain.hints`. Both fields are **informational only** — `brain.status` does NOT gate the next step, and `brain.hints` is a candidate path list the integration's prose may consult later when asking the user for a brain root. Do not branch on `brain.status`.
 
-Branch on `brain.status`:
+### Step 2 — Scaffold `brain.aide` if missing
 
-- **`ok`** — `.aide/config/brain.aide` exists and `.mcp.json` is in sync. Tell the user there's nothing to do. If `$ARGUMENTS` includes a path and that path represents a different vault from the one currently configured (surfaced by `brain.name` plus the user's own scaffolding history), treat that as a deliberate re-point and continue to Step 2 with the new path. Otherwise **STOP.**
+Branch on `brain.status` from Step 1, but only for this scaffolding decision:
 
-- **`no-brain-aide`** — `.aide/config/brain.aide` does not exist yet. Continue to Step 2 to resolve the vault path, then to Step 3 to scaffold, then to Step 4 to run sync, then to Step 5.
+- **`brain.status === "no-brain-aide"`** → Call `aide_init({ category: "brain" })`. This scaffolds `.aide/config/brain.aide` from the bundled template, emitting YAML null at the unwired path slot of `mcpServerConfig.args`. YAML null is the structural unwired-slot signal; there is no literal-string placeholder.
+- **Any other `brain.status` value** → Skip the `aide_init` call. `brain.aide` is already on disk; the integration prose in Step 3 will read it directly.
 
-- **`no-mcp-entry`** — `.aide/config/brain.aide` exists but `.mcp.json` has no `brain` key. Scaffolding is not needed. Skip Steps 2 and 3 and go directly to Step 4 to run sync, then Step 5.
+This is a presence-check branch, not a config-flow branch — it decides whether to scaffold, not what wiring path to take. Every other state distinction is owned by the integration prose returned in Step 3, which inspects `brain.aide` directly. Missing-`brain.aide` recovery still folds into this command via the `no-brain-aide` branch above; there is no separate `doctor`, `repair`, or `status` verb.
 
-- **`mcp-drift`** — `.aide/config/brain.aide` exists and `.mcp.json` has a `brain` key, but the key's `command`/`args` disagree with the `mcpServerConfig` declared in `brain.aide`. Sync will overwrite the entry to bring it back into alignment. Scaffolding is not needed. Skip Steps 2 and 3 and go directly to Step 4 to run sync, then Step 5.
+Missing entry-point artifact recovery is owned by the integration's prose's presence-check + re-seed loop in Step 4 — not by this call.
 
-### Step 2 — Resolve the vault path
+### Step 3 — Pull integration-specific config prose (MANDATORY)
 
-If `$ARGUMENTS` was `config <path>`, use `<path>` as `<brainPath>` and skip to validation.
+Call `aide_brain({ kind: "config" })`. This call is mandatory and runs every time `/aide:brain config` is invoked, regardless of `brain.status`. It returns the verbatim `<!-- aide-config-start -->` body section from the host's `brain.aide`. Forward `$ARGUMENTS` opaquely to the returned instructions — the shipped command does not parse it. The integration's prose alone interprets the bytes.
 
-Otherwise, branch on `brain.hints.length`:
+You MUST NOT skip this call. The integration prose is the only source of truth for what to do with `brain.aide` and `.mcp.json`. `brain.status` from Step 1 is a coarse status code — notably, `no-mcp-entry` covers both unwired-args (YAML null at the path slot, never filled) and unsynced-args (string at the path slot, never written to `.mcp.json`) — and you cannot tell which sub-case applies without reading the integration prose and following its first step.
 
-- **No hints** — ask inline:
+### Step 4 — Execute the returned instructions verbatim
 
-  > Where is your brain vault? (Provide an absolute path.)
+Follow the instructions returned in Step 3 exactly. The integration's config prose owns everything from here: deciding what `$ARGUMENTS` means for this backend, asking the user for whatever else it needs (using `AskUserQuestion` plus `aide_info.brain.hints` when appropriate), editing `brain.aide` to land the resolved values into the YAML-null slots, running sync via the Bash command recovered from `.mcp.json["mcpServers"]["aide"]`, seeding the four entry-point artifacts into the brain via the brain's own MCP write tool from the seed-section bytes (presence-check + re-seed any missing), and emitting the restart message.
 
-  Treat the user's reply as `<brainPath>`.
+**Anti-patterns — each one means you have skipped or short-circuited the flow:**
 
-- **One or more hints** — call `AskUserQuestion`:
-  - `header`: `"Brain vault"`
-  - `question`: `"Where is your brain vault?"`
-  - `options`: one entry per hint as `label: "Use {hint.path}"`, `description: "{hint.source} hint"`, **plus** an explicit final entry: `label: "Different location"`, `description: "Paste a custom absolute path"`. The explicit final entry is required (the schema's `minItems: 2` cannot be satisfied with a single hint, and the entry renders correctly for both 1-hint and multi-hint cases). Maximum 4 entries (3 hints + Different location); if hints exceed 3, drop the lowest-priority hint.
+- Telling the user to run `npx aidemd-mcp sync` themselves. Sync runs via your own Bash tool, recovered from `.mcp.json["mcpServers"]["aide"]` (`command` + `args` + `"sync"` appended). Telling the user to run it is a failure mode — they invoked `/aide:brain config` expecting the slash command to complete the wiring, not to hand them homework.
+- Concluding `brain.aide` is wired or unwired without quoting the actual bytes at the path slot. The integration prose's first step instructs you to read and quote the value at the unwired slot before continuing — you cannot quote what you did not read.
+- Treating `brain.status` as a runbook. It is a status code; the runbook is the integration prose. Drafting "next steps for the user" from the status code alone means you bypassed Steps 3–4.
+- Comparing the integration prose against guidance outside it. The prose is the authority — follow it as written.
+- Falling back to native filesystem tools (`Read`, `Write`, `Glob`, Bash `ls`, etc.) to inspect or write the brain when the brain MCP tools are not reachable. The brain is a backend-agnostic abstraction; the filesystem is one possible backing store but you must not assume it. If the brain MCP tools are unreachable, the correct response is to STOP and tell the user to restart, never to improvise via the filesystem.
 
-  **STOP. Wait for the user's response.**
+### Step 5 — STOP
 
-  Resolve:
-  - Hint clicked → extract the path from `"Use {hint.path}"`.
-  - "Different location" / Other → use the user's typed text verbatim.
+After Step 4 completes, **STOP**. Do NOT call `aide_info` again in the same session. The brain MCP server was launched before the new entry existed and cannot be hot-reloaded mid-session — an in-session re-check would report stale truth. Continuation always happens on the next `/aide` invocation after the user restarts Claude Code.
 
-**Validate** `<brainPath>` is a non-empty absolute path. If it's relative or empty, ask once more inline for a corrected absolute path.
+### Failure handling (Step 2 — scaffold only)
 
-The resolved `<brainPath>` is passed to `aide_init` as `brainPath` in Step 3. `aide_init` lands it inline inside `mcpServerConfig.args` in the scaffolded `.aide/config/brain.aide` — it does NOT get written into `.mcp.json` directly.
-
-### Step 3 — Scaffold `.aide/config/brain.aide`
-
-Call `aide_init({ category: "brain", brainPath: <brainPath> })`. This scaffolds `.aide/config/brain.aide` from the canonical default, with `<brainPath>` landed inline inside `mcpServerConfig.args`. No direct `.mcp.json` mutation happens here. Every `.mcp.json` mutation runs through a visible command boundary — the agent's Bash call in Step 4 is the command the user sees in transcript.
-
-### Step 4 — Run sync via Bash
-
-This step runs unconditionally on the `no-brain-aide` path (after Step 3 completes), and also on the `no-mcp-entry` and `mcp-drift` paths (which skip directly here from Step 1).
-
-Read the host project's `.mcp.json` and locate the `mcpServers["aide"]` entry. This entry is the launcher Claude Code itself uses to run the AIDE MCP server in the current session — its existence is guaranteed whenever this prompt is running. No defensive fallback prose is needed.
-
-Take the entry's `command` and `args` exactly as written, append the literal string `"sync"` as the final argument, and run the resulting command via the Bash tool. The recovered command will look different depending on how AIDE was installed — for example:
-
-- **Prod install** (illustrative): `cmd /c npx @aidemd-mcp/server sync`
-- **Local-dev install** (illustrative): `node D:/path/to/dist/index.js sync`
-
-These are examples only — they are not literal invocations hardcoded in this prompt. The launcher is always recovered from `.mcp.json["mcpServers"]["aide"]` at runtime; the actual command depends on the user's install shape.
-
-**On success** (exit code 0): continue to Step 5.
-
-**On failure** (exit code non-zero): surface the captured stderr to the user verbatim. Do NOT retry. Do NOT continue to Step 5. Tell the user:
-
-> Sync exited with an error (see output above).
->
-> Run `npx aidemd-mcp sync` manually in your terminal to see the full output, then restart Claude Code and re-run `/aide`.
-
-### Step 5 — Emit the post-sync user message, then STOP
-
-This step runs only after Step 4 returned exit code 0. Emit this message to the user:
-
-> Sync wrote the brain entry into `.mcp.json` successfully.
->
-> Please restart Claude Code so the brain MCP server picks up the new entry. Claude Code reads `.mcp.json` only at session startup, so the brain MCP server in the current session was launched before the brain entry existed and cannot be hot-reloaded mid-session. After the restart, re-running `/aide` will pick up where you left off.
-
-Then **STOP**. Do NOT call `aide_info` again to "confirm" `brain.status: ok`. The brain MCP server in the running session was launched without the brain entry — `aide_info` in the same session reports disk state, not live-server state, and the resulting `ok` would be false confidence. Re-checking state in the same session is a trap; continuation always happens on the next `/aide` invocation after the restart.
-
-Do NOT continue the user's original request. The live brain server is provably stale, and any work that touches it would hit an unwired backend.
-
-### Failure handling (Step 3 — scaffolding only)
-
-"Failure" here means the Step 3 `aide_init` call threw or the scaffold failed. The Bash-sync failure case from Step 4 is its own gate (handled inline in Step 4) and is not covered here. Do NOT retry inline. Do NOT re-prompt the user. Surface the error and fall back to the CLI:
+If the `aide_init` call in Step 2 throws or the scaffold fails, do NOT retry inline, do NOT re-prompt the user. Surface the error and fall back to the CLI:
 
 > Something went wrong scaffolding `.aide/config/brain.aide`: `<error message>`.
 >
 > Run `npx aidemd-mcp init` in this project's terminal to retry the setup with full per-file logging, then restart Claude Code and re-run `/aide`.
 
+Sync failure and entry-point seeding failures are handled inside Step 4's verbatim instructions — the integration's prose owns those flows and their error recovery.
+
 ---
 
 ## Arguments
 
-`$ARGUMENTS` —
-- `config` to enter the wiring flow with hint-driven path resolution.
-- `config <absolute-path>` to wire (or re-point) at an explicit path without prompting.
-- Anything else (or empty) — treat as a general vault query/instruction.
+`$ARGUMENTS` is forwarded verbatim to the integration's config prose (Step 3). The shipped command does not parse, validate, or interpret it. Each integration's `brain.aide` `config` section documents what users can put after `/aide:brain config` for that backend. Anything other than `config` (or empty) routes to Mode 1.

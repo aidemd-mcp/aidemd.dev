@@ -1,174 +1,142 @@
 {
   "docs/index": {
-    "publishedAt": "2026-04-26T00:58:20-07:00",
-    "sourceCommit": "ed84d94",
-    "previousCommit": "a8c4361"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/aide-spec": {
-    "publishedAt": "2026-04-15T14:30:49-07:00",
-    "sourceCommit": "86ec0dc",
-    "previousCommit": "b859854"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/aide-template": {
-    "publishedAt": "2026-04-15T14:30:49-07:00",
-    "sourceCommit": "86ec0dc",
-    "previousCommit": "d89d3cd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/progressive-disclosure": {
-    "publishedAt": "2026-04-12T00:13:27-07:00",
-    "sourceCommit": "ccba506",
-    "previousCommit": "2d6ecdd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/agent-readable-code": {
-    "publishedAt": "2026-04-12T00:13:27-07:00",
-    "sourceCommit": "ccba506",
-    "previousCommit": "2d6ecdd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/automated-qa": {
-    "publishedAt": "2026-04-11T20:06:53-07:00",
-    "sourceCommit": "c32e887",
-    "previousCommit": "2d6ecdd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/plan-aide": {
-    "publishedAt": "2026-04-20T15:35:59-07:00",
-    "sourceCommit": "73e3feb",
-    "previousCommit": "1914479"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/todo-aide": {
-    "publishedAt": "2026-04-13T13:47:06-07:00",
-    "sourceCommit": "b859854",
-    "previousCommit": "c32e887"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/brain-aide": {
-    "publishedAt": "2026-04-27T11:39:09-07:00",
-    "sourceCommit": "949bb31",
-    "previousCommit": "74650d6"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "docs/cascading-alignment": {
-    "publishedAt": "2026-04-13T17:15:54-07:00",
-    "sourceCommit": "027f166",
-    "previousCommit": "d89d3cd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/aide": {
-    "publishedAt": "2026-04-26T14:42:43-07:00",
-    "sourceCommit": "328ce96",
-    "previousCommit": "ed84d94"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/research": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "b859854"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/spec": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "b859854"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/synthesize": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "b859854"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/plan": {
-    "publishedAt": "2026-04-20T15:07:07-07:00",
-    "sourceCommit": "1914479",
-    "previousCommit": "fc9edc0"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/build": {
-    "publishedAt": "2026-04-20T15:35:59-07:00",
-    "sourceCommit": "73e3feb",
-    "previousCommit": "ba5179e"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/qa": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "d89d3cd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/fix": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "d89d3cd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/upgrade": {
-    "publishedAt": "2026-04-12T15:40:55-07:00",
-    "sourceCommit": "d6a3b78",
-    "previousCommit": "cc881ec"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/update-playbook": {
-    "publishedAt": "2026-04-12T20:45:51-07:00",
-    "sourceCommit": "0c4ce96"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/refactor": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "1be5576"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/align": {
-    "publishedAt": "2026-04-13T17:49:55-07:00",
-    "sourceCommit": "ba5179e",
-    "previousCommit": "d89d3cd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "commands/aide/brain": {
-    "publishedAt": "2026-04-26T14:42:43-07:00",
-    "sourceCommit": "328ce96",
-    "previousCommit": "ed84d94"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-spec-writer": {
-    "publishedAt": "2026-04-15T14:30:49-07:00",
-    "sourceCommit": "86ec0dc",
-    "previousCommit": "9e81e3a"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-domain-expert": {
-    "publishedAt": "2026-04-26T00:58:20-07:00",
-    "sourceCommit": "ed84d94",
-    "previousCommit": "7db4dea"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-strategist": {
-    "publishedAt": "2026-04-26T00:58:20-07:00",
-    "sourceCommit": "ed84d94",
-    "previousCommit": "7db4dea"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-architect": {
-    "publishedAt": "2026-04-27T12:31:13-07:00",
-    "sourceCommit": "248d8e3",
-    "previousCommit": "7db4dea"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-implementor": {
-    "publishedAt": "2026-04-26T00:58:20-07:00",
-    "sourceCommit": "ed84d94",
-    "previousCommit": "7db4dea"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-qa": {
-    "publishedAt": "2026-04-13T09:52:38-07:00",
-    "sourceCommit": "d89d3cd",
-    "previousCommit": "ccba506"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-auditor": {
-    "publishedAt": "2026-04-25T16:45:45-07:00",
-    "sourceCommit": "7db4dea",
-    "previousCommit": "1914479"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-aligner": {
-    "publishedAt": "2026-04-13T09:52:38-07:00",
-    "sourceCommit": "d89d3cd"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "agents/aide/aide-explorer": {
-    "publishedAt": "2026-04-19T00:58:17-07:00",
-    "sourceCommit": "221ae50",
-    "previousCommit": "1a5d2e8"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "skills/study-playbook": {
-    "publishedAt": "2026-04-27T11:39:09-07:00",
-    "sourceCommit": "949bb31",
-    "previousCommit": "ed84d94"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "skills/brain": {
-    "publishedAt": "2026-04-25T16:45:45-07:00",
-    "sourceCommit": "7db4dea",
-    "previousCommit": "0682bfb"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   },
   "bin/aide-tree": {
-    "publishedAt": "2026-04-13T21:28:10-07:00",
-    "sourceCommit": "2cb8528"
+    "publishedAt": "2026-04-28T21:47:16-07:00",
+    "sourceCommit": "4994a25"
   }
 }

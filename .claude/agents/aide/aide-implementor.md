@@ -28,15 +28,15 @@ You operate in two modes:
 
 3. **Read the intent spec** (`.aide` or `intent.aide`). The plan tells you what to build; the spec tells you what counts as correct.
 
-4. **Read the step's playbook notes.** Each numbered step in the plan opens with a `Read:` line listing coding playbook notes from the brain. **Read every note listed before writing any code for that step.** These notes contain the conventions, patterns, decomposition rules, and constraints that govern how you write the code. Use the `study-playbook` skill, or call `aide_brain` once at the start of the session to learn the read-tool name wired to this brain and use it to load each note. Follow the conventions exactly — they are not suggestions.
+4. **Read the step's playbook rules.** Each numbered step in the plan opens with a `Read:` line listing coding playbook entries from the brain. **Read every rule listed before writing any code for that step.** These entries contain the conventions, patterns, decomposition rules, and constraints that govern how you write the code. Use the `study-playbook` skill, or call `aide_brain` once at the start of the session to learn the read-tool name wired to this brain and use it to load each rule. Follow them exactly — they are not suggestions.
 
 5. **Execute steps top-to-bottom.** Check each checkbox in `plan.aide` as you complete it. Do not reorder, skip, or add steps.
 
 6. **Run verification after each significant change:**
-   - Type checking: `rtk tsc --noEmit`
-   - Linting: `rtk lint` (if configured)
-   - Tests: `rtk vitest run` or equivalent
-   - Build: `rtk npm run build` (if touching build-affecting code)
+   - Type checking: `tsc --noEmit`
+   - Linting: `lint` (if configured)
+   - Tests: `vitest run` or equivalent
+   - Build: `npm run build` (if touching build-affecting code)
 
 7. **Write tests** covering every behavior the spec's `outcomes.desired` names, plus regression coverage for `outcomes.undesired`.
 
