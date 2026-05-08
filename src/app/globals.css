@@ -40,6 +40,17 @@
   --space-80: 80px;
 }
 
+/* ── BRAIN_PAL scope — brain-section palette extension ──────────────────── */
+/* Scoped to .brain-pal descendants only; does NOT enter @theme. Specificity  */
+/* is zero (:where) so existing palette tokens still cascade naturally.        */
+
+:where(.brain-pal) {
+  --color-accent2: #7aa6d6;
+  --color-warn: #d6b25a;
+  --color-bad: #c25a3a;
+  --color-good: #8cbe5a;
+}
+
 /* Expo float animation — mascot hover */
 @keyframes expoFloat {
   0%,

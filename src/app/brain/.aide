@@ -1,0 +1,202 @@
+---
+scope: src/app/brain
+description: "Public-facing /brain section shipping two long-form guide pages (Walkthrough at /brain, Cookbook at /brain/recipes) for developers wiring a backend as an AIDE brain; deliberately re-introduces a `brain` nav link and a brain page that the project root intent currently lists as out-of-scope, with root-spec realignment deferred per user direction."
+intent: >
+  The /brain section is the public canonical guide for developers who want to wire
+  (or author) a storage backend as an AIDE brain plugin. It serves backend authors
+  arriving cold who must, within one scroll, understand that brain.aide is a plugin
+  interface — a short spec that tells AIDE how to launch a backend over MCP and how
+  to talk to it once live — and then either follow the guided tutorial top-to-bottom
+  or jump straight to a reference recipe for their backend of choice. Two pages
+  ship rather than one because the same content serves two distinct readers: the
+  Walkthrough (/brain) is for first-time readers wiring the bundled Obsidian
+  default in linear order; the Cookbook (/brain/recipes) is for returning readers
+  hunting the Notion or filesystem recipe without re-reading the guide. Both pages
+  inherit the site's static-export, pixel-fidelity, JetBrains-Mono-only, warm-dark
+  forest-green discipline so a credibility signal lands before any word is read.
+outcomes:
+  desired:
+    - "The /brain route renders the Walkthrough variant — a single linear-scroll guide with numbered §01 install + scaffold the default, §02 wire it: /aide:brain config, §03 seed the entry-point artifacts, §04 verify with the boot reporter, §05 build your own backend — and stands as the primary entry point a cold reader lands on first."
+    - "The /brain/recipes route renders the Cookbook variant — a three-column rail / recipe / sticky-generator layout with the hero `recipes for the brain plugin interface.` — covering the same backend roster the Walkthrough teaches but optimized for returning readers jumping to a specific recipe."
+    - The Walkthrough page carries a visible link to the Cookbook at /brain/recipes so a reader who arrives at the linear guide and wants the reference layout can reach it without leaving the section.
+    - "The site top-bar nav exposes exactly four destinations in order: docs, brain, github ↗, npm ↗ — `brain` placed adjacent to `docs` on every page that renders the top bar. Subnavigation (agents, skills, commands) lives inside the docs surface as sidebar entries, not as top-level peers."
+    - The `brain` nav entry remains visible on mobile viewports adjacent to `docs` and never collapses into a hamburger or overflow menu, because the brain section is important enough to surface at every viewport.
+    - "Four new semantic colors — accent2 blue `#7aa6d6`, warn amber `#d6b25a`, bad red `#c25a3a`, good green `#8cbe5a` — are introduced as a brain-section-scoped palette extension that coexists with the site's forest-green `#3d6b4a` accent rather than replacing or competing with it."
+    - "The three interactive surfaces from the design source remain functional once translated to the Next.js App Router: the skeleton generator (preset switching across obsidian/filesystem/notion, clipboard copy of generated frontmatter, optional override-orientation textarea on the Walkthrough), the config-flow visualizer (column highlighting across WIRING / SEEDING / both with a green success bubble on the after-restart-and-seed state), the worked-examples tabs (Walkthrough only, swapping blurb + tools + frontmatter + orientation across filesystem/notion/obsidian) and the recipe rail (Cookbook only, eight recipes with active-state green left-border driving body content swap)."
+    - Both pages link to the existing methodology spec render at /docs/brain-aide as the `the spec` / `RELATED` cross-reference, so a reader who wants the canonical brain.aide doc after reading the guide can reach it inside the docs surface.
+    - "All `href=\"#\"` placeholder external links in the design source are replaced before deploy with the real URLs the rest of the site already uses: `https://github.com/aidemd-mcp/server` for github, `https://www.npmjs.com/package/@aidemd-mcp/server` for npm."
+    - "The /brain section inherits the project root's static-export discipline (Next.js `output: 'export'`, no SSR / API / ISR / middleware), pixel-fidelity to the design references at 1440px desktop, JetBrains Mono as the only typeface, the fixed spacing scale, and server-components-by-default with client components only where interactive state requires it."
+    - Page copy across both variants matches the design-source key strings exactly — hero, section headers §01–§05, footer line — and reads in the site's precise, deliberate, engineering-credible voice rather than salesy or hype-driven phrasing.
+  undesired:
+    - The `brain` nav link disappearing on mobile viewports, collapsing into a hamburger or overflow menu, or rendering only on desktop — the user explicitly required mobile parity for this entry adjacent to `docs`.
+    - "Shipping only one of the two variants — a /brain route without /brain/recipes, or a /brain/recipes route without /brain — collapses the dual-reader intent into a single surface and forces returning readers back through the linear walkthrough they don't need."
+    - "The design-canvas wrapper (`<DesignCanvas>` from `brain.html`, the multi-option side-by-side comparison harness) reaching production. The canvas is a design-review tool only; end users get each variant rendered directly, fullscreen, at its own route."
+    - "Any `href=\"#\"` placeholder external link reaching production — every external link in the variant source must be substituted with the real github / npm URL before deploy."
+    - "The four new BRAIN_PAL colors (accent2 blue, warn amber, bad red, good green) leaking out of the /brain section into the rest of the site as a global palette change — they are scoped semantic additions that coexist with `#3d6b4a` forest-green, not a replacement palette."
+    - A `# BRAIN` section being added to the docs sidebar nav. The user explicitly dropped that ask; the docs-sidebar surface is unchanged by this work and the only cross-link from the docs side is the existing /docs/brain-aide page that the variants point at.
+    - "Any of the three interactive surfaces broken or silently failing after the static-HTML-to-Next.js translation: a preset button that doesn't regenerate the skeleton, a copy chip that doesn't write to clipboard or never surfaces a `✓ copied` feedback, an override-orientation textarea that doesn't flow through to the preview, a config-flow column highlight that doesn't toggle, the success bubble missing from the after-restart-and-seed state, a worked-examples tab that doesn't swap content, or a recipe rail entry that doesn't drive the body."
+    - "The cross-link to `/docs/brain-aide` pointing anywhere else (a relative `docs-brain-aide.html` carried over from the static-HTML source, an external GitHub raw-markdown URL, or a 404) — the link must resolve to the existing in-site docs render of the brain.aide methodology doc."
+    - "A fifth nav entry sneaking in, the order changing, or `brain` landing anywhere other than adjacent to `docs` — the contract is exactly four entries with `brain` next to `docs`, and any drift teaches the wrong roster. Surfacing agents/skills/commands as top-level peers (instead of as docs sidebar entries) is the specific failure mode this rule prevents."
+    - Filenames, component names, or React patterns from the static-HTML design source (`brain.html`, `brain-shared.jsx`, `brain-variant-walkthrough.jsx`, inline-Babel script tags) carrying through into the Next.js implementation as-is — the architect translates the visual and behavioral intent into App Router idioms; the design source is reference, not transcription.
+    - Either page rendering with a second typeface alongside JetBrains Mono, ad-hoc spacing values outside the site's fixed scale, or any deviation from pixel-fidelity at 1440px desktop against the design references.
+---
+
+## Context
+
+A `brain.aide` is a plugin interface — a short YAML spec that tells AIDE how to launch a storage backend over MCP and how to talk to it once that backend is live. The /brain section of the site is the public guide for the developer who has just learned the term and now has to decide what to do with it. That developer arrives in one of two shapes, and the section's whole structure exists to serve both without compromising either.
+
+The first reader is the cold first-timer. They have never wired a brain before, they want the bundled Obsidian default working in their project, and they want to read top-to-bottom in the order the methodology actually executes — install and scaffold, wire it via the config command, seed the entry-point artifacts, verify with the boot reporter, and only then think about authoring their own backend. They benefit from a single linear scroll with numbered sections that mirror the workflow, because the workflow is itself sequential and skipping ahead breaks understanding.
+
+The second reader is the returning developer. They already know what a brain.aide is, they've done this before for one backend, and they're back because they need the Notion recipe or the filesystem recipe or one of half a dozen others. Forcing them through the linear walkthrough every time would teach them nothing they don't already know and would make the section feel like documentation that doesn't respect repeat use. They benefit from a recipe rail — a sticky list of backend recipes on the left, a body that swaps when they pick one, and a sticky live skeleton generator they can use without scrolling.
+
+Two pages, not one, because compressing both readers into a single surface punishes whichever one isn't being optimized for at any given scroll position. The Walkthrough at /brain is the front door for the first-timer; the Cookbook at /brain/recipes is the lookup surface for the returner. They share the same backend roster, the same primitives, and the same canonical brain.aide concept — the difference is the shape of the page around that shared content.
+
+The /brain section is the tutorial half of a two-document pair. The reference half — the canonical brain.aide methodology spec — already renders inside the docs surface at /docs/brain-aide. That doc is the spec; this section is the guide. A reader who finishes the Walkthrough and wants the formal interface contract follows the cross-link into the docs surface; a reader who lands on the spec page first and wants the guided version follows the reverse link back into /brain. The two surfaces must reinforce each other rather than duplicate: the docs page describes the contract, the brain section walks the reader through honoring it.
+
+This section deliberately re-introduces a `brain` nav link that the project root currently lists as out-of-scope. The user accepted that the root spec lags this work and waived realignment for this delivery. The contract for the nav row therefore widens here from six entries to seven, with `brain` placed adjacent to `docs` because the brain section is part of the canonical reference surface, not a marketing detour.
+
+## Strategy
+
+**Ship both variants as separate routes — Walkthrough at /brain, Cookbook at /brain/recipes — and override the handoff's default-of-A recommendation.** The handoff §1 recommends shipping Variant A only and explicitly suggests Variant B's tab-state JS is "worth keeping out of the marketing surface." The user countermanded that recommendation: both variants ship, on their own routes. The reasoning the frontmatter preserves is dual-reader: the linear walkthrough is the front door for first-timers, the cookbook is the lookup surface for returners, and collapsing one into the other punishes whichever reader the surviving variant wasn't optimized for. Cross-link the Walkthrough to the Cookbook (a visible link out of /brain into /brain/recipes) so the dual surface remains discoverable to a reader who walked in the front door and now wants the reference layout.
+
+**Translate the static-HTML inline-Babel design source into App Router idioms; do not preserve the source's file shape.** The handoff §2–§4 ships a single `brain.html` at the site root with `brain-shared.jsx` and the variant body loaded via inline `<script type="text/babel">` tags. That shape is a non-starter inside this project's static export — it bypasses the bundler, ships React+Babel from unpkg, and produces no route segment. The translation: each variant becomes a Next.js route segment under the brain scope, the static prose and footer live in server components, and the three interactive surfaces become client components carrying the React state the handoff §8 enumerates. The handoff §12 explicitly anticipates this translation; the design files are reference, not transcription.
+
+**Keep the shared primitives colocated with the brain segment, not lifted to a global components module.** The shared module the handoff calls `brain-shared.jsx` carries primitives and the `BACKEND_PRESETS` data that both variants consume; nothing else on the site needs them. Colocating under the brain segment keeps their scope visibly tied to /brain, prevents the shared module from accreting unrelated UI primitives, and gives the architect a single place to delete if the section is ever pulled. The exact path layout is the architect's call, not this spec's.
+
+**Drop the `<DesignCanvas>` wrapper at the translation boundary.** The handoff §1 and §3 both call out that `brain.html` in the source project wraps both variants in a multi-option side-by-side comparison harness for design review only. Production renders each variant directly, fullscreen, at its own route. No production component imports a design-canvas equivalent; if someone needs to compare variants visually, they open the design source, not the deployed site.
+
+**Add `brain` to the top-bar nav adjacent to `docs`, on every page that renders the top bar, with mobile parity guaranteed.** The handoff §5a edits both `Terminal.html` and `docs-shell.jsx` top bars to add a `brain` entry between `home` and `docs`. The Next.js translation: edit the existing top-bar components used by the marketing landing and the docs shell so that the seven-entry nav contract — `docs · brain · agents · skills · commands · github ↗ · npm ↗` — renders everywhere. The frontmatter places `brain` adjacent to `docs` (not between `home` and `docs` as the handoff source did, because the production nav has no `home` entry). The mobile gate is non-negotiable: `brain` must remain visible at every viewport — it is the only nav link beyond `docs` that survives mobile collapse in this contract, because the brain section is important enough to surface at every viewport. A hamburger that hides `brain` is a spec violation.
+
+**Treat BRAIN_PAL as a brain-section-scoped palette extension, not a global token change.** The handoff §6 introduces four new semantic colors — `accent2 #7aa6d6`, `warn #d6b25a`, `bad #c25a3a`, `good #8cbe5a` — and explicitly notes they live alongside the existing site palette rather than replacing it. The decision: scope these tokens to /brain components only. They must not be lifted into the root palette tokens or into globals, because doing so would teach the rest of the codebase that warn-amber and forest-green-accent are interchangeable and would let the additions leak onto the marketing landing page and into docs callouts. Specifically: forest-green `#3d6b4a` remains the only accent on the marketing surface and on the docs callout treatment; the four BRAIN_PAL colors render only on /brain and /brain/recipes. The handoff calls out that lifting these into the global palette is acceptable as a follow-up if the rest of the site adopts them as semantic tokens — that follow-up is explicitly out of scope here.
+
+**Substitute every `href="#"` external placeholder at translation time using the canonical URLs the rest of the site already uses.** The handoff §7 lists four placeholder spots in each variant — top-bar `github ↗`, footer "the source" card, footer trio (`github ↗ · npm ↗ · discuss`), and the cookbook equivalents. The substitutions are not negotiable per-variant: GitHub points to `https://github.com/aidemd-mcp/server` and npm points to `https://www.npmjs.com/package/@aidemd-mcp/server` because that is the URL contract the project root locks. The "discuss" link maps to the GitHub repository in v1 because the root spec treats GitHub as the contact channel for v1 and there is no separate forum yet. No `href="#"` reaches production; verification of this is a deploy gate.
+
+**Cross-link to the canonical methodology doc at /docs/brain-aide via the existing dynamic docs route, not via the static-HTML pathname.** The handoff §5b/§5c describes the cross-link target as `docs-brain-aide.html` because the source project is flat-static. In this project, the same content already renders inside the docs surface via the dynamic route that serves any markdown file under `.aide/docs/`. The Walkthrough's "the spec" footer card and the Cookbook's "RELATED" rail link both point at the in-site docs render of brain-aide.md — never at a relative `docs-brain-aide.html` carried over from the source, never at a raw GitHub markdown URL, never at a 404. The exact route shape is the architect's resolution.
+
+**Add the reverse cross-link from the methodology doc back into /brain, but treat it as a small surgical insertion in the docs template, not a rewrite of the markdown.** The handoff §5c adds a one-line `→ tutorial: wire your own backend` link near the top of the brain-aide doc page. The decision: this link belongs in the docs rendering layer, not inside the markdown source — adding it to the markdown would couple the package's methodology source to the site's URL structure. The architect picks the mechanism — frontmatter-driven banner, body-prefix injection in the docs template when slug equals brain-aide, or another DocsTemplate-aware approach. The constraint is that the brain-aide markdown file ships unchanged inside the package.
+
+**Render the three interactive surfaces as pure client-side React state — no fetch, no backend, no API.** The handoff §8 enumerates exactly three interactive pieces: the skeleton generator (preset switching, clipboard copy, override-orientation toggle), the config-flow visualizer (column highlight buttons, success bubble), and the worked-examples tabs in the Walkthrough plus the recipe rail in the Cookbook. Every piece of this state is local. The skeleton generator's preset data lives in the `BACKEND_PRESETS` table colocated in the shared module; clipboard write uses the browser API and surfaces "✓ copied" feedback, with the handoff §10 noting clipboard requires HTTPS or localhost. The config-flow's column-highlight is local toggle state with the success-bubble derived from the both-columns-active condition. The Walkthrough's worked-examples and the Cookbook's recipe-rail are tab-state and rail-state respectively, each driving body content swap. The architect picks whether the rail uses local state or React Context; this spec does not dictate.
+
+**Honor the design widths the source files were drawn at, with the existing site's responsive convention as the floor.** The handoff §1 calls out 1280px for the Walkthrough and 1480px for the Cookbook. The Walkthrough fits inside the marketing/docs `var(--layout-max-width)` of 1280px and renders without special handling. The Cookbook's three-column rail/recipe/sticky-generator layout needs the wider 1480px design width and must render fullscreen across that width rather than being squeezed into the standard layout container. The site's responsive convention from the root applies on both pages: pixel-fidelity at the design width, horizontal scroll below 1280px is acceptable, mobile is best-effort except for the `brain` nav entry's mobile parity which is strict.
+
+**Treat the handoff §10 validation checklist as the QA contract, not as suggestions.** Ten checklist items in the handoff each map to a deploy gate: routes return 200 without console errors, React hydrates cleanly, the top-bar `home` analog (the brand link) returns to the landing page, footer "the spec" / "RELATED" link reaches the in-site brain-aide doc render, the skeleton generator with the `notion` preset emits `--token` and `--root` arg lines plus two YAML nulls, the config-flow's "after restart + seed" state reveals the green ✓ bubble, the seven-entry top-bar nav with `brain` appears on the landing and docs pages, the OG preview renders correctly via the existing canonical og.png, and the page is responsive at 1280px+. These items become the QA checklist — every one must pass on the deployed surface, not just locally.
+
+**Match the design copy exactly. The variant `.jsx` is the source of truth for every visible string.** The handoff §9 ships a copy reference table covering the page title, the dual heroes, the five Walkthrough section titles (§01–§05), the Cookbook hero, and the footer line. Every visible string on either page must match the design source character-for-character — including the dimmed second line of the Walkthrough hero, the period at the end of `recipes for the brain plugin interface.`, and the footer's `© 2026 TetsuKodai Group LLC · ● brain plugin interface` exactly. Voice is the project root's: precise, deliberate, engineering-credible. No exclamation points, no marketing adjectives, no rephrasing for clarity — the design copy is already the clarified version.
+
+**Default to server components; mark client only for the three interactive surfaces and the top-bar nav state if any.** The static prose, hero text, section headers, footer, and any non-interactive layout chrome are server components. The skeleton generator, config-flow, worked-examples tabs, and recipe rail are client components. This is the same boundary the project root strategy enforces; the brain section narrows by naming exactly which surfaces cross the boundary.
+
+## Good examples
+
+A correctly-rendered top-bar nav row, on every page that carries the top bar, in JetBrains Mono, aligned to the right of the brand cluster:
+
+```
+docs   brain   agents   skills   commands   github ↗   npm ↗
+```
+
+Seven entries. In that order. `brain` placed adjacent to `docs`. Active page gets the accent-green underline. Visible at every viewport — at mobile widths, the row may compress its spacing but `brain` and `docs` remain rendered, never collapsed into a hamburger.
+
+A correctly-rendered Walkthrough hero at /brain:
+
+```
+wire any backend
+as a brain.
+```
+
+The first line is in the foreground color, the second line is dimmed. The subhead reads `The brain.aide file is a plugin interface. It tells AIDE how to launch your storage backend over MCP and how to talk to it once it's live…` exactly.
+
+A correctly-rendered Cookbook hero at /brain/recipes:
+
+```
+recipes for the brain plugin interface.
+```
+
+Lowercase, with the trailing period, single line. The three-column body sits below — a left rail of eight backend recipes with a green left-border on the active entry, the recipe body in the middle, the sticky live skeleton generator on the right.
+
+A correct Walkthrough section ladder, in numbered scroll order:
+
+```
+§01  install + scaffold the default
+§02  wire it: /aide:brain config
+§03  seed the entry-point artifacts
+§04  verify with the boot reporter
+§05  build your own backend
+```
+
+Each numbered, each in the design source's exact phrasing.
+
+A correct skeleton generator output for the `notion` preset, after a reader clicks the preset chip:
+
+The frontmatter pane shows the brain.aide preset for Notion, the launch arguments include lines for `--token` and `--root`, and two YAML null values appear inline where the developer must fill in their workspace credentials. A `⧉ copy` chip lives next to the output; clicking it writes the file content to the clipboard and the chip swaps to `✓ copied` for a short window before reverting.
+
+A correct config-flow visualizer in the "after restart + seed" state, when the third button is selected:
+
+Both the WIRING column and the SEEDING column highlight simultaneously, and a green ✓ confirmation card appears below the columns indicating the brain has restarted with seeded entry points. Selecting WIRING flow alone or SEEDING flow alone highlights only that single column with no success bubble.
+
+A correct cross-link from the Walkthrough's "the spec" footer card and from the Cookbook's RELATED rail link, on click:
+
+The reader navigates into the docs surface and lands on the in-site render of the brain-aide methodology doc, breadcrumb reading `AIDE / DOCS`, with the "Cite as" URL carrying the commit-pinned `?v=<commit>` suffix the docs template enforces. The URL never reads `docs-brain-aide.html` and never points at a raw GitHub markdown file.
+
+A correct reverse link near the top of the in-site brain-aide doc render:
+
+```
+→ tutorial: wire your own backend
+```
+
+Forest-green text, no underline, navigating back to /brain when clicked. Inserted by the docs template, not by editing the markdown source under `.aide/docs/`.
+
+A correct footer on both /brain and /brain/recipes:
+
+```
+© 2026 TetsuKodai Group LLC · ● brain plugin interface
+```
+
+Year is 2026. The `LLC` is present. The dot is the canonical authority dot, green and static.
+
+A correct OG preview when the URL is pasted into Slack or iMessage:
+
+The card renders with the canonical site og.png, the title `brain.aide — wire any backend as a brain`, and the description `A guide for backend authors. Wire the bundled Obsidian default, then learn how to author your own brain plugin.` exactly per the handoff §4 metadata.
+
+## Bad examples
+
+A nav row that reads `docs   agents   skills   commands   github ↗   npm ↗`. This is the project root's six-entry contract, unmodified — the brain section ships without adding the `brain` entry the frontmatter requires. A reader on the landing page or any docs page has no way to discover the section at all.
+
+A nav row that reads `docs   agents   skills   commands   brain   github ↗   npm ↗`. Seven entries, but `brain` placed at the end of the docs cluster instead of adjacent to `docs`. Adjacency is contract — placement at the end teaches that `brain` is a peer of `commands` rather than a peer of `docs`, which understates what the section actually is.
+
+A mobile viewport (375px) that renders only `docs` in the visible nav and collapses the rest, including `brain`, into a hamburger overflow menu. The frontmatter explicitly forbids this — `brain` must remain visible at every viewport, because the brain section is important enough to surface adjacent to `docs` on every device.
+
+A /brain route shipped without /brain/recipes (or vice versa). One variant alone collapses the dual-reader intent into a single surface. A returner who knows what brain.aide is and just needs the Notion recipe is forced through the linear walkthrough every time, or — in the inverse failure — a first-timer who arrives cold lands on a three-column rail/recipe/sticky-generator surface with no top-to-bottom path through the methodology workflow.
+
+A /brain page that ships without a visible link out to /brain/recipes anywhere on the page. The dual surface exists, but the cross-link doesn't, so the Walkthrough reader who finishes the linear guide and now wants the cookbook layout for repeat lookups has no way to discover that /brain/recipes exists.
+
+A production component tree that imports a `<DesignCanvas>` wrapper and renders both variants side-by-side at /brain. The canvas is a design-review tool only; it leaked from the source project's variant comparison harness into production. End users see two competing layouts at one URL and the cookbook's interactive state collides with the walkthrough's.
+
+A footer that reads `© 2026 TetsuKodai Group · ● brain plugin interface` (missing `LLC`) or `© 2025 TetsuKodai Group LLC · ● brain plugin interface` (wrong year). Copy fidelity is part of the credibility signal — the year is 2026, the legal entity is TetsuKodai Group LLC, and either drift is recognizable on sight as inattention.
+
+A skeleton generator that switches presets correctly and writes content to the clipboard on click but never surfaces the `✓ copied` feedback. The user clicks, the chip stays visually idle, and they cannot tell whether the click registered. The frontmatter explicitly names `✓ copied` feedback as required functionality; silent success is broken UX.
+
+A skeleton generator chip that fails to write to the clipboard at all because the page is being served over plain `http://` in some environment. The handoff §10 calls out that the clipboard API requires HTTPS or localhost; the deploy target must be HTTPS, and local dev runs at localhost so the API works in both environments.
+
+A config-flow visualizer where the third button is selected but the green ✓ success bubble fails to appear. The frontmatter names this exact case as a broken interaction; the success bubble is the entire point of the after-restart-and-seed state.
+
+The four BRAIN_PAL colors — `accent2 #7aa6d6`, `warn #d6b25a`, `bad #c25a3a`, `good #8cbe5a` — appearing on the marketing landing page hero, on docs callouts, or anywhere outside /brain and /brain/recipes. The palette is section-scoped; leaking it teaches the rest of the site that warn-amber and forest-green are interchangeable accents.
+
+An external link in either variant still rendering with `href="#"` after deploy. The handoff §7 enumerated the placeholder spots; substitution at translation time is the contract; any survival into production is a deploy-blocking spec violation.
+
+A "the spec" footer card on /brain whose link target is `docs-brain-aide.html` (carried over verbatim from the source project's flat-static layout) or `https://raw.githubusercontent.com/.../brain-aide.md` (an external GitHub raw URL). The link must resolve to the in-site dynamic docs render of the brain-aide methodology doc — the same surface that serves every other `.aide/docs/` markdown file.
+
+A reverse link added to `.aide/docs/brain-aide.md` directly inside the markdown source. The brain-aide markdown is part of the package's methodology source and ships unchanged inside the package; coupling it to the site's URL structure breaks that contract. The reverse link belongs in the docs rendering layer.
+
+A `# BRAIN` section added to the docs sidebar nav. The user explicitly dropped that ask; the docs sidebar is unchanged by this work, and the only cross-link from the docs side is the reverse link added by the docs template on the brain-aide page.
+
+A Cookbook page rendered inside the standard 1280px max-width container, with the three-column rail/recipe/sticky-generator layout squeezed and the right-rail generator overlapping the recipe body. The Cookbook is drawn at 1480px and needs the wider canvas; treating it as a standard-width page collapses the design.
+
+A page rendered with a second typeface alongside JetBrains Mono — a Sans serif headline, a serif blockquote, anything not mono. The frontmatter inherits the project root's mono-only discipline; any second typeface is a spec violation.
+
+Inline-Babel `<script type="text/babel">` tags shipping in production HTML, loading React and Babel Standalone from unpkg at runtime. This is the source project's design-source pattern; carrying it into the Next.js build bypasses the bundler and the static export, ships React twice, and breaks Lighthouse. The handoff §12 specifically anticipates this translation; the architect must produce App Router idioms, not preserve the source's inline-Babel shape.
+
+## References
+
+- `design-handoff/handoff.md` -- the canonical integration brief for the brain section; informs every strategy decision below: §1 variant selection (overridden by user to ship both rather than just A), §2-§4 what-to-ship and the static-HTML source shape that must be translated to App Router idioms, §5a top-bar nav addition with the `brain` link, §5b/§5c the cross-link target and the reverse-link placement, §6 BRAIN_PAL palette extension scoped to /brain, §7 the four `href="#"` placeholder substitution spots, §8 the three interactive surfaces and their state model, §9 the copy reference table for hero / section / footer strings, §10 the validation checklist that becomes the QA contract, §12 the explicit anticipation that the design source is reference rather than transcription
+- `design-handoff/brain.html` -- the design-source pointer the handoff refers to; not consumed directly here, named only to confirm that `<DesignCanvas>` is the comparison harness inside this file and must not reach production
+- `.aide/intent.aide` -- the project root spec; informs the inherited static-export discipline (Next.js `output: 'export'`, no SSR / API / ISR / middleware), JetBrains-Mono-only typography, the fixed spacing scale, server-components-by-default, the brand voice rules, and the canonical external URL targets `https://github.com/aidemd-mcp/server` and `https://www.npmjs.com/package/@aidemd-mcp/server` that the brain section's external-link substitution inherits; also the source for the existing six-entry nav contract that this section widens to seven
+- `.aide/docs/brain-aide.md` -- the canonical methodology doc that already renders inside the docs surface; informs the cross-link target for the Walkthrough's "the spec" footer card and the Cookbook's RELATED rail link, and the file the docs template must inject the reverse link onto without modifying the markdown itself

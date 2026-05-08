@@ -1,0 +1,29 @@
+---
+intent: >
+  Two implementation gaps: (1) five CSS variable references use `--color-dim2`
+  (no hyphen) while globals.css defines `--color-dim-2` (with hyphen), silently
+  stripping the dim color from WalkthroughFooter and Section01Install;
+  (2) the brain layout renders <TopBar sticky /> without an `active` prop,
+  so the `brain` nav entry never receives the accent-green underline when
+  browsing /brain/ or /brain/recipes/ — violating the seven-entry nav contract's
+  active-state requirement.
+misalignment:
+  - implementation-drift
+---
+
+## Issues
+
+- [x] **src/app/brain/_components/Walkthrough/WalkthroughFooter/index.tsx:38,49,57,65** — Uses `var(--color-dim2)` (no hyphen) in four Tailwind arbitrary-value classes, but the only defined CSS variable is `--color-dim-2` (with hyphen) in globals.css. The invalid variable resolves to empty/initial; the intended 38%-opacity dim color never renders on the footer text and trio links.
+      Traces to: `outcomes.desired[10]` (pixel-fidelity, inherited project-root visual discipline) | Misalignment: `implementation-drift`
+
+- [x] **src/app/brain/_components/Walkthrough/Section01Install/index.tsx:33** — Same `--color-dim2` typo on the §01 alt-command comment line. Text renders with no color value rather than the intended 38%-opacity dim shade.
+      Traces to: `outcomes.desired[10]` (pixel-fidelity to the design references) | Misalignment: `implementation-drift`
+
+- [x] **src/app/brain/layout.tsx:31** — Renders `<TopBar sticky />` without an `active` prop. TopBar drives nav active state exclusively via `(active as string) === label`; when `active` is undefined, no nav link receives the accent-green underline. The `brain` entry shows as inactive on every brain page, violating the spec's requirement that the active page carry the underline.
+      Traces to: `outcomes.desired[3]` (seven-entry nav contract — active page gets accent-green underline) | Misalignment: `implementation-drift`
+
+## Retro
+
+Both failures originated at the same architectural seam: the brain layout is the only layout that uses `<TopBar sticky />` directly without an active-aware wrapper. The docs layout wraps TopBar in `<ActiveAwareTopBar />` which injects `active` from `usePathname()`; the plan step for the TopBar edit (step 8a) added the `brain` entry to NAV_LINKS and set `mobileVisible: true`, but did not specify how the brain layout should source its `active` prop. The implementor wired `isBrain` into the brand-label display path in TopBar but stopped before passing `active="brain"` to the layout call.
+
+The CSS variable typo (`--color-dim2` vs `--color-dim-2`) would have been caught by any visual snapshot of `WalkthroughFooter` against the design source — footer text renders at full brightness rather than 38% dim. A grep-validate step cross-checking every `var(--color-*)` reference in brain components against the token registry in globals.css would catch this class of error at plan time rather than post-deploy.

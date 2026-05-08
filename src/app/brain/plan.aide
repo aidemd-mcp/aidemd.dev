@@ -1,0 +1,1248 @@
+---
+intent: >
+  Build the public /brain section as two static-export Next.js routes — Walkthrough at
+  /brain (linear §01–§05 guide) and Cookbook at /brain/recipes (3-column rail / recipe /
+  sticky generator) — translating the design-handoff JSX into App Router idioms with
+  three pure-client interactive surfaces (skeleton generator, config-flow visualizer,
+  worked-examples tabs / recipe rail), a brain-section-scoped BRAIN_PAL palette
+  extension, a brain-scoped footer line, surgical edits to both top-bar components
+  to add a `brain` nav entry adjacent to `docs` with mobile parity, and a slug-gated
+  reverse link inside DocsTemplate for /docs/methodology/brain-aide → /brain.
+---
+
+## Project Structure
+
+The tree below is the proposed state of `src/app/brain/` after this plan executes,
+plus a short list of out-of-scope files this plan modifies in place. Annotations
+that say "(new)" are created by this plan; "(modified)" are existing files
+edited by this plan; "(unchanged)" are untouched but referenced for context.
+
+```
+src/app/brain/
+├── .aide                              ← intent spec (existing, unchanged)
+├── plan.aide                          ← this file (new)
+├── layout.tsx                         ← (new) brain-section layout: wraps children with `.brain-pal` palette-scope div, renders <TopBar sticky/>, brand <Footer/>-replacement <BrainFooter/>; signature: ({ children }: { children: ReactNode }) => JSX
+├── page.tsx                           ← (new) Walkthrough route at /brain; server component composing the variant; signature: () => JSX. Exports `metadata: Metadata` for OG/title.
+├── recipes/
+│   └── page.tsx                       ← (new) Cookbook route at /brain/recipes; server component composing the cookbook variant; signature: () => JSX. Exports `metadata: Metadata`.
+├── _components/                       ← brain-only components (new folder)
+│   ├── BrainFooter/
+│   │   └── index.tsx                  ← (new) section-scoped attribution footer rendering `FOOTER_LINE` on the left and the `FOOTER_TRIO` 3-link cluster (`github ↗`, `npm ↗`, `discuss`) on the right (matches cookbook.jsx footer 86–92); used by the layout under both routes. The Walkthrough page composes a richer cluster (2-col FooterCard grid + the same trio) inside its own body via `WalkthroughFooter` — see Decisions. Signature: () => JSX
+│   ├── Walkthrough/                   ← Variant A composition (new); maps to brain-variant-walkthrough.jsx
+│   │   ├── index.tsx                  ← (new) orchestrator: Hero → Divider → §01 → Divider → §02 → Divider → §03 → Divider → §04 → Divider → §05 → Divider → WalkthroughFooter; signature: () => JSX
+│   │   ├── Hero/
+│   │   │   └── index.tsx              ← (new) maps to JSX hero block (lines 22–39): eyebrow `# a guide for backend authors`, two-line `<h1>` (`HERO_A_LINE_1` / `HERO_A_LINE_2` second line dimmed via `--color-dim`), `HERO_A_SUBHEAD` paragraph, then a checkmark trio row `[ ✓ ] 5-step walkthrough · [ ✓ ] 3 worked examples · [ ✓ ] live skeleton generator`; signature: () => JSX
+│   │   ├── SectionScaffold/
+│   │   │   └── index.tsx              ← (new) maps to JSX `<Section/>` (lines 203–215): `§{num}` accent eyebrow + bold title baseline-aligned, optional `sub` line below indented to title baseline; signature: ({ num: '01' | '02' | '03' | '04' | '05', title: string, sub?: string, children: ReactNode }) => JSX
+│   │   ├── Section01Install/
+│   │   │   └── index.tsx              ← (new) maps to JSX §01 block (lines 43–82): 2-col grid — left: `<CmdLine cmd="npx aidemd-mcp init" />` + prose mentioning unwired YAML null; right: `<CodeBlock label=".aide/config/brain.aide (just-scaffolded)" code={SCAFFOLD_PREVIEW}/>`. The scaffold preview string lives in `_data/codeSamples.ts` (verbatim from JSX line 60–80). Sub line: `# the cli writes .aide/config/brain.aide pre-filled with the obsidian template.`; signature: () => JSX
+│   │   ├── Section02Wire/
+│   │   │   └── index.tsx              ← (new) maps to JSX §02 block (lines 86–102): intro prose, `<ConfigFlow/>` (client) embedded, then `<Callout kind="why-stop" label="WHY THE STOP">` containing the JSX-verbatim explanation prose; sub line: `# the config flow has two paths. the one that runs depends on what's in args.`; signature: () => JSX
+│   │   ├── Section03Seed/
+│   │   │   └── index.tsx              ← (new) maps to JSX §03 block (lines 106–138): 2-col grid — left: prose intro + 4 `<SeedRow/>`s (one per entry-point artifact, paths and tags from JSX lines 115–118) + dim closer prose; right: `<CodeBlock label="seed write call (obsidian)" code={SEED_PREVIEW}/>` (verbatim from JSX line 126–136). Sub line: `# the four seed sections in brain.aide become four files inside your brain.`; signature: () => JSX
+│   │   ├── Section04Verify/
+│   │   │   └── index.tsx              ← (new) maps to JSX §04 block (lines 142–145): contains `<BootStates/>` (renders all FOUR states — ok/no-brain-aide/no-mcp-entry/mcp-drift, NOT just two as the prior plan assumed); sub line: `# at session start the orchestrator checks brain.aide vs .mcp.json. four states.`; signature: () => JSX
+│   │   ├── Section05BuildOwn/
+│   │   │   └── index.tsx              ← (new) maps to JSX §05 block (lines 149–181): intro prose, then 4 sub-blocks separated by `<SubHeader/>`: A · what your MCP server must expose → `<MCPToolSurface/>`; B · the body sections you author → 2-col grid of 6 `<BodySectionCard/>` (tag/who/what trios from JSX lines 164–169); C · worked examples → `<WorkedExamples/>` (client); D · live skeleton generator → intro prose + `<SkeletonGenerator/>` (client). Sub line: `# everything above worked with bundled obsidian. now write one for your storage.`; signature: () => JSX
+│   │   ├── WalkthroughFooter/
+│   │   │   └── index.tsx              ← (new) maps to JSX footer block (lines 186–197): 2-col `<FooterCard/>` cluster ("the spec" → /docs/methodology/brain-aide/, "the source" → external github URL), then a separator row with `FOOTER_LINE` on the left and `github ↗ · npm ↗ · discuss` trio on the right. The "discuss" link maps to the github URL per spec strategy ("discuss link maps to the GitHub repository in v1"). Note: this is rendered in the page body, NOT in `BrainFooter` (the section footer is the simpler one-line attribution); the BrainFooter rule applies on /brain/recipes; on /brain the page body owns this richer footer cluster THEN BrainFooter renders below. signature: () => JSX
+│   │   └── CookbookCrossLink/
+│   │       └── index.tsx              ← (new) visible cross-link out of /brain into /brain/recipes; the spec mandates it but the JSX does not emit one (the JSX walkthrough has no link to the cookbook). Implemented as a `<FooterCard cta="LOOKUP" title="see the cookbook →" body="3-column rail/recipe/sticky-generator layout for returning readers." href="/brain/recipes/" />`. Rendered between §05 and the WalkthroughFooter cluster. signature: () => JSX
+│   ├── Cookbook/                      ← Variant B composition (new)
+│   │   ├── index.tsx                  ← (new) orchestrator: cookbook hero + 3-column body (rail + body + sticky-right generator); signature: () => JSX
+│   │   ├── Hero/
+│   │   │   └── index.tsx              ← (new) single-line hero "recipes for the [brain] plugin interface." (the word `brain` is wrapped in an inline accent-green span per JSX); signature: () => JSX
+│   │   ├── RecipeRail/
+│   │   │   └── index.tsx              ← (new client) sticky left rail; renders 8 recipe entries from RECIPE_INDEX (NOT BACKEND_PRESETS — see Decisions: "8-recipe roster is its own index"); active entry has 2px green left-border + tinted bg `rgba(61,107,74,0.12)`; signature: ({ activeKey: RecipeKey, onSelect: (key: RecipeKey) => void }) => JSX
+│   │   ├── RecipeBody/
+│   │   │   └── index.tsx              ← (new client) switches on `recipeKey` to render one of 8 recipe bodies; each body composes <RecipeFrame/> + recipe-specific content (CmdLine + Step rows for quickstart, ConfigFlow for flow, BootStates for states, MCPToolSurface for mcp, prose+CodePre for orient/configsec, RecipeWorked for fs/notion); signature: ({ recipeKey: RecipeKey }) => JSX
+│   │   ├── CookbookShell/
+│   │   │   └── index.tsx              ← (new client) holds activeKey state and lays out rail + body + <SkeletonCompact/>; signature: () => JSX
+│   │   └── WalkthroughCrossLink/
+│   │       └── index.tsx              ← (new) "RELATED" rail card. Two JSX-sourced links plus one spec-mandated reverse link: `docs / brain-aide.md →` (to /docs/methodology/brain-aide/, JSX line 69), `all canonical docs →` (to /docs/, JSX line 70), AND `tutorial: wire your own backend →` (to /brain/, spec dual-discoverability requirement — JSX cookbook does not emit this link but the spec mandates it). Signature: () => JSX
+│   ├── interactive/                   ← four pure-client interactive surfaces (new)
+│   │   ├── SkeletonGenerator/
+│   │   │   └── index.tsx              ← (new client) full skeleton generator used in Walkthrough §05 sub-D; props: none; state: `backend: PresetKey` (default `'obsidian'`), `name: string` (mirrors preset.name, editable input), `overrideOrient: boolean` (default `false`), `orient: string` (preset.orientation by default, swaps to user value when override is on); JSX-equivalent of `<SkeletonGenerator/>` from brain-shared.jsx lines 158–276; signature: () => JSX
+│   │   ├── SkeletonCompact/
+│   │   │   └── index.tsx              ← (new client) sticky-right compact generator used in Cookbook; props: none (own backend toggle per JSX brain-variant-cookbook.jsx lines 271–322 — does NOT consume parent recipe state); state: `backend: PresetKey` (default `'obsidian'`); no orientation override, no name input, no left chip column — single horizontal flex of 3 backend buttons + preview pane + copy chip; signature: () => JSX
+│   │   ├── ConfigFlow/
+│   │   │   └── index.tsx              ← (new client) used in Walkthrough §02 AND Cookbook recipe `flow`; state: `state: 'null' | 'string' | 'seeded'` (default `'null'`); 3 buttons (`args last entry: YAML null` / `args last entry: "/Users/me/vault"` / `after restart + seed`); two-column WIRING/SEEDING grid, `isWiring = state==='null'` / `isSeeding = state==='string'`; the green ✓ success card renders only when `state==='seeded'`; signature: () => JSX
+│   │   └── WorkedExamples/
+│   │       └── index.tsx              ← (new client) tab strip used in Walkthrough §05 sub-C ONLY; state: `tab: WorkedExampleKey` where `WorkedExampleKey = 'filesystem' | 'notion' | 'obsidian'`, default `'filesystem'` (per JSX line 252); reads from a SEPARATE inline data table `WORKED_EXAMPLES` (NOT BACKEND_PRESETS — different shape: `label, blurb, tools, orient, config, args`); signature: () => JSX
+│   ├── walkthrough-blocks/            ← static building blocks consumed by Walkthrough sections (new)
+│   │   ├── BootStates/
+│   │   │   └── index.tsx              ← (new) 2x2 grid of the 4 boot reporter states (`ok`, `no-brain-aide`, `no-mcp-entry`, `mcp-drift`) with colored dot, label, "what" line, "fix" line; data inlined from brain-shared.jsx lines 350–367; signature: () => JSX
+│   │   ├── MCPToolSurface/
+│   │   │   └── index.tsx              ← (new) 5-row checklist of `mcp__brain__*` tool signatures with req/opt label + why-line; data inlined from brain-shared.jsx lines 371–399; signature: () => JSX
+│   │   ├── BodySectionCard/
+│   │   │   └── index.tsx              ← (new) card showing `<!-- aide-X-* -->` tag + who-consumes-it + body description; signature: ({ tag: string, who: string, what: string }) => JSX
+│   │   ├── SeedRow/
+│   │   │   └── index.tsx              ← (new) one row of `◆ {path} ← <!-- {tag}-* -->` for §03 seed list; signature: ({ path: string, fromTag: string }) => JSX
+│   │   ├── SubHeader/
+│   │   │   └── index.tsx              ← (new) uppercase letter-spaced sub-section label `A · WHAT YOUR MCP SERVER MUST EXPOSE`; signature: ({ children: ReactNode }) => JSX
+│   │   └── Divider/
+│   │       └── index.tsx              ← (new) full-width dashed horizontal divider used between Walkthrough sections; signature: () => JSX
+│   ├── cookbook-blocks/               ← static building blocks consumed by Cookbook recipes (new)
+│   │   ├── RecipeFrame/
+│   │   │   └── index.tsx              ← (new) `RECIPE` eyebrow + h2 title + dim subhead + body slot; signature: ({ title: string, sub: string, children: ReactNode }) => JSX
+│   │   ├── Step/
+│   │   │   └── index.tsx              ← (new) numbered step row used in `quickstart` recipe; signature: ({ n: string, what: string, children: ReactNode }) => JSX
+│   │   └── RecipeWorked/
+│   │       └── index.tsx              ← (new) shared layout for the `fs` and `notion` recipes: tools-exposed line + unwired-slot box + 2-column WIRING/SEEDING boxes; signature: ({ tools: string, slot: string, wiring: string, seeding: string }) => JSX
+│   └── primitives/                    ← static building blocks shared across both variants (new)
+│       ├── Card/
+│       │   └── index.tsx              ← (new) bordered card primitive; signature: ({ children: ReactNode, className?: string }) => JSX
+│       ├── Eyebrow/
+│       │   └── index.tsx              ← (new) uppercase 11px letter-spaced label colored `--color-accent`; signature: ({ children: ReactNode, className?: string }) => JSX
+│       ├── Chip/
+│       │   └── index.tsx              ← (new) pill `<button>` used both as preset selector (active = filled accent bg, dark text) and as inline tab; signature: ({ active?: boolean, onClick?: () => void, ariaLabel?: string, children: ReactNode, className?: string }) => JSX
+│       ├── CopyChip/
+│       │   └── index.tsx              ← (new client) `⧉ copy` chip that writes `text` prop to clipboard, swaps to `✓ copied` for ~1400ms; state: `copied: boolean`; signature: ({ text: string, label?: string, className?: string }) => JSX. Centralized so SkeletonGenerator, SkeletonCompact, and CodeBlock all share one timer/cleanup implementation.
+│       ├── CmdLine/
+│       │   └── index.tsx              ← (new client) one-line shell command box with `$` prefix, monospace body, and trailing `⧉`/`✓` indicator; clicking the row writes `cmd` to clipboard; props: `{ cmd: string }`; state: `copied: boolean`. Inlines copy logic for ergonomic full-row click target (not extracted to CopyChip because the clickable surface IS the entire box, per JSX lines 31–47).
+│       ├── CodeBlock/
+│       │   └── index.tsx              ← (new) labeled `<pre>` block with optional CopyChip header; props: `{ code: string, label?: string, maxHeight?: number }`; replaces JSX's `CodePre` component (lines 49–62). When `label` is provided, header bar renders `{label}` + CopyChip; when omitted, plain pre.
+│       ├── Callout/
+│       │   └── index.tsx              ← (new) brain-scoped callout block. Props: `{ kind: 'why-stop' | 'ok' | 'no-brain-aide' | 'no-mcp-entry' | 'mcp-drift' | 'success', label?: string, children: ReactNode }`. Kind→color: `why-stop`/`no-mcp-entry`/`mcp-drift` → `--color-warn`; `ok`/`success` → `--color-good`; `no-brain-aide` → `--color-bad`. Border-left 2px in the kind's color; uppercase label.
+│       └── FooterCard/
+│           └── index.tsx              ← (new) the spec / RELATED card primitive used in both variants. Props: `{ href: string, cta: string, title: string, body?: string, external?: boolean }` — `cta` is the small accent-green eyebrow (e.g. `docs/brain-aide.md →`), `title` is the bold body title (e.g. `the spec`), `body` is optional dim sub-prose. When `external` is `true`, renders `<a target="_blank" rel="noopener noreferrer">`; otherwise renders `<Link>` from `next/link`.
+└── _data/                             ← static data tables consumed by interactive surfaces (new)
+    ├── backendPresets.ts              ← (new) BACKEND_PRESETS table: `Record<PresetKey, BackendPreset>` where `PresetKey = 'obsidian' | 'filesystem' | 'notion'` (THREE entries only — the JSX BACKEND_PRESETS object holds three) and `BackendPreset = { name: string, command: string, argLines: string[], orientation: string, config: string }`. `argLines` entries starting with `~` render as YAML null with optional inline comment (preserves the JSX's `~  // ← absolute path…` pattern verbatim). Authored character-for-character from brain-shared.jsx lines 65–156. Exports `BACKEND_PRESETS`, `type PresetKey`, `type BackendPreset`.
+    ├── workedExamples.ts              ← (new) WORKED_EXAMPLES table consumed by `<WorkedExamples/>` ONLY: `Record<WorkedExampleKey, { label: string, blurb: string, tools: string, orient: string, config: string, args: string }>` where `WorkedExampleKey = 'filesystem' | 'notion' | 'obsidian'`. Distinct shape from BackendPreset because the worked-examples panes show `tools` (one-line) and `args` (preformatted multi-line YAML string), NOT a parsed argLines array. Authored from brain-variant-walkthrough.jsx lines 254–306.
+    ├── recipeIndex.ts                 ← (new) RECIPE_INDEX consumed by `<RecipeRail/>`: ordered array of `{ id: RecipeKey, label: string, subtitle: string }` where `RecipeKey = 'quickstart' | 'flow' | 'states' | 'mcp' | 'orient' | 'configsec' | 'fs' | 'notion'` (8 entries, in the exact order from brain-variant-cookbook.jsx lines 8–17). Each entry's `label` and `subtitle` are quoted verbatim. Exports `RECIPE_INDEX`, `type RecipeKey`.
+    ├── bootStates.ts                  ← (new) BOOT_STATES: ordered array of `{ id: 'ok' | 'no-brain-aide' | 'no-mcp-entry' | 'mcp-drift', kind: CalloutKind, what: string, fix: string }`. Authored from brain-shared.jsx lines 351–356.
+    ├── mcpTools.ts                    ← (new) MCP_TOOLS: ordered array of `{ sig: string, why: string, required: boolean }` for the 5 tool entries. Authored from brain-shared.jsx lines 372–378.
+    ├── codeSamples.ts                 ← (new) preformatted code-string constants: `SCAFFOLD_PREVIEW` (Walkthrough §01 right pane, from walkthrough.jsx lines 60–80), `SEED_PREVIEW` (Walkthrough §03 right pane, lines 126–136), `ORIENT_GOOD_SAMPLE` (Cookbook `orient` recipe, cookbook.jsx lines 153–163), `CONFIG_SKELETON_SAMPLE` (Cookbook `configsec` recipe, lines 181–194). Multi-line template literals authored verbatim — whitespace preserved.
+    └── brainCopy.ts                   ← (new) load-bearing copy strings: HERO_A_LINE_1, HERO_A_LINE_2, HERO_A_EYEBROW, HERO_A_SUBHEAD, HERO_A_CHECKS (3-tuple), HERO_B_EYEBROW, HERO_B_LINE_1, HERO_B_LINE_2, HERO_B_LINE_3, SECTION_TITLES (§01–§05 phrasing), FOOTER_LINE, FOOTER_TRIO (`github ↗`, `npm ↗`, `discuss`), PAGE_TITLE_A, PAGE_TITLE_B, OG_DESCRIPTION; quoted verbatim from spec hero blocks + handoff §9 + JSX line ranges noted next to each constant; consumers import to avoid drift.
+```
+
+**Files modified outside `src/app/brain/` (targeted edits, not full rewrites):**
+
+```
+src/app/_components/TopBar/index.tsx               ← (modified) add `brain` entry to NAV_LINKS adjacent to `docs`; flip `mobileVisible` so docs+brain remain visible at every viewport
+src/app/docs/_components/ActiveAwareTopBar/
+  index.tsx                                        ← (modified) extend ActivePage union with 'brain'; map any pathname starting with /brain to active='brain'
+src/app/docs/_components/DocsTemplate/
+  DocsTemplate/index.tsx                           ← (modified) when route.section === 'methodology' && route.slug === 'brain-aide', render a reverse-link banner ("→ tutorial: wire your own backend") between Breadcrumb and H1
+src/app/sitemap.ts                                 ← (modified) append /brain/ and /brain/recipes/ entries (priority 0.7)
+src/app/globals.css                                ← (modified) append a single `:where(.brain-pal) { --color-accent2: #7aa6d6; --color-warn: #d6b25a; --color-bad: #c25a3a; --color-good: #8cbe5a; }` rule. Tokens exist only on `.brain-pal` descendants — no global leak.
+```
+
+**Files NOT modified (in scope by user direction):**
+
+- `.aide/intent.aide` — root spec lag is waived per spec.
+- `.aide/docs/brain-aide.md` — package-vendored markdown ships unchanged; reverse link is injected by the docs template.
+- DocsSidebar / docs sidebar nav — no `# BRAIN` section added.
+
+## Prerequisites
+
+This plan depends on the following existing modules' contracts. They are already
+in place and unchanged by this plan; they must continue to expose the same
+contracts when this plan executes.
+
+- `@/app/_components/TopBar` must continue to export a default `TopBar` component
+  whose source contains a `NAV_LINKS` array with `{ label, href, external,
+  mobileVisible }` entries. Step 8 modifies this array in place.
+
+- `@/app/docs/_components/ActiveAwareTopBar` must continue to export a default
+  client component that derives the active TopBar entry from `usePathname()`.
+  Step 9 extends its `ActivePage` discriminator union and prefix-matching block.
+
+- `@/app/docs/_components/DocsTemplate/DocsTemplate` must continue to receive
+  `{ route: DocRoute, frontmatter, commit, published, renderedHtml, prev, next }`
+  and render Breadcrumb → H1 → DocMeta → body → PrevNext → DocsFooter. Step 10
+  inserts a slug-gated banner element between Breadcrumb and H1.
+
+- `@/service/docsRegistry` must continue to walk `.aide/docs/` under section
+  `methodology` and produce a route whose `(section, slug)` is
+  `('methodology', 'brain-aide')` and whose `urlPath` is
+  `/docs/methodology/brain-aide`. Steps 4 and 5 hard-link to the registry-emitted
+  URL `/docs/methodology/brain-aide/` (with trailing slash, per
+  `next.config.mjs`'s `trailingSlash: true`).
+
+- `@/app/globals.css` must continue to declare the existing `--color-bg`,
+  `--color-card`, `--color-fg`, `--color-dim`, `--color-border`, `--color-accent`
+  tokens at the `@theme` layer. Step 2 appends a `:where(.brain-pal) { … }`
+  block alongside without modifying any existing tokens.
+
+## Plan
+
+### 1. Author static data tables and the copy registry
+
+Read: `coding-playbook/architecture/folder-structure`, `coding-playbook/foundations/conventions`
+
+This step lands the load-bearing data-only modules every later step will import.
+All six tables are colocated in `src/app/brain/_data/` because nothing outside
+the brain section consumes them. Each constant is authored character-for-
+character from the named JSX module — do not paraphrase, do not normalize
+whitespace, do not collapse multi-line template literals. The implementor must
+read the cited JSX line ranges before writing any string.
+
+- [x] Create `src/app/brain/_data/brainCopy.ts` exporting these constants
+      (sources: `design-handoff/brain-variant-walkthrough.jsx` for HERO_A,
+      `design-handoff/brain-variant-cookbook.jsx` for HERO_B, handoff §9 for the
+      §01–§05 titles + footer, `design-handoff/handoff.md` §4 for OG strings):
+
+      `HERO_A_EYEBROW = "# a guide for backend authors"` (walkthrough.jsx line 23)
+      `HERO_A_LINE_1 = "wire any backend"` (walkthrough.jsx line 25)
+      `HERO_A_LINE_2 = "as a brain."` (walkthrough.jsx line 26 — second line is
+      dimmed via `text-[color:var(--color-dim)]`)
+      `HERO_A_SUBHEAD` — verbatim from walkthrough.jsx lines 28–33; renders with
+      an inline accent-colored span around `brain.aide`. Text:
+      `"The brain.aide file is a plugin interface. It tells AIDE how to launch
+      your storage backend over MCP and how to talk to it once it's live.
+      Bundled today: an Obsidian default. This page walks you through wiring
+      that default, then shows you how to author your own — a Notion brain, a
+      flat-filesystem brain, anything that can speak MCP."` Implementor renders
+      this as a `<p>` with a single inline `<span>` around `brain.aide`.
+      `HERO_A_CHECKS` — 3-tuple `["5-step walkthrough", "3 worked examples",
+      "live skeleton generator"]` (walkthrough.jsx lines 35–37)
+      `HERO_B_EYEBROW = "# brain.aide cookbook"` (cookbook.jsx line 36)
+      `HERO_B_LINE_1 = "recipes for the "` (cookbook.jsx line 38; trailing space)
+      `HERO_B_LINE_2 = "brain"` (cookbook.jsx line 38; renders inside an inline
+      accent-colored span)
+      `HERO_B_LINE_3 = " plugin interface."` (cookbook.jsx line 38; leading
+      space + trailing period)
+      `HERO_B_SUBHEAD_LINES` — 2-tuple of comment-style lines from cookbook.jsx
+      lines 41–42:
+      `["# pick a recipe from the rail. each one stands alone — no need to
+      read top-to-bottom.", "# the skeleton generator on the right stays sticky
+      so you can experiment as you read."]`
+      `SECTION_TITLES = { '01': 'install + scaffold the default', '02': 'wire
+      it: /aide:brain config', '03': 'seed the entry-point artifacts', '04':
+      'verify with the boot reporter', '05': 'build your own backend' }` (per
+      handoff §9 + walkthrough.jsx lines 44, 87, 107, 143, 150)
+      `SECTION_SUBHEADS = { '01': '# the cli writes .aide/config/brain.aide
+      pre-filled with the obsidian template.', '02': "# the config flow has
+      two paths. the one that runs depends on what's in args.", '03': '# the
+      four seed sections in brain.aide become four files inside your brain.',
+      '04': '# at session start the orchestrator checks brain.aide vs
+      .mcp.json. four states.', '05': '# everything above worked with bundled
+      obsidian. now write one for your storage.' }` (verbatim from
+      walkthrough.jsx `sub` props on lines 44, 87, 107, 143, 150)
+      `FOOTER_LINE = "© 2026 TetsuKodai Group LLC · ● brain plugin interface"`
+      `FOOTER_TRIO = ["github ↗", "npm ↗", "discuss"]` (walkthrough.jsx line
+      194; "discuss" target maps to the github URL per spec strategy)
+      `PAGE_TITLE_A = "brain.aide — wire any backend as a brain"` (handoff §4)
+      `PAGE_TITLE_B = "brain.aide cookbook — recipes for the brain plugin
+      interface"`
+      `OG_DESCRIPTION = "A guide for backend authors. Wire the bundled Obsidian
+      default, then learn how to author your own brain plugin."` (handoff §4)
+      `EXTERNAL_GITHUB_URL = "https://github.com/aidemd-mcp/server"` (project
+      root spec contract)
+      `EXTERNAL_NPM_URL = "https://www.npmjs.com/package/@aidemd-mcp/server"`
+      `OBSIDIAN_MCP_PACKAGE = "@bitbonsai/mcpvault"` (brain-shared.jsx line 70;
+      surfaces in the obsidian preset's argLines and in the WalkthroughFooter
+      "the source" body prose)
+
+- [x] Create `src/app/brain/_data/backendPresets.ts`. Source:
+      `design-handoff/brain-shared.jsx` lines 65–156 (the verbatim
+      `BACKEND_PRESETS` object). Shape extracted from the JSX:
+
+      `export type PresetKey = 'obsidian' | 'filesystem' | 'notion'` — exactly
+      THREE entries (NOT eight; the JSX BACKEND_PRESETS object holds three
+      keys, no more, see brain-shared.jsx line 65 + its closing brace).
+      `export interface BackendPreset { name: string; command: string; argLines:
+      string[]; orientation: string; config: string }`
+      `export const BACKEND_PRESETS: Record<PresetKey, BackendPreset>` — copy
+      every field byte-for-byte from the JSX literal. The `argLines` array is a
+      list of strings where any entry beginning with `~` represents a YAML null
+      slot with optional inline comment after the `~`. The notion preset's
+      argLines MUST include the explicit `"--token"` and `"--root"` literal
+      entries plus two `~`-prefixed null slots between them (per
+      brain-shared.jsx lines 127–132 + handoff §10 explicit gate). Strings
+      `orientation` and `config` are multi-line — preserve them as template
+      literals with no whitespace normalization.
+
+- [x] Create `src/app/brain/_data/workedExamples.ts`. Source:
+      `design-handoff/brain-variant-walkthrough.jsx` lines 254–306 (the inline
+      `examples` object inside `WorkedExamples`). Shape:
+
+      `export type WorkedExampleKey = 'filesystem' | 'notion' | 'obsidian'`
+      `export interface WorkedExample { label: string; blurb: string; tools:
+      string; orient: string; config: string; args: string }`
+      `export const WORKED_EXAMPLES: Record<WorkedExampleKey, WorkedExample>`
+      Note `tools` is ONE STRING (e.g. `"mcp__brain__read_file ·
+      mcp__brain__list_dir · …"`) joined by ` · ` separators — NOT a string
+      array. `args` is a preformatted multi-line YAML string (e.g.
+      `"args:\n  - \"@example/fs-brain-mcp\"\n  -                              #
+      ← brain root path"`). Quote the trailing-spaces and YAML-null-slot
+      whitespace exactly as the JSX writes them.
+
+- [x] Create `src/app/brain/_data/recipeIndex.ts`. Source:
+      `design-handoff/brain-variant-cookbook.jsx` lines 8–17 (the `recipes`
+      array). Shape:
+
+      `export type RecipeKey = 'quickstart' | 'flow' | 'states' | 'mcp' |
+      'orient' | 'configsec' | 'fs' | 'notion'` — EIGHT entries, in this exact
+      order (this is the JSX-authoritative roster that resolves the prior
+      blocker).
+      `export interface RecipeMeta { id: RecipeKey; label: string; subtitle:
+      string }`
+      `export const RECIPE_INDEX: readonly RecipeMeta[]` — quoted verbatim:
+      `[{ id: 'quickstart', label: '01 · quickstart', subtitle: 'install +
+      wire obsidian' }, { id: 'flow', label: '02 · the config flow', subtitle:
+      'wiring vs. seeding' }, { id: 'states', label: '03 · boot states',
+      subtitle: 'the four reporter codes' }, { id: 'mcp', label: '04 · mcp
+      surface', subtitle: 'what your server exposes' }, { id: 'orient', label:
+      '05 · writing orientation', subtitle: 'the runtime briefing' }, { id:
+      'configsec', label: '06 · writing aide-config', subtitle: 'wiring +
+      seeding script' }, { id: 'fs', label: '07 · recipe: filesystem',
+      subtitle: 'minimum-viable brain' }, { id: 'notion', label: '08 · recipe:
+      notion', subtitle: 'two-slot worked example' }]`
+
+- [x] Create `src/app/brain/_data/bootStates.ts`. Source: `brain-shared.jsx`
+      lines 351–356.
+      `export type BootStateId = 'ok' | 'no-brain-aide' | 'no-mcp-entry' |
+      'mcp-drift'`
+      `export interface BootStateEntry { id: BootStateId; kind: 'ok' |
+      'no-brain-aide' | 'no-mcp-entry' | 'mcp-drift'; what: string; fix:
+      string }`
+      `export const BOOT_STATES: readonly BootStateEntry[]` quoted verbatim
+      from the JSX (each entry's `what` and `fix` text matches the JSX line by
+      line — `what` examples: `"brain.aide + .mcp.json agree."`, `".aide/config/
+      brain.aide is missing."`, etc.).
+
+- [x] Create `src/app/brain/_data/mcpTools.ts`. Source: `brain-shared.jsx`
+      lines 372–378.
+      `export interface MCPToolEntry { sig: string; why: string; required:
+      boolean }`
+      `export const MCP_TOOLS: readonly MCPToolEntry[]` — five entries quoted
+      verbatim (signatures `mcp__brain__read_<unit>`, `mcp__brain__list_<unit>`,
+      `mcp__brain__write_<unit>` are required; `mcp__brain__search` and
+      `mcp__brain__delete_<unit>` are optional).
+
+- [x] Create `src/app/brain/_data/codeSamples.ts` exporting:
+      `export const SCAFFOLD_PREVIEW: string` — verbatim from
+      walkthrough.jsx lines 60–80 (the `<CodePre code={...}/>` template).
+      `export const SEED_PREVIEW: string` — verbatim from walkthrough.jsx
+      lines 126–136.
+      `export const ORIENT_GOOD_SAMPLE: string` — verbatim from cookbook.jsx
+      lines 153–163 (used by the `orient` recipe in step 6).
+      `export const CONFIG_SKELETON_SAMPLE: string` — verbatim from
+      cookbook.jsx lines 181–194 (used by the `configsec` recipe in step 6).
+      All as multi-line template literals; preserve every space and newline.
+
+- [x] No tests for `_data/` modules — they are static literals; verification
+      is the `12d/12e/12g` validation steps in step 12 (grep against literal
+      strings).
+
+### 2. Extend the global CSS palette with a BRAIN_PAL scope rule
+
+Read: `coding-playbook/foundations/anti-patterns`, `coding-playbook/setup/tailwind-v4-gotchas`
+
+Spec contract: BRAIN_PAL must NOT enter the `@theme` block (would expose tokens
+site-wide). Playbook contract: no CSS Modules, no CSS-in-JS, no `style={{}}`
+when Tailwind arbitrary values work. The reconciliation: a single
+`:where(.brain-pal) { … }` rule appended to `globals.css` declaring the four
+custom properties on the `.brain-pal` descendant scope only. Brain components
+consume them via Tailwind arbitrary-value classes
+(`bg-[color:var(--color-warn)]`, `text-[color:var(--color-good)]`, etc.) — no
+component CSS files, no inline styles, full conformance with the
+Tailwind-only rule. The `:where(...)` selector keeps specificity at zero so
+existing palette tokens still cascade naturally.
+
+- [x] Append a single CSS block to `src/app/globals.css` (after the existing
+      `@theme` block, before the keyframes block):
+
+      `:where(.brain-pal) {
+         --color-accent2: #7aa6d6;
+         --color-warn: #d6b25a;
+         --color-bad: #c25a3a;
+         --color-good: #8cbe5a;
+       }`
+
+- [x] Do not modify any existing rule, do not touch `@theme`, do not introduce
+      a new file under `src/app/brain/`. The only required change is the append
+      to `globals.css`. Verify by inspection: the four hex values appear
+      nowhere else in the project.
+
+### 3. Build the brain-section primitives
+
+Read: `coding-playbook/client/components`, `coding-playbook/architecture/folder-structure`
+
+Static, layout-neutral building blocks reused across Walkthrough and Cookbook.
+Most are server components; CopyChip and CmdLine are clients because they own
+clipboard state. Each primitive follows the project component convention:
+PascalCase folder + `index.tsx` default export, JSDoc on the export,
+`className` accepted on the outermost element only and merged via the existing
+`cn` helper at `@/lib/cn`. JSX line refs below resolve every prop and behavior.
+
+- [x] Create `_components/primitives/Card/index.tsx` — bordered card matching
+      the docs callout border treatment; props:
+      `{ children: ReactNode, className?: string }`. Server component.
+- [x] Create `Eyebrow/index.tsx` — uppercase 11px letter-spaced label colored
+      `text-[color:var(--color-accent)]`; props:
+      `{ children: ReactNode, className?: string }`. Server component.
+- [x] Create `Chip/index.tsx` — pill `<button>` used both as backend-preset
+      selector (filled accent bg + dark `#0d0b08` text when active, transparent
+      bg + foreground text when inactive) and as horizontal tab. Renders as
+      `<button>` for accessibility (do NOT use `<div role="button">` — the
+      JSX uses `<button>` for these throughout, see brain-shared.jsx line 226
+      and brain-variant-walkthrough.jsx line 313). Props:
+      `{ active?: boolean, onClick?: () => void, ariaLabel?: string,
+      children: ReactNode, className?: string }`. Server component (the click
+      handler is passed in by the parent client component).
+- [x] Create `CopyChip/index.tsx`. Top of file: `'use client'`. Props:
+      `{ text: string, label?: string, className?: string }`. State:
+      `copied: boolean`. On click: writes `text` to `navigator.clipboard`,
+      sets `copied=true`, swaps the rendered label to `✓ copied`, resets to
+      the prior `label` (default `⧉ copy`) after ~1400ms via a `setTimeout`
+      whose handle is cleared on unmount in a `useEffect` cleanup. JSX source:
+      brain-shared.jsx lines 21–29 (note: JSX uses 1400ms; preserve that
+      timing, NOT the 1500ms the prior plan said). Renders as a `<button>`
+      with `cursor: pointer`; never as a `<span>` (the JSX uses `<span>` but
+      the playbook requires `<button>` for click targets — see Decisions).
+- [x] Create `CmdLine/index.tsx`. Top of file: `'use client'`. Props:
+      `{ cmd: string, className?: string }`. State: `copied: boolean`. The
+      ENTIRE box is clickable (matching JSX brain-shared.jsx lines 31–47);
+      renders as `<button>` with appropriate role + keyboard support so Enter
+      and Space activate the click handler. Inside: `$` accent prefix +
+      monospace `cmd` body + trailing `⧉` (idle) / `✓` (copied) indicator.
+      Border-left 2px in `--color-accent`. Do NOT compose CopyChip here — the
+      whole-row click target requires a single `<button>` element, not an
+      inner button-in-button.
+- [x] Create `CodeBlock/index.tsx` — replaces the JSX's `CodePre` (brain-
+      shared.jsx lines 49–62). Props:
+      `{ code: string, label?: string, maxHeight?: number, className?: string }`.
+      When `label` is set, renders a header bar with `{label}` on the left and
+      a `<CopyChip text={code}/>` on the right; below, a `<pre>` with the
+      verbatim `code` content. When `label` is omitted, renders just the
+      `<pre>`. Server component (CopyChip is the only client part and is
+      composed in).
+- [x] Create `Callout/index.tsx` — brain-scoped callout block.
+      Props: `{ kind: CalloutKind, label?: string, children: ReactNode,
+      className?: string }` where
+      `type CalloutKind = 'why-stop' | 'ok' | 'no-brain-aide' | 'no-mcp-entry'
+      | 'mcp-drift' | 'success'`. Kind-to-color mapping (extended from prior
+      plan to cover the four boot states authoritatively per brain-shared.jsx
+      lines 351–356):
+      `why-stop` → `--color-warn`;
+      `ok` → `--color-good`;
+      `no-brain-aide` → `--color-bad`;
+      `no-mcp-entry` → `--color-warn` (JSX line 354: warn dot);
+      `mcp-drift` → `--color-warn` (JSX line 355: warn dot);
+      `success` → `--color-good` (after-restart-and-seed bubble).
+      Border-left 2px solid the kind's color (matching JSX `borderLeft: 2px
+      solid` everywhere — NOT 3px), uppercase optional label, body in
+      `--color-fg`. Do NOT reuse the docs `.callout-*` classes. Server
+      component.
+- [x] Create `FooterCard/index.tsx` — the spec / RELATED card primitive.
+      Props: `{ href: string, cta: string, title: string, body?: string,
+      external?: boolean, className?: string }`. JSX source: walkthrough.jsx
+      lines 336–345. The `cta` is the small accent-green eyebrow line (e.g.
+      `docs/brain-aide.md →`), `title` is the bold body title (e.g. `the
+      spec`), `body` is the optional dim sub-prose. When `external === true`,
+      renders `<a target="_blank" rel="noopener noreferrer">`; otherwise
+      renders `<Link>` from `next/link`. Server component.
+- [x] No tests for primitives — they are pure render with no logic.
+
+### 4. Build the four pure-client interactive surfaces
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/anti-patterns`
+
+The four interactive components — three named in spec/handoff §8 plus the
+Cookbook-only `SkeletonCompact` — all carry `'use client'`, hold state via
+`useState`, and never fetch. State boundaries: each component owns its own
+state (no Context, no global store). The Cookbook rail/body coupling is
+handled in the Cookbook orchestrator (step 6), not here. Every prop signature
+and state shape below is extracted directly from the JSX source — see line
+ranges. JSX-equivalent logic must be matched behaviorally, not transcribed
+character-for-character (the JSX uses inline styles + `React.useState`; the
+implementor uses Tailwind arbitrary values + the standard `useState` import).
+
+- [x] 4a. Create `_components/interactive/SkeletonGenerator/index.tsx`. Top of
+      file: `'use client'`. JSX source: `brain-shared.jsx` lines 158–276.
+      Props: none. State:
+      `backend: PresetKey` (default `'obsidian'`),
+      `name: string` (default `BACKEND_PRESETS.obsidian.name`),
+      `overrideOrient: boolean` (default `false`),
+      `orient: string` (default `BACKEND_PRESETS.obsidian.orientation`).
+      `useEffect` watches `backend`: on change, sets `name` to the new preset's
+      name and (if `!overrideOrient`) refreshes `orient` from the new preset's
+      orientation (matches JSX lines 165–168 verbatim). Renders a 2-column grid:
+      LEFT — labeled `backend` block with vertical button column (one button
+      per `Object.keys(BACKEND_PRESETS)` — three entries); labeled `name
+      (label)` text input bound to `name`; `override orientation` checkbox
+      bound to `overrideOrient` (when checked, immediately seeds `orient` from
+      the active preset's orientation per JSX line 247); conditional
+      `<textarea>` bound to `orient` when override is on. RIGHT — file path
+      label `.aide/config/brain.aide` + `<CopyChip text={file}/>` on a header
+      row; below, a `<pre>` rendering the composed `file` string. The `file`
+      string composition mirrors JSX lines 170–212 — render `argLines` with `~`
+      entries collapsed to bare `-` (with optional comment after) and string
+      entries rendered as `- "..."`. Use the four standard seed-section
+      placeholder blocks (aide-orientation, aide-config, aide-playbook-index,
+      aide-study-playbook, aide-update-playbook, aide-research-index) verbatim
+      from the JSX; keep the inner `<!-- (your X goes here) -->` placeholders.
+
+- [x] 4b. Create `_components/interactive/SkeletonCompact/index.tsx`. Top of
+      file: `'use client'`. JSX source: `brain-variant-cookbook.jsx` lines
+      271–322. Props: NONE — this component owns its own backend toggle (the
+      JSX SkeletonCompact does NOT consume a parent `presetKey` prop; correcting
+      the prior plan's assumption). State: `backend: PresetKey` (default
+      `'obsidian'`). Renders, in vertical order: a single horizontal row of 3
+      flex-1 backend buttons; a `brain.aide preview` label row with
+      `<CopyChip text={file}/>`; a `<pre>` showing the composed file. The
+      compact `file` composition is simpler than SkeletonGenerator —
+      orientation is always from preset (no override), and the four seed
+      sections are summarized with a single line `(... four seed sections
+      ...)` per JSX line 295. No name input, no override checkbox.
+
+- [x] 4c. Create `_components/interactive/ConfigFlow/index.tsx`. Top of file:
+      `'use client'`. JSX source: `brain-shared.jsx` lines 279–326. Props:
+      none. State: `state: 'null' | 'string' | 'seeded'` (default `'null'`,
+      per JSX line 280; correcting the prior plan's `selected` naming to
+      match JSX). Three buttons render labels (verbatim from JSX lines
+      287–291):
+      `'args last entry: YAML null'` (sets state to `'null'`),
+      `'args last entry: "/Users/me/vault"'` (sets state to `'string'`),
+      `'after restart + seed'` (sets state to `'seeded'`).
+      Two-column WIRING/SEEDING grid below: WIRING column highlighted iff
+      `state === 'null'`, SEEDING column highlighted iff `state === 'string'`.
+      Note: when `state === 'seeded'`, BOTH columns are inactive (opacity 0.4)
+      per JSX — the seeded state suppresses the column highlights and shows
+      ONLY the success card. This corrects the prior plan's "both highlighted
+      when seeded" assumption — re-read JSX lines 304–318 to confirm.
+      Beneath: when `state === 'seeded'`, a `<Callout kind="success">` renders
+      with the JSX-verbatim body: a green `✓` glyph then prose `brain wired
+      and seeded — boot reporter shows ` then a `<span class="text-good">ok
+      </span>` then prose `. you can now run ` then a `<span
+      class="text-accent">/aide</span>` then `normally.`. The five WIRING
+      steps and five SEEDING steps come from JSX lines 304–317 — quote each
+      step's `[n, label]` tuple verbatim. Spec gate: 12j requires only the
+      seeded state to show the bubble; both single states (null, string)
+      highlight one column with no bubble.
+
+- [x] 4d. Create `_components/interactive/WorkedExamples/index.tsx`. Top of
+      file: `'use client'`. JSX source: `brain-variant-walkthrough.jsx` lines
+      251–334. Props: none. State: `tab: WorkedExampleKey` (default
+      `'filesystem'`, per JSX line 252; this resolves the prior plan's open
+      question about default tab). Reads from `WORKED_EXAMPLES`
+      (`_data/workedExamples.ts`) — NOT `BACKEND_PRESETS`. Renders, in
+      vertical order: a horizontal `Chip` strip across the 3 keys (each Chip's
+      `children` is `ex.label` — `'minimum-viable filesystem'`, `'notion
+      (end-to-end)'`, `'obsidian (the bundled default)'`); a body card with
+      `ex.blurb` paragraph; an `MCP TOOLS EXPOSED` eyebrow + `ex.tools` accent
+      line; a 2-col grid containing `<CodeBlock label="frontmatter args"
+      code={ex.args}/>` and `<CodeBlock label="aide-orientation (excerpt)"
+      code={ex.orient}/>`; below the grid, `<CodeBlock label="aide-config
+      (excerpt)" code={ex.config}/>`. Active-tab styling uses the JSX
+      convention: filled accent bg with dark `#0d0b08` foreground (Chip
+      primitive's `active` prop handles this).
+
+### 5. Compose the Walkthrough variant body
+
+Read: `coding-playbook/client/components`, `coding-playbook/foundations/conventions`
+
+Compose §00 hero through §05 plus the cross-link block. Each subsection lives
+in its own folder under `_components/Walkthrough/` and is a server component
+unless it embeds an interactive surface. The orchestrator at
+`_components/Walkthrough/index.tsx` is a server component that imports each
+subsection helper and lays them out in scroll order — no logic in the
+orchestrator beyond import-and-render.
+
+JSX-to-component mapping (every block in `brain-variant-walkthrough.jsx`
+maps to one named component below):
+
+| JSX block (lines)              | Component                                |
+| ------------------------------ | ---------------------------------------- |
+| Top bar (lines 9–19)           | (NOT shipped — `<TopBar/>` from layout)  |
+| Hero (lines 22–39)             | `Walkthrough/Hero/`                       |
+| §01 install (lines 43–82)      | `Walkthrough/Section01Install/`           |
+| §02 wire (lines 86–102)        | `Walkthrough/Section02Wire/`              |
+| §03 seed (lines 106–138)       | `Walkthrough/Section03Seed/`              |
+| §04 verify (lines 142–145)     | `Walkthrough/Section04Verify/`            |
+| §05 build (lines 149–181)      | `Walkthrough/Section05BuildOwn/`          |
+| Footer cluster (lines 186–197) | `Walkthrough/WalkthroughFooter/`          |
+| `<Section>` helper (lines 203–215) | `Walkthrough/SectionScaffold/`         |
+| `<Divider>` (lines 217–219)    | `walkthrough-blocks/Divider/`             |
+| `<SubHeader>` (221–227)        | `walkthrough-blocks/SubHeader/`           |
+| `<SeedRow>` (229–238)          | `walkthrough-blocks/SeedRow/`             |
+| `<BodySectionCard>` (240–249)  | `walkthrough-blocks/BodySectionCard/`     |
+| `<WorkedExamples>` (251–334)   | `interactive/WorkedExamples/` (step 4d)   |
+| `<FooterCard>` (336–345)       | `primitives/FooterCard/` (step 3)         |
+
+- [x] Create `Walkthrough/Hero/index.tsx`. Maps to JSX lines 22–39. Renders:
+      eyebrow `HERO_A_EYEBROW`, two-line `<h1>` (line 2 wrapped in
+      `<span class="text-[color:var(--color-dim)]">`), the `HERO_A_SUBHEAD`
+      paragraph (with the inline accent span around `brain.aide` per JSX line
+      29), and the checkmark trio row using `HERO_A_CHECKS`. Server component.
+- [x] Create `Walkthrough/SectionScaffold/index.tsx`. Maps to JSX `<Section/>`
+      helper (lines 203–215). Props: `{ num: '01' | '02' | '03' | '04' | '05',
+      title: string, sub?: string, children: ReactNode }`. Renders the
+      `§{num}` accent eyebrow + title baseline-aligned, the optional dim sub
+      line below indented to the title's left edge, then the children slot.
+      Server component. Used by §01 through §05.
+- [x] Create `walkthrough-blocks/Divider/index.tsx`. Maps to JSX `<Divider/>`
+      (lines 217–219). Full-width dashed horizontal line. Server component.
+- [x] Create `walkthrough-blocks/SubHeader/index.tsx`. Maps to JSX
+      `<SubHeader/>` (221–227). Props: `{ children: ReactNode }`. Renders an
+      uppercase letter-spaced accent label. Server component.
+- [x] Create `walkthrough-blocks/SeedRow/index.tsx`. Maps to JSX `<SeedRow/>`
+      (229–238). Props: `{ path: string, fromTag: string }`. Renders a 4-col
+      grid: accent `◆` glyph + path + `←` arrow + `<!-- {fromTag}-* -->` tag.
+      Server component.
+- [x] Create `walkthrough-blocks/BodySectionCard/index.tsx`. Maps to JSX
+      `<BodySectionCard/>` (240–249). Props: `{ tag: string, who: string,
+      what: string }`. Renders a card with accent border-left 2px, the tag
+      `<!-- {tag}-* -->` as accent eyebrow, the dim `who` line, and the
+      foreground `what` body. Server component.
+- [x] Create `walkthrough-blocks/BootStates/index.tsx`. Maps to JSX
+      `<BootStates/>` (brain-shared.jsx 350–367). Reads `BOOT_STATES`
+      (`_data/bootStates.ts`). Renders a 2x2 grid of cards — each card has a
+      colored dot + state id + "what" body + accent "fix" hint, with
+      border-left 2px in the state's color. Server component.
+- [x] Create `walkthrough-blocks/MCPToolSurface/index.tsx`. Maps to JSX
+      `<MCPToolSurface/>` (brain-shared.jsx 371–399). Reads `MCP_TOOLS`
+      (`_data/mcpTools.ts`). Renders a stacked list of 5 rows: req/opt label
+      column on the left + signature + dim why-line on the right. Server
+      component.
+- [x] Create `Walkthrough/Section01Install/index.tsx`. Maps to JSX §01 (lines
+      43–82). 2-col grid: LEFT — `<CmdLine cmd="npx aidemd-mcp init"/>`,
+      followed by prose paragraph (verbatim from JSX lines 48–54: "Run this
+      in any project root. It creates `.aide/` with the methodology docs,
+      scaffolds `.aide/config/brain.aide` using the bundled Obsidian template,
+      and stops. The file lands with YAML null at the unwired arg slot — that's
+      the signal that you still need to point it at a vault." with `YAML null`
+      colored `--color-warn`), followed by the dim alternative comment block
+      (verbatim from JSX lines 55–58); RIGHT — `<CodeBlock label=".aide/config/
+      brain.aide (just-scaffolded)" code={SCAFFOLD_PREVIEW}/>`. Wrapped in
+      `<SectionScaffold num="01" title={SECTION_TITLES['01']} sub=
+      {SECTION_SUBHEADS['01']}>`. Server component.
+- [x] Create `Walkthrough/Section02Wire/index.tsx`. Maps to JSX §02 (lines
+      86–102). Wrapped in `<SectionScaffold num="02"
+      title={SECTION_TITLES['02']} sub={SECTION_SUBHEADS['02']}>`. Renders:
+      intro prose paragraph (verbatim from JSX lines 88–93: "Run `/aide:brain
+      config` from inside Claude Code. The command reads the `aide-config`
+      body section, which is integration-specific prose that knows how to
+      handle the unwired slots for *this* backend. Click the buttons below to
+      see what fires when:"); `<ConfigFlow/>` (step 4c); then a
+      `<Callout kind="why-stop" label="WHY THE STOP">` containing the JSX
+      lines 96–101 prose verbatim ("The brain's MCP server is registered at
+      session start. The just-wired brain isn't loaded in the running session
+      — sync wrote the entry but Claude Code didn't see it boot. So the
+      wiring flow stops, you restart, and the second run of `/aide:brain
+      config` takes the seeding path."). Server component.
+- [x] Create `Walkthrough/Section03Seed/index.tsx`. Maps to JSX §03 (lines
+      106–138). Wrapped in `<SectionScaffold num="03"
+      title={SECTION_TITLES['03']} sub={SECTION_SUBHEADS['03']}>`. 2-col grid
+      (1.1fr / 1fr): LEFT — intro prose (verbatim from JSX lines 110–113),
+      then 4 `<SeedRow/>`s with these `(path, fromTag)` pairs from JSX lines
+      115–118: `("coding-playbook/coding-playbook.md", "aide-playbook-index")`,
+      `("coding-playbook/study-playbook.md", "aide-study-playbook")`,
+      `("coding-playbook/update-playbook.md", "aide-update-playbook")`,
+      `("research/research.md", "aide-research-index")`. Then closer prose
+      (verbatim from JSX lines 120–124); RIGHT — `<CodeBlock label="seed write
+      call (obsidian)" code={SEED_PREVIEW}/>`. Server component.
+- [x] Create `Walkthrough/Section04Verify/index.tsx`. Maps to JSX §04 (lines
+      142–145). Wrapped in `<SectionScaffold num="04"
+      title={SECTION_TITLES['04']} sub={SECTION_SUBHEADS['04']}>`. Renders
+      `<BootStates/>` only — note this is FOUR states (ok, no-brain-aide,
+      no-mcp-entry, mcp-drift), not two as the prior plan implied. Server
+      component.
+- [x] Create `Walkthrough/Section05BuildOwn/index.tsx`. Maps to JSX §05 (lines
+      149–181). Wrapped in `<SectionScaffold num="05"
+      title={SECTION_TITLES['05']} sub={SECTION_SUBHEADS['05']}>`. Renders, in
+      vertical order: intro paragraph (verbatim from JSX lines 151–155 with
+      inline accent span around `brain.aide`); `<SubHeader>A · what your MCP
+      server must expose</SubHeader>`; a `<Card>` wrapping `<MCPToolSurface/>`;
+      `<SubHeader>B · the body sections you author</SubHeader>`; a 2-col grid
+      of 6 `<BodySectionCard/>`s with these `(tag, who, what)` triples (verbatim
+      from JSX lines 164–169) — `aide-orientation` / `aide_brain at runtime`,
+      `aide-config` / `/aide:brain config`, and the four `aide-X-index/playbook`
+      seed-section descriptors. Then `<SubHeader>C · worked
+      examples</SubHeader>` + `<WorkedExamples/>` (step 4d). Then `<SubHeader>D
+      · live skeleton generator</SubHeader>` + the dim comment line (JSX line
+      177–178: `# pick a preset, name it, optionally override orientation. copy
+      the result into .aide/config/brain.aide.`) + `<SkeletonGenerator/>`
+      (step 4a). Server component.
+- [x] Create `Walkthrough/CookbookCrossLink/index.tsx` — visible cross-link
+      out of /brain into /brain/recipes. NOT in the JSX (the JSX walkthrough
+      has no cookbook cross-link); spec mandates it. Renders a
+      `<FooterCard cta="LOOKUP" title="see the cookbook →" body="3-column
+      rail/recipe/sticky-generator layout for returning readers."
+      href="/brain/recipes/" />`. Server component.
+- [x] Create `Walkthrough/WalkthroughFooter/index.tsx`. Maps to JSX footer
+      (lines 186–197). Renders, in vertical order: a 2-col grid of two
+      `<FooterCard/>`s: `{ cta: "docs/brain-aide.md →", title: "the spec",
+      body: "The strict, byte-faithful contract for brain.aide — frontmatter
+      schema, marker grammar, parser failure modes.", href:
+      "/docs/methodology/brain-aide/" }` and `{ cta: "github ↗", title: "the
+      source", body: "Reference implementation: @bitbonsai/mcpvault is the
+      Obsidian brain shipping today. Read it as a template for your own.",
+      href: EXTERNAL_GITHUB_URL, external: true }`. Below the cards, a
+      separator row with `FOOTER_LINE` left + a 3-link inline row right
+      (`github ↗` → EXTERNAL_GITHUB_URL, `npm ↗` → EXTERNAL_NPM_URL,
+      `discuss` → EXTERNAL_GITHUB_URL per spec strategy). Server component.
+- [x] Create `Walkthrough/index.tsx` orchestrator. Server component. Imports
+      and renders, in scroll order: `<Hero/>` → `<Divider/>` →
+      `<Section01Install/>` → `<Divider/>` → `<Section02Wire/>` → `<Divider/>`
+      → `<Section03Seed/>` → `<Divider/>` → `<Section04Verify/>` →
+      `<Divider/>` → `<Section05BuildOwn/>` → `<Divider/>` →
+      `<CookbookCrossLink/>` → `<WalkthroughFooter/>`. No state in this file.
+
+### 6. Compose the Cookbook variant body
+
+Read: `coding-playbook/client/components`, `coding-playbook/architecture/folder-structure`
+
+The cookbook is structurally interactive — recipe selection in the rail must
+swap the body. The sticky-right `SkeletonCompact` is independent (owns its own
+backend toggle per the JSX, NOT a parent-driven prop) so the only shared state
+is `activeKey: RecipeKey` between the rail and the body. `CookbookShell` is the
+single client component holding that state; `RecipeRail` and `RecipeBody`
+receive the active key and the handler via props. The outer `Cookbook/index.tsx`
+is a server component composing the hero, the shell, and the footer.
+
+JSX-to-component mapping (every block in `brain-variant-cookbook.jsx` maps to a
+named component below):
+
+| JSX block (lines)                | Component                              |
+| -------------------------------- | -------------------------------------- |
+| Top bar (lines 22–32)            | (NOT shipped — `<TopBar/>` from layout) |
+| Hero strip (lines 34–44)         | `Cookbook/Hero/`                        |
+| Rail buttons (lines 49–66)       | `Cookbook/RecipeRail/`                  |
+| RELATED rail (lines 67–71)       | `Cookbook/WalkthroughCrossLink/`        |
+| Main body (lines 75–77)          | `Cookbook/RecipeBody/`                  |
+| Sticky generator (lines 80–83)   | `interactive/SkeletonCompact/` (4b)     |
+| Footer strip (lines 86–92)       | (NOT shipped — `<BrainFooter/>` from layout) |
+| `<RecipeBody>` switch (97–217)   | `Cookbook/RecipeBody/` (8 branches)     |
+| `<P>`/`<Bullet>`/`<C>` (220–233) | `cookbook-blocks/` text helpers         |
+| `<Step>` (234–244)               | `cookbook-blocks/Step/`                 |
+| `<RecipeWorked>` (246–268)       | `cookbook-blocks/RecipeWorked/`         |
+
+- [x] Create `Cookbook/Hero/index.tsx`. Maps to JSX hero strip (lines 34–44).
+      Server component. Renders: eyebrow `HERO_B_EYEBROW`; an `<h1>` composed as
+      `{HERO_B_LINE_1}<span class="text-[color:var(--color-accent)]">
+      {HERO_B_LINE_2}</span>{HERO_B_LINE_3}` (the word `brain` is wrapped in an
+      inline accent span per JSX line 38 — this corrects the prior plan's
+      assumption of a flat single-line string); below, the two dim subhead
+      lines from `HERO_B_SUBHEAD_LINES` separated by a `<br/>`.
+- [x] Create `cookbook-blocks/Step/index.tsx`. Maps to JSX `<Step/>` (lines
+      234–244). Props: `{ n: string, what: string, children: ReactNode }`.
+      Renders a 40px / 1fr grid: accent `step {n}` label on the left, then
+      bold `{what}` title + `children` body on the right. Server component.
+- [x] Create `cookbook-blocks/RecipeWorked/index.tsx`. Maps to JSX
+      `<RecipeWorked/>` (lines 246–268). Props: `{ tools: string, slot:
+      string, wiring: string, seeding: string }`. Renders, in vertical order:
+      `MCP TOOLS EXPOSED` eyebrow + accent `tools` line; `UNWIRED SLOT(S)`
+      eyebrow + foreground `slot` block (in a card with monospace font); a
+      2-col grid of two cards (`WIRING` accent eyebrow + `wiring` body;
+      `SEEDING` accent eyebrow + `seeding` body), both with accent border-left
+      2px. Server component.
+- [x] Create `cookbook-blocks/RecipeFrame/index.tsx` — frame wrapping every
+      recipe body. Maps to JSX `wrap(...)` helper (lines 100–107). Props:
+      `{ title: string, sub: string, children: ReactNode }`. Renders: dim
+      `RECIPE` eyebrow + bold `<h2>{title}</h2>` + dim subtitle paragraph +
+      children slot. Server component.
+- [x] Create `Cookbook/RecipeBody/index.tsx`. Top of file: `'use client'` (so
+      it can compose `<ConfigFlow/>` for the `flow` recipe and so the
+      conditional logic stays inside the client tree). Props: `{ recipeKey:
+      RecipeKey }`. Switches on `recipeKey` to render one of the 8 recipe
+      bodies. Each body wraps in `<RecipeFrame title=... sub=...>` with
+      JSX-verbatim title/sub strings (lines 109, 130, 134, 138, 146, 172, 199,
+      208 of the cookbook JSX) and contains JSX-verbatim body content. Bodies
+      below — quote prose verbatim:
+      - `quickstart` → 3 `<Step/>`s (n="1" "install + scaffold" body =
+        `<CmdLine cmd="npx aidemd-mcp init"/>` + paragraph; n="2" "wire the
+        slot" body = `<CmdLine cmd="/aide:brain config"/>` + paragraph; n="3"
+        "restart, then seed" body = paragraph only); below the steps, a
+        `<Callout kind="success">` with body `brain ready. boot reporter shows
+        ok; the orchestrator advances; /aide works.` (verbatim from JSX line
+        124).
+      - `flow` → just `<ConfigFlow/>` (step 4c).
+      - `states` → just `<BootStates/>` (step 5).
+      - `mcp` → a `<Card>` wrapping `<MCPToolSurface/>`.
+      - `orient` → "Three jobs:" paragraph + 3 bullet points (lines 150–152
+        verbatim) + `<CodeBlock label="aide-orientation (good)"
+        code={ORIENT_GOOD_SAMPLE}/>` (multi-line literal from JSX lines
+        153–163, must land in `_data/codeSamples.ts`) + "Things not to put
+        here:" paragraph + 3 bullet points (lines 165–167 verbatim).
+      - `configsec` → "Five required moves, in order:" + 5 bullet points
+        (lines 176–180 verbatim) + `<CodeBlock label="aide-config (skeleton)"
+        code={CONFIG_SKELETON_SAMPLE}/>` (multi-line literal from JSX lines
+        181–194).
+      - `fs` → `<RecipeWorked tools="..." slot="..." wiring="..." seeding=
+        "..."/>` with values verbatim from JSX lines 200–204.
+      - `notion` → `<RecipeWorked .../>` with values verbatim from JSX lines
+        209–214.
+      Inline text helpers needed for the bullet/code prose: a small `<P/>`
+      paragraph wrapper, `<Bullet/>` row (accent `·` glyph + body), `<C/>`
+      inline code span (matches JSX lines 220–233 — colocate these as small
+      named exports inside `cookbook-blocks/textHelpers.tsx` or as top-level
+      consts inside RecipeBody — implementor's call, but quote the JSX shape).
+      State: NONE (recipeKey is a prop). Note the additional code samples
+      (`ORIENT_GOOD_SAMPLE`, `CONFIG_SKELETON_SAMPLE`) extend
+      `_data/codeSamples.ts` from step 1 — implementor adds them when
+      authoring this step.
+- [x] Create `Cookbook/RecipeRail/index.tsx`. Top of file: `'use client'`.
+      Maps to JSX rail (lines 49–66). Props: `{ activeKey: RecipeKey, onSelect:
+      (k: RecipeKey) => void }`. Renders one `<button>` per entry in
+      `RECIPE_INDEX` (8 entries from `_data/recipeIndex.ts`). Each button:
+      block-display, full-width, left-aligned text; when active applies
+      `border-l-2 border-[color:var(--color-accent)] bg-[rgba(61,107,74,0.12)]`
+      and uses accent foreground for the label; when inactive renders with
+      transparent border-left and foreground label. Each button shows
+      `entry.label` (line 1, 12.5px) + dim `entry.subtitle` (line 2, 11px).
+- [x] Create `Cookbook/WalkthroughCrossLink/index.tsx`. Maps to JSX RELATED
+      block (lines 67–71). Server component. Renders a card containing the
+      `RELATED` eyebrow + TWO accent links: `docs / brain-aide.md →` →
+      `/docs/methodology/brain-aide/`, and `all canonical docs →` → `/docs/`.
+      The first link uses accent foreground; the second uses standard
+      foreground per JSX line 70. (Spec requires the `→ /brain` reverse link
+      from the RELATED rail too — add a third link `tutorial: wire your own
+      backend →` → `/brain/` so a Cookbook reader can reach the Walkthrough
+      surface, satisfying the spec dual-discoverability gate.)
+- [x] Create `Cookbook/CookbookShell/index.tsx`. Top of file: `'use client'`.
+      State: `activeKey: RecipeKey` (default `'quickstart'`, matching JSX line
+      7). Renders a CSS-grid 3-column layout `grid-cols-[240px_1fr_380px]`
+      (matching JSX line 47): LEFT — `<RecipeRail activeKey={activeKey}
+      onSelect={setActiveKey}/>` followed by `<WalkthroughCrossLink/>` (the
+      RELATED card sits below the rail per JSX); CENTER — `<main><RecipeBody
+      recipeKey={activeKey}/></main>`; RIGHT — sticky aside with `STICKY · LIVE
+      GENERATOR` eyebrow then `<SkeletonCompact/>` (which owns its own state).
+- [x] Create `Cookbook/index.tsx` orchestrator. Server component. Renders
+      `<Hero/>` → `<CookbookShell/>`. The `max-w-[1480px]` wrapper applies
+      HERE (NOT in the layout), keeping the Walkthrough route unaffected.
+      The footer (cookbook.jsx lines 86–92) is NOT rendered inside this
+      orchestrator — the layout's `<BrainFooter/>` covers it. The
+      `<WalkthroughCrossLink/>` (RELATED card) is composed INSIDE
+      `<CookbookShell/>` as part of the rail column per JSX, NOT here.
+
+### 7. Wire the brain section's layout, routes, OG metadata, and section footer
+
+Read: `coding-playbook/client/seo`, `coding-playbook/architecture/folder-structure`
+
+Three Next.js App Router files: `layout.tsx`, `page.tsx`, `recipes/page.tsx`.
+The layout owns the `.brain-pal` palette-scope wrapper, the sticky TopBar, and
+the brain-section `BrainFooter` so both routes inherit the section footer with
+no per-route duplication.
+
+- [x] 7a. Create `src/app/brain/_components/BrainFooter/index.tsx` — server
+      component rendering the `FOOTER_LINE` + `FOOTER_TRIO` row inside a
+      `<footer>` matching the JSX cookbook footer spacing (lines 86–92):
+      horizontal flex, `FOOTER_LINE` on the left with the green static
+      authority dot, the three trio links (`github ↗` → `EXTERNAL_GITHUB_URL`,
+      `npm ↗` → `EXTERNAL_NPM_URL`, `discuss` → `EXTERNAL_GITHUB_URL`) on the
+      right. Note: this is the SECTION footer rendered by the layout under
+      both routes. The Walkthrough's RICHER footer cluster (the 2-col
+      "the spec" / "the source" `FooterCard` grid + the same trio row) lives
+      INSIDE `<Walkthrough/>` as `WalkthroughFooter` (step 5) — so on /brain
+      the page body owns the rich cluster AND BrainFooter renders the simpler
+      attribution line below it; on /brain/recipes only `BrainFooter` renders.
+      This REPLACES the global `<Footer/>` for /brain routes; the global
+      footer is NOT rendered on /brain or /brain/recipes.
+
+- [x] 7b. Create `src/app/brain/layout.tsx` — server component. Wraps children
+      with the palette-scope div and the section chrome:
+      structure: `<div className="brain-pal">` outermost,
+      `<TopBar sticky />` (imported from `@/app/_components/TopBar`),
+      `<main id="main">{children}</main>` (no max-width on the main — the
+      route-level orchestrator owns its own width: `Walkthrough/index.tsx`
+      uses `max-w-[var(--layout-max-width)]` and `Cookbook/index.tsx` uses
+      `max-w-[1480px]`). Skip-link `<a href="#main" className="skip-link">…
+      </a>` is the first child of the wrapper. `<BrainFooter />` is rendered
+      after `<main>`.
+
+- [x] 7c. Create `src/app/brain/page.tsx` — server component returning
+      `<Walkthrough />`. Exports `metadata: Metadata` with:
+      `title: PAGE_TITLE_A` (`"brain.aide — wire any backend as a brain"`),
+      `description: OG_DESCRIPTION`,
+      `alternates: { canonical: 'https://aidemd.dev/brain/' }`,
+      `openGraph: { type: 'article', url: 'https://aidemd.dev/brain/', title:
+      PAGE_TITLE_A, description: OG_DESCRIPTION, images: [ogImage.imagePath →
+      composed via existing pattern in `src/app/layout.tsx` so the canonical
+      `og.png` is reused] }`. Use the existing `ogImage` import from
+      `@/service/socialShare` to inherit the canonical OG image config (per
+      handoff §4 — the brain section reuses the canonical og.png; no
+      brain-specific OG image).
+
+- [x] 7d. Create `src/app/brain/recipes/page.tsx` — server component returning
+      `<Cookbook />`. Exports `metadata` mirroring 7c with title
+      `PAGE_TITLE_B` (`"brain.aide cookbook — recipes for the brain plugin
+      interface"`), the same description, canonical
+      `https://aidemd.dev/brain/recipes/`, and the same OG image inheritance.
+
+- [x] 7e. Verify (manually, by reading the final tree): both routes render
+      `<TopBar sticky />` via the layout, neither route imports the global
+      `Footer` component. `BrainFooter`'s `FOOTER_LINE` matches the spec
+      character-for-character.
+
+### 8. Add the `brain` nav entry to the marketing TopBar with mobile parity
+
+Read: `coding-playbook/client/seo`, `coding-playbook/foundations/conventions`
+
+The marketing TopBar at `src/app/_components/TopBar/index.tsx` already drives
+both the marketing landing and the docs shell (via `ActiveAwareTopBar` reuse).
+Edits live in one file. Spec contract: seven entries in order
+`docs · brain · agents · skills · commands · github ↗ · npm ↗`, with
+`brain` the second `mobileVisible` entry alongside `docs`. The existing
+`ActivePage` discriminator is extended in step 9.
+
+- [x] 8a. In `src/app/_components/TopBar/index.tsx`:
+      - Extend the `ActivePage` type union from
+        `'docs' | 'agents' | 'skills' | 'commands'` to
+        `'docs' | 'brain' | 'agents' | 'skills' | 'commands'`.
+      - Insert a new entry into `NAV_LINKS` directly after the `docs` entry:
+        `{ label: 'brain', href: '/brain', external: false, mobileVisible:
+        true }`. Order is load-bearing — `brain` adjacent to `docs`.
+      - Leave `mobileVisible` for `docs` as `true` (already true) and for
+        `brain` as `true`. The remaining four (`agents`, `skills`,
+        `commands`, `github ↗`, `npm ↗`) keep `mobileVisible: false`.
+      - Update the `isDocs` computed to include `/brain` for the address-bar
+        rendering ONLY if it would render the current path's label correctly;
+        otherwise leave `isDocs` untouched and add a parallel `isBrain` derived
+        from `pathname === '/brain' || pathname.startsWith('/brain/')` and
+        render the `<span>` segment `aidemd.dev<span color=dim>/brain</span>`
+        when on a /brain route, mirroring the existing `/docs` treatment.
+- [x] 8b. No tests added; the change is a literal data-table extension matched
+      visually in the QA step.
+
+### 9. Wire active-state derivation for /brain in the docs TopBar wrapper
+
+Read: `coding-playbook/client/seo`
+
+`ActiveAwareTopBar` at `src/app/docs/_components/ActiveAwareTopBar/index.tsx`
+currently derives the active TopBar entry from /docs prefix matches. It is
+also re-used inside the brain layout via the underlying TopBar. Add a `/brain`
+prefix branch so the brain link gets `aria-current="page"` and the
+forest-green underline when the user is on either /brain route. The marketing
+TopBar (used directly in `src/app/page.tsx` and now in the brain layout) does
+not need a change — it reads `usePathname` itself in step 8a.
+
+- [x] 9a. In `src/app/docs/_components/ActiveAwareTopBar/index.tsx`:
+      - Extend `ActivePage` to include `'brain'`.
+      - Add a prefix-match branch: when `pathname.startsWith('/brain')`,
+        set `active = 'brain'`. Place the branch before the `/docs/agents`
+        check since `/brain` has no overlap risk; ordering is for readability,
+        not correctness.
+      - JSDoc on the function gets one new bullet documenting the mapping
+        `/brain* → 'brain'`.
+- [x] 9b. No tests added for the same reason as step 8b.
+
+### 10. Inject the reverse link into DocsTemplate for /docs/methodology/brain-aide
+
+Read: `coding-playbook/client/components`, `coding-playbook/architecture/folder-structure`
+
+Spec contract: do not modify `.aide/docs/brain-aide.md` (package-vendored).
+The reverse link `→ tutorial: wire your own backend` must appear at the top of
+the rendered docs page. Cleanest insertion point: gate inside `DocsTemplate`'s
+render so only the `methodology/brain-aide` route gets the banner. The banner
+is a static `<a>` styled `text-[color:var(--color-accent)]` with no
+underline. Decision rationale captured in the Decisions section.
+
+- [x] 10a. In `src/app/docs/_components/DocsTemplate/DocsTemplate/index.tsx`:
+      - Add a derived constant near the top of the function:
+        `const isBrainAide = route.section === 'methodology' && route.slug ===
+        'brain-aide'`.
+      - Render a `<a href="/brain" className="...">→ tutorial: wire your own
+        backend</a>` element conditionally between `<Breadcrumb />` and
+        `<h1 />` when `isBrainAide` is true. No `target="_blank"` (in-site
+        link). Inline style or Tailwind arbitrary-value class is fine — match
+        the project's existing convention (Tailwind class). JSDoc on the
+        component is updated to document the slug-gated banner.
+- [x] 10b. No new tests added; behavior is verified by the QA route check in
+      step 12.
+
+### 11. Add /brain and /brain/recipes to the sitemap
+
+Read: `coding-playbook/client/seo`
+
+The existing sitemap is generated; the brain routes are static and outside
+the docs registry's scope, so they need explicit entries.
+
+- [x] In `src/app/sitemap.ts`, append two entries to the returned array
+      (after the `/docs/` entry, before `sectionIndexes`):
+      `{ url: '${BASE}/brain/', lastModified: buildDate, priority: 0.7 }`,
+      `{ url: '${BASE}/brain/recipes/', lastModified: buildDate, priority: 0.6 }`.
+      Trailing slashes are required to match the canonical-URL trailing-slash
+      contract enforced by `next.config.mjs`'s `trailingSlash: true`.
+
+### 12. Validation gates against handoff §10 and spec outcomes
+
+Read: `coding-playbook/workflow/feature-checklist`, `coding-playbook/client/seo`
+
+Each item below maps to a spec outcome or handoff §10 gate. The implementor
+runs these against `npm run dev` (port 3001 — user runs the server, NOT the
+implementor) at desktop 1440px and at 375px mobile. Each unchecked box is a
+deploy-blocking failure. Document each result in the build summary.
+
+- [ ] 12a. Routes return 200: `/brain/` and `/brain/recipes/` both render
+      without console errors at 1440px.
+- [x] 12b. Top-bar nav row shows seven entries in order
+      `docs · brain · agents · skills · commands · github ↗ · npm ↗` on the
+      marketing landing (`/`), on a docs leaf (`/docs/methodology/aide-spec/`),
+      and on `/brain/`. `brain` placement is adjacent to `docs`.
+- [x] 12c. Mobile parity: at viewport 375px, the nav still shows `docs` and
+      `brain` (and `aidemd.dev — zsh` collapsed). `agents`, `skills`,
+      `commands`, `github ↗`, `npm ↗` are hidden via the `hidden md:inline`
+      visibility class; the brain entry is visible because its
+      `mobileVisible` flag is `true`. NO hamburger drawer is introduced on
+      the marketing TopBar (spec forbids `brain` collapsing into a
+      hamburger).
+- [x] 12d. Walkthrough hero copy matches `HERO_A_EYEBROW` /
+      `HERO_A_LINE_1` / `HERO_A_LINE_2` (line 2 dimmed) /
+      `HERO_A_SUBHEAD` (with inline accent span around `brain.aide`) /
+      `HERO_A_CHECKS` trio character-for-character. Section titles §01–§05
+      match `SECTION_TITLES`; section subheads (the `# the cli writes …`
+      comment lines) match `SECTION_SUBHEADS`.
+- [x] 12e. Cookbook hero matches `HERO_B_EYEBROW` plus the composed h1 of
+      `{HERO_B_LINE_1}{accent-span: HERO_B_LINE_2}{HERO_B_LINE_3}` —
+      verifiably the word `brain` is rendered in forest-green accent inside
+      the headline (NOT a flat plain-text line). The two dim subhead comment
+      lines match `HERO_B_SUBHEAD_LINES`.
+- [x] 12f. Footer copy on both `/brain/` and `/brain/recipes/` matches
+      `FOOTER_LINE` character-for-character: year `2026`, `LLC` present,
+      authority dot is forest-green and static (not pulsing). The
+      `FOOTER_TRIO` (`github ↗`, `npm ↗`, `discuss`) renders on both routes;
+      the `discuss` link points at `EXTERNAL_GITHUB_URL`.
+- [x] 12g. Skeleton generator: with `notion` selected, the output includes
+      `--token` and `--root` arg lines and two YAML null values inline
+      (handoff §10 explicit gate).
+- [x] 12h. Skeleton generator: clicking `⧉ copy` writes to the system
+      clipboard and the chip swaps to `✓ copied` for ~1400ms before reverting
+      (NOT 1500ms — JSX uses 1400). Test on `localhost` (HTTPS / localhost is
+      required for clipboard API per handoff §10).
+- [x] 12i. Skeleton generator override: enabling the orientation-override
+      checkbox reveals the textarea and edits flow through to the preview
+      output; disabling restores the preset's default orientation.
+- [x] 12j. ConfigFlow tri-state: button 1 (`args last entry: YAML null`)
+      highlights ONLY WIRING column, no bubble; button 2 (`args last entry:
+      "/Users/me/vault"`) highlights ONLY SEEDING column, no bubble; button 3
+      (`after restart + seed`) leaves both columns dim AND reveals the green
+      ✓ success card. (The prior "both highlighted on seeded" claim is wrong
+      per JSX lines 304–318.)
+- [x] 12k. WorkedExamples (Walkthrough only): switching tabs across
+      `filesystem` / `notion` / `obsidian` swaps blurb + tools + frontmatter +
+      orientation panes from `WORKED_EXAMPLES` (NOT `BACKEND_PRESETS`).
+      Default tab is `filesystem` per JSX line 252.
+- [x] 12l. Recipe rail (Cookbook only): clicking each of the 8 entries
+      (`quickstart, flow, states, mcp, orient, configsec, fs, notion`, in
+      that order) sets the active state (2px accent left-border + tinted
+      `rgba(61,107,74,0.12)` background) and swaps the body. The sticky
+      right-rail `SkeletonCompact` is INDEPENDENT — its backend toggle
+      (obsidian/filesystem/notion) is a separate user input that does NOT
+      change in response to recipe-rail clicks (per JSX cookbook.jsx 271–322,
+      this corrects the prior plan's "swap simultaneously" assertion).
+- [x] 12m. Cross-links resolve: Walkthrough's `<WalkthroughFooter/>` "the
+      spec" card 200s at `/docs/methodology/brain-aide/`. Walkthrough's "the
+      source" card opens `EXTERNAL_GITHUB_URL` in a new tab. Walkthrough's
+      `<CookbookCrossLink/>` 200s at `/brain/recipes/`. Cookbook's
+      `<WalkthroughCrossLink/>` exposes three working links: `docs / brain-
+      aide.md →` 200s at `/docs/methodology/brain-aide/`, `all canonical
+      docs →` 200s at `/docs/`, and `tutorial: wire your own backend →` 200s
+      at `/brain/`.
+- [x] 12n. DocsTemplate banner: at `/docs/methodology/brain-aide/`, the
+      reverse link `→ tutorial: wire your own backend` appears between
+      breadcrumb and H1, colored `--color-accent`, and 200s at `/brain/` on
+      click. At any other docs route (sample: `/docs/methodology/aide-spec/`),
+      the banner is absent.
+- [x] 12o. No `href="#"` survives in the rendered output of either /brain
+      route. Spot-check by viewing source.
+- [x] 12p. BRAIN_PAL containment: viewing `/`, `/docs/`, or any non-brain
+      route in DevTools, no element computes `--color-accent2`,
+      `--color-warn`, `--color-bad`, or `--color-good`. The four tokens
+      resolve only on descendants of the `.brain-pal` wrapper.
+- [ ] 12q. JetBrains Mono only: no second typeface anywhere on /brain,
+      including code-style frontmatter blocks inside the skeleton generator.
+- [x] 12r. OG preview: `https://aidemd.dev/brain/` pasted into a link-preview
+      tester (or via `<head>` source inspection) shows title `PAGE_TITLE_A`
+      (`brain.aide — wire any backend as a brain`), description
+      `OG_DESCRIPTION` (`A guide for backend authors. Wire the bundled
+      Obsidian default, then learn how to author your own brain plugin.`),
+      and the canonical `og.png` image (inherited per handoff §4 — no
+      brain-specific OG image). For `/brain/recipes/`, title is
+      `PAGE_TITLE_B` and the same description and OG image apply.
+- [x] 12s. Sitemap: `/sitemap.xml` (built via `next build`) includes both
+      `https://aidemd.dev/brain/` and `https://aidemd.dev/brain/recipes/`
+      with `<lastmod>` timestamps.
+- [ ] 12t. Lighthouse pass on both /brain and /brain/recipes at 1440px:
+      ≥95 in all four categories (matches root spec gate).
+
+## Decisions
+
+**Two pages, two routes.** Spec strategy "Ship both variants as separate routes"
+is decisive over the handoff's "ship A only" recommendation. The user's
+dual-reader rationale is preserved verbatim in the spec frontmatter and the
+plan implements it without question. The routes are `/brain` (Walkthrough) and
+`/brain/recipes` (Cookbook).
+
+**Shared primitives colocated under `src/app/brain/_components/primitives/`**
+rather than lifted to `src/components/`. The spec strategy explicitly mandates
+brain-section colocation: "Keep the shared primitives colocated with the brain
+segment, not lifted to a global components module." If the section is ever
+pulled, the entire `_components/` tree is one delete-folder operation. Nothing
+else on the site needs Card/Eyebrow/Chip/Callout/FooterCard in this
+brain-specific shape.
+
+**BRAIN_PAL as a `:where(.brain-pal)` rule in `globals.css`** rather than a
+new colocated `.css` file under `src/app/brain/`. Three forces converge on
+this answer: (a) spec forbids the four colors entering the global `@theme`
+(would leak); (b) playbook anti-pattern forbids CSS Modules and CSS-in-JS
+(rules out `brain.module.css`); (c) memory: "When a plan says no component CSS
+in globals.css but the playbook forbids CSS Modules, inline Tailwind arbitrary
+values, don't create per-module .css files" — which we honor by NOT creating a
+brain-only stylesheet, instead appending a single `:where(.brain-pal)` rule
+that scopes the four custom properties to a wrapper class. `:where` keeps
+specificity at zero so existing tokens still win at the cascade level. Brain
+components consume via Tailwind arbitrary values
+(`bg-[color:var(--color-warn)]`).
+
+**Three separate data tables, not one — `BACKEND_PRESETS`, `WORKED_EXAMPLES`,
+and `RECIPE_INDEX` each have distinct shapes and consumers per the JSX.**
+The prior architect assumed a single 8-entry table named `BACKEND_PRESETS`
+fed every interactive surface. Reading the JSX dissolves that assumption:
+
+  - `BACKEND_PRESETS` (brain-shared.jsx 65–156) holds THREE entries
+    (`obsidian, filesystem, notion`). Its shape is `{ name, command, argLines,
+    orientation, config }`. Consumed by `<SkeletonGenerator/>` and
+    `<SkeletonCompact/>` only.
+  - `WORKED_EXAMPLES` (walkthrough.jsx 254–306) holds THREE entries with the
+    same keys but a DIFFERENT shape `{ label, blurb, tools, orient, config,
+    args }` — `tools` is a single ` · `-joined string and `args` is a
+    preformatted multi-line YAML string. Consumed by `<WorkedExamples/>` only.
+  - `RECIPE_INDEX` (cookbook.jsx 8–17) is the EIGHT-entry Cookbook recipe
+    roster `[quickstart, flow, states, mcp, orient, configsec, fs, notion]`
+    — entirely orthogonal to the backend presets (a recipe like `flow` or
+    `mcp` is a meta-topic, not a backend). Consumed by `<RecipeRail/>` and
+    `<RecipeBody/>` only.
+
+The prior plan conflated all three into one table and assumed the 8-recipe
+roster was a list of backends (`supabase, postgres, sqlite, github, custom`)
+— that was wrong. Splitting the data into three colocated files gives each
+consumer the exact shape it needs and lets the implementor lift each table
+verbatim from the JSX without resolving cross-table dependencies.
+
+**The 8-recipe Cookbook roster is JSX-authoritative.** Lifted verbatim from
+`brain-variant-cookbook.jsx` lines 8–17, in this order:
+  1. `quickstart` — `01 · quickstart` — `install + wire obsidian`
+  2. `flow` — `02 · the config flow` — `wiring vs. seeding`
+  3. `states` — `03 · boot states` — `the four reporter codes`
+  4. `mcp` — `04 · mcp surface` — `what your server exposes`
+  5. `orient` — `05 · writing orientation` — `the runtime briefing`
+  6. `configsec` — `06 · writing aide-config` — `wiring + seeding script`
+  7. `fs` — `07 · recipe: filesystem` — `minimum-viable brain`
+  8. `notion` — `08 · recipe: notion` — `two-slot worked example`
+
+This resolves the prior architect's open question #1 (the assumed
+`obsidian, filesystem, notion, supabase, postgres, sqlite, github, custom`
+list was incorrect — those backends never existed in the JSX).
+
+**Per-section body prose is lifted from the JSX, not authored.** Resolves
+prior open question #2. Every paragraph, every code-pre body, every callout
+content block has a precise JSX line range cited inline in steps 5 and 6.
+The implementor reads the cited block, transcribes the prose into the
+component, and wraps it in the appropriate primitive. No interpretive prose
+authoring is required — the design source IS the source of truth.
+
+**Walkthrough subsection components map 1:1 to JSX blocks, not to logical
+divisions.** Each `Section0X` component owns one numbered §-block in the
+JSX. Subsection content like the §05 sub-blocks A/B/C/D lives inside
+`Section05BuildOwn` (NOT split into separate components per sub-letter)
+because those sub-blocks share the section's vertical context and never
+render independently. The cookbook's recipe bodies are similarly inlined in
+`RecipeBody` as a single switch (NOT 8 separate components) because each
+body is small and the JSX shapes them as conditional branches in a single
+helper, not as standalone components.
+
+**`SkeletonCompact` is independent from the recipe rail.** The JSX
+(`brain-variant-cookbook.jsx` lines 271–322) gives `<SkeletonCompact/>` its
+own internal `backend` state with three obsidian/filesystem/notion buttons
+— the rail does NOT drive it. `CookbookShell` therefore only owns
+`activeKey: RecipeKey` and threads it to RecipeRail and RecipeBody; the
+SkeletonCompact's state stays local to itself. This corrects the prior
+plan's "feeds the sticky-right SkeletonCompact" coupling.
+
+**Copy strings centralized in `_data/brainCopy.ts`.** Spec outcome:
+"Page copy across both variants matches the design-source key strings exactly."
+A single source-of-truth file lets the validation steps grep against literal
+strings rather than hunting through component files. Drift surfaces as a
+single import diff instead of a dozen.
+
+**Reverse link insertion lives in `DocsTemplate` with a slug-gated branch,
+not in the markdown source.** Spec strategy: "this link belongs in the docs
+rendering layer, not inside the markdown source — adding it to the markdown
+would couple the package's methodology source to the site's URL structure."
+The slug check `route.section === 'methodology' && route.slug === 'brain-aide'`
+is the smallest possible coupling — one expression, one rendered element,
+nothing else changed. Frontmatter-driven banner was considered but rejected:
+adding a `tutorialHref` field to frontmatter would require schema validation
+and would tempt other docs to use it, expanding the surface.
+
+**Brain section uses its own `layout.tsx`** rather than rendering the
+TopBar+Footer inside each page. Three benefits: (a) the `.brain-pal`
+palette-scope wrapper applies to both routes from one place; (b) the brand
+`<Footer/>` global is replaced cleanly by `<BrainFooter/>` (the section
+footer differs only in the trailing tag-line, but they are distinct enough
+that mixing them in the global Footer would muddy that component's purpose);
+(c) the sticky TopBar render lives in one server component and both routes
+inherit it, mirroring the docs layout pattern.
+
+**Mobile parity via the existing `mobileVisible` flag, not a new mechanism.**
+The TopBar already has a per-link `mobileVisible: boolean` flag controlling
+the `hidden md:inline` class. Flipping the new `brain` entry to
+`mobileVisible: true` is the smallest possible change. No hamburger overlay,
+no overflow drawer, no extra component — `brain` and `docs` simply render at
+all viewports while the rest hide below `md:`. Mirrors how `docs` already
+behaves today.
+
+**Cookbook's 1480 design width achieved via inner-orchestrator wrapper-level
+classes, not the layout's max-width.** The brain layout reuses the standard
+`var(--layout-max-width)` (1280px) for the Walkthrough's main wrapper.
+Overriding the layout for the Cookbook would cascade into the Walkthrough
+unnecessarily. The Cookbook orchestrator `Cookbook/index.tsx` applies its
+own `max-w-[1480px]` wrapper directly. Below 1280px horizontal scroll is
+acceptable per spec strategy.
+
+**Active-state derivation lives in two places, not unified.** The marketing
+TopBar (used by `/` and `/brain` layout) reads `usePathname` directly. The
+`ActiveAwareTopBar` wrapper (used by `/docs` layout) computes a derived
+`active` prop. Both must learn `/brain` independently. We do not unify them
+in this plan because (a) it expands scope beyond what the spec covers, and
+(b) the existing two-bar design is pre-existing and the spec does not request
+unification. Each gets the smallest correct edit.
+
+**Cookbook recipe-rail state lives in `CookbookShell` (a single client
+boundary)**, not in React Context. Two components share the active-recipe
+state (RecipeRail, RecipeBody — `SkeletonCompact` does NOT consume this
+state, see decision above); a parent component holds the state and threads
+it via props. Context would be overkill for two direct children of the same
+parent — and the playbook's anti-pattern entry on state-management libraries
+reinforces "props for tightly related child components, Context for many
+unrelated components."
+
+**Walkthrough rich footer renders inside the page body; BrainFooter is the
+section attribution line.** The JSX walkthrough has both a 2-col footer-card
+cluster (the spec / the source) AND a one-line attribution row in the same
+footer block (lines 186–197). The cookbook footer (lines 86–92) has only the
+attribution row. To honor both shapes in one section layout: the layout's
+`<BrainFooter/>` renders the simple attribution row (matching the cookbook)
+and the Walkthrough composes a richer `<WalkthroughFooter/>` inside its
+page body (above where the layout-level BrainFooter ends up rendering). On
+/brain, the visible footer area shows both — the cards above, the
+attribution below. On /brain/recipes, only the attribution renders. This
+keeps the per-route shape JSX-faithful without forcing the layout to
+conditionally render different footers per pathname.
+
+**Inline `<button>` elements replace JSX's `<span onClick>` clipboard
+chips.** The JSX uses `<span onClick={...}>` with `cursor: pointer` for both
+the `CopyChip` and the `CmdLine` row (brain-shared.jsx lines 24, 34). The
+playbook requires native button semantics for click targets — the
+implementor renders `<button type="button">` with the same visual styling
+but proper keyboard support (Enter / Space) and screen-reader semantics.
+This is a translation correction, not a design change; the rendered output
+is visually identical.
+
+**Reuse existing `cn` helper rather than introducing a new utility.** The
+project already exports `cn` from `@/lib/cn`. Brain primitives that accept
+`className` merge it via `cn(base, className)` — no new util.
+
+**Validation as numbered checkboxes, mapped 1:1 to spec outcomes.** The
+spec's `outcomes.desired` and the handoff's §10 are explicit about what must
+work. Each gate is a checkbox in step 12; failure is deploy-blocking.
+
+## Open questions for the implementor or user
+
+All three blockers from the prior architect pass are resolved by reading the
+JSX in `design-handoff/`. No open questions remain; the plan executes from
+source.

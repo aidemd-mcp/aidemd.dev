@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import cn from "@/lib/cn";
 import TrafficLights from "./TrafficLights";
 
-type ActivePage = "docs" | "agents" | "skills" | "commands";
+type ActivePage = "docs" | "brain";
 
 interface TopBarProps {
   active?: ActivePage;
@@ -21,9 +21,7 @@ interface TopBarProps {
 
 const NAV_LINKS = [
   { label: "docs", href: "/docs", external: false, mobileVisible: true },
-  { label: "agents", href: "/docs/agents", external: false, mobileVisible: false },
-  { label: "skills", href: "/docs/skills", external: false, mobileVisible: false },
-  { label: "commands", href: "/docs/commands", external: false, mobileVisible: false },
+  { label: "brain", href: "/brain", external: false, mobileVisible: true },
   {
     label: "github ↗",
     href: "https://github.com/aidemd-mcp/server",
@@ -43,17 +41,19 @@ const NAV_LINKS = [
  * In the docs layout (step 9) this becomes sticky; for the marketing
  * variant it is non-sticky.
  *
- * Responsive: desktop-only nav links (agents, skills, commands, github, npm)
- * are hidden below the md: breakpoint. Only `docs` remains visible at mobile.
+ * Four nav entries in order: docs, brain, github ↗, npm ↗.
+ * Responsive: external links (github ↗, npm ↗) are hidden below the md: breakpoint.
+ * Both `docs` and `brain` remain visible at every viewport — mobile parity required.
  * The `aidemd.dev — zsh` label also hides at the smallest sizes to save space.
  *
  * In the docs layout, `hamburgerSlot` is rendered inside the nav area at mobile
- * (block md:hidden) so the hamburger appears after the docs link.
+ * (block md:hidden) so the hamburger appears after the brain link.
  */
 export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isDocs = pathname === "/docs" || pathname.startsWith("/docs/");
+  const isBrain = pathname === "/brain" || pathname.startsWith("/brain/");
   return (
     <header
       className="w-full bg-[color:var(--color-card)] border-b border-[color:var(--color-border)]"
@@ -76,6 +76,15 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
               <span style={{ color: "var(--color-accent)" }}>$</span>
               {" "}aidemd.dev
               <span style={{ color: "var(--color-dim)" }}>/docs</span>
+            </span>
+          ) : isBrain ? (
+            <span
+              className="ml-[18px] text-[12px] hidden md:inline"
+              aria-hidden="true"
+            >
+              <span style={{ color: "var(--color-accent)" }}>$</span>
+              {" "}aidemd.dev
+              <span style={{ color: "var(--color-dim)" }}>/brain</span>
             </span>
           ) : (
             <span

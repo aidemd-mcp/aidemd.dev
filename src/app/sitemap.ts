@@ -49,6 +49,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // /privacy canonical is emitted with trailing slash due to trailingSlash: true
     { url: `${BASE}/privacy/`, lastModified: PRIVACY_LAST_UPDATED, priority: 0.4 },
     { url: `${BASE}/docs/`, lastModified: buildDate, priority: 0.8 },
+    { url: `${BASE}/brain/`, lastModified: buildDate, priority: 0.7 },
+    { url: `${BASE}/brain/recipes/`, lastModified: buildDate, priority: 0.6 },
     ...sectionIndexes,
     ...leafRoutes,
   ];
