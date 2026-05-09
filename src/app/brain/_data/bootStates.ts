@@ -20,18 +20,18 @@ export const BOOT_STATES: readonly BootStateEntry[] = [
     id: "no-brain-aide",
     kind: "no-brain-aide",
     what: ".aide/config/brain.aide is missing.",
-    fix: "npx aidemd-mcp init",
+    fix: "npx @aidemd-mcp/server@latest init",
   },
   {
     id: "no-mcp-entry",
     kind: "no-mcp-entry",
     what: ".mcp.json has no brain entry, or args still have null.",
-    fix: "/aide:brain config → npx aidemd-mcp sync → restart",
+    fix: "/aide:brain config → npx @aidemd-mcp/server@latest sync → restart",
   },
   {
     id: "mcp-drift",
     kind: "mcp-drift",
     what: "brain.aide and .mcp.json disagree.",
-    fix: "npx aidemd-mcp sync → restart",
+    fix: "npx @aidemd-mcp/server@latest sync → restart",
   },
 ];

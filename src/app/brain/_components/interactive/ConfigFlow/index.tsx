@@ -17,7 +17,7 @@ const WIRING_STEPS: [string, string][] = [
   ['1', 'read brain.aide → quote last args entry'],
   ['2', 'YAML null detected — ask user for value'],
   ['3', 'edit brain.aide → land resolved value'],
-  ['4', 'run npx aidemd-mcp sync'],
+  ['4', 'run npx @aidemd-mcp/server@latest sync'],
   ['STOP', 'emit "restart Claude Code" message and end'],
 ];
 

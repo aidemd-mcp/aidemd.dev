@@ -20,7 +20,7 @@ export default function Section01Install() {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] items-start">
         <div>
-          <CmdLine cmd="npx aidemd-mcp init" />
+          <CmdLine cmd="npx @aidemd-mcp/server@latest init" />
           <div className="text-[12px] text-[color:var(--color-dim)] mt-[14px] leading-[1.7]">
             Run this in any project root. It creates{" "}
             <span className="text-[color:var(--color-accent)]">.aide/</span> with the

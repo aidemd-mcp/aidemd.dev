@@ -36,7 +36,7 @@ export default function RecipeBody({ recipeKey }: RecipeBodyProps) {
         sub="Wire the bundled Obsidian default in three commands. Total time: under two minutes if you already have a vault."
       >
         <Step n="1" what="install + scaffold">
-          <CmdLine cmd="npx aidemd-mcp init" />
+          <CmdLine cmd="npx @aidemd-mcp/server@latest init" />
           <P>
             Creates <C>.aide/</C> and pre-fills <C>.aide/config/brain.aide</C>{" "}
             with the obsidian template. The args list lands with one{" "}
