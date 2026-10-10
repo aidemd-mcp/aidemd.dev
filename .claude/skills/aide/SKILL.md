@@ -9,7 +9,8 @@ description: >
   in-flight pipeline, or asks to align/refactor specs across the intent
   tree. **MANDATORY**: this skill begins with a non-skippable boot sequence
   — call `aide_info`, gate on brain status, read 6 methodology docs in
-  parallel, run `aide_discover`, read `.aide/session.aide` if it exists.
+  parallel, run `aide_discover`, read `.aide/session.aide` if it exists,
+  then check the board through the `kanban` skill for open tasks.
   You MUST execute boot before reading or acting on the user's request,
   even when you think you have enough context. Skipping boot means
   orchestrating a methodology you don't know — you will guess at file
@@ -38,11 +39,11 @@ This is your only first call. No `Read`, no `aide_discover`, no other tool.
 
 The brain is the pipeline's durable memory. If it isn't wired, the pipeline can't run.
 
-`aide_info` returns one of four `brain.status` values. Branch on them exactly:
+`aide_info` returns one of five `brain.status` values. Branch on them exactly:
 
 - **`ok`** — continue to Step 3.
 
-- **`no-brain-aide`** — the `brain.aide` config file is missing. STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line, conversational tone — e.g.:
+- **`no-brain-aide`** — the `brain.aide` config file is missing (`.aide/config/brain.aide` does not exist). STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line, conversational tone — e.g.:
 
   > The brain config file (`brain.aide`) is missing — let's set that up first.
 
@@ -52,7 +53,24 @@ The brain is the pipeline's durable memory. If it isn't wired, the pipeline can'
   Skill(skill="aide:brain", args="config")
   ```
 
-  The config flow scaffolds `brain.aide` and syncs it into `.mcp.json`. After it returns, halt — the user must run `npx @aidemd-mcp/server@latest sync` and then re-run `/aide`.
+  After the skill returns, halt — the skill itself scaffolds `brain.aide`, handles the sync, and asks the user to restart.
+
+- **`brain-aide-invalid`** — the `brain.aide` config file is present but falls short of the required-section contract. `brain.fault` says how. STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line what is wrong:
+  - `fault.kind === "missing-sections"` → name the sections from `fault.sections`, e.g.:
+
+    > Your brain config is missing required sections: `<section>`, `<section>` — let's add them first.
+
+  - `fault.kind === "malformed"` → give `fault.reason` verbatim, e.g.:
+
+    > Your brain config is malformed: `<fault.reason>` — let's fix that first.
+
+  Then invoke the config flow:
+
+  ```
+  Skill(skill="aide:brain", args="config")
+  ```
+
+  After the skill returns, halt — the config flow repairs or helps fix the file, validates it, and tells the user what to do next.
 
 - **`no-mcp-entry`** — the brain backend is not wired into `.mcp.json`. STOP boot. Do NOT read docs. Do NOT call `aide_discover`. Tell the user in one line — e.g.:
 
@@ -86,6 +104,10 @@ If `outdated` from `aide_info` is non-empty, mention it once and continue:
 
 Outdated is informational, not a gate.
 
+If `behind` from `aide_info` is non-null, mention it once: the global aide server is v{installed}, npm has v{latest}; run `npm i -g @aidemd-mcp/server` when convenient. Informational, never a gate.
+
+If `brainMigration` from `aide_info` is non-null, mention it once: the brain config has outdated sections (`staleSections`) and/or a legacy brain launcher (`legacyLauncher` gives the reasons); run `/aide:brain config` to review each change. Informational, never a gate — nothing changes without the user's yes.
+
 ### Step 4 — Load methodology + intent tree (parallel)
 
 Now — and only now — run these 8 calls in parallel:
@@ -99,7 +121,22 @@ Now — and only now — run these 8 calls in parallel:
 7. `aide_discover` (MCP tool, no arguments)
 8. `Read` → `.aide/session.aide` (only if it exists — the project-root pipeline-position log; if absent, no feature pipeline is in flight)
 
-**Only after all calls return** may you read the user's request, consult the sections below, and decide what to do.
+**Only after all calls return** move on to Step 5.
+
+### Step 5 — Check the board
+
+Every pipeline's work is tracked on the project's kanban board. Invoke the `kanban` skill (`Skill(skill="kanban")`) and, as it directs, have the `kanban-maintainer` agent LIST the project's **open tasks** — every column except Done. You get back a report — per task its column, slug, priority, title, a short excerpt and its path; never list or search the tasks with other tools. Read a task in full from its reported path whenever you need more than the excerpt. If the project tag isn't known yet this session, the kanban index tells you to ask the user — do that, never guess.
+
+Then cross-check the open tasks against `.aide/session.aide` (if present) and the discover output:
+
+- **Session links.** `session.aide`'s `## Kanban` section names the in-flight feature's tasks by slug. Open those tasks first — they are the feature's task list.
+- **Drift.** Flag tasks that `session.aide` says are finished but sit outside Done, in-flight work with no task, tasks `session.aide` names that the agent cannot find, and stale In Progress tasks.
+
+Report the open tasks and any drift to the user in a few lines, and propose the moves or new tasks that would fix it. If `session.aide` names the next task, propose continuing it; otherwise ask the user which task to work on. Never move or create a task silently — every task change goes through the kanban skill's own operations and their approval gates.
+
+If the kanban skill or the brain tools are unreachable, say so and continue — never invent the board's contents.
+
+**Only after Step 5** may you read the user's request, consult the sections below, and decide what to do.
 
 **Why this matters:** You are an orchestrator for a methodology you don't inherently know. Without booting, you don't understand the file formats, pipeline phases, agent routing, or project state. Skipping boot means guessing.
 
@@ -123,9 +160,12 @@ This is non-negotiable. No exceptions. No "this is simple enough to handle direc
 3. **Delegate** — spawn the correct specialized agent for each phase
 4. **Relay** — present agent results to the user and collect approvals
 5. **Advance** — move to the next pipeline stage after approval
+6. **Track** — keep the feature's task current on the board through the `kanban` skill (see "Board tracking" below)
+7. **Edit prose** — agent instructions (agent definitions, command prompts, skill files), documentation (READMEs, methodology docs, guides) and wording-only changes to user-facing text: make the edit yourself. Never delegate it to a subagent and never run it through the pipeline — no plan, no build, no QA: the change depends on the conversation that motivated it, and a fresh subagent loses that context. Only code that changes behavior goes through the pipeline; `.aide` specs still go through their writer agents.
 
 **You MUST NOT:**
-- Write or edit `.aide`, `plan.aide`, `todo.aide`, or any code files yourself
+- Write or edit `.aide`, `plan.aide`, `todo.aide`, `brief.aide`, `session.aide`, or any code files yourself
+- Create or update `.aide/session.aide` yourself — even though you know the pipeline-state content, the orchestrator delegates the write to `aide-spec-writer` (the same agent that writes `.aide` frontmatter); the orchestrator decides WHEN and WHAT, the spec-writer transcribes into canonical form
 - Fill in spec frontmatter, body sections, plans, or fixes yourself
 - Make architectural, implementation, or domain decisions
 - Run builds, tests, or validation yourself (agents do this)
@@ -144,10 +184,11 @@ This is non-negotiable. No exceptions. No "this is simple enough to handle direc
 - Stage 7 (Fix): `aide-implementor` then `aide-qa`
 - Refactor: `aide-auditor` (one per `.aide` section, then `aide-implementor` + `aide-qa`)
 - Align: `aide-aligner`
-- Completion cleanup: `aide-maintainer` (post-QA, after retro promotion)
+- `.aide/session.aide` CREATE and UPDATE: `aide-spec-writer` (same structured-file writer that owns `.aide` frontmatter — see "Session state management" below)
+- Completion cleanup (remove per-module ephemerals through the `aide_cleanup` tool; `session.aide` is never deleted): `aide-maintainer` (post-QA, after retro promotion)
 - Bug investigation / non-pipeline work: `aide-explorer` (read-only) or `general-purpose` (if it needs to write files)
 
-**Stages 2 and 3 are skipped by default.** Most modules are navigation stubs whose intent and outcomes alone are sufficient for planning. Research runs only when the domain is genuinely unknown territory; synthesize runs only when the *domain* (not the implementation) has non-obvious decisions worth persisting alongside the spec. The spec-writer signals both needs in its return; the user confirms; the orchestrator routes accordingly. When both are skipped, the orchestrator passes the user's implementation instructions directly to the architect — the architect plans against frontmatter + user context + coding playbook.
+**Stages 2 and 3 are skipped by default.** Most modules are navigation stubs whose intent and outcomes alone are sufficient for planning. Research runs only when the domain is genuinely unknown territory; synthesize runs when the feature is a pipeline — several modules handing off to each other in a specific order — so the order and hand-offs persist alongside the spec. The spec-writer signals both needs in its return; the user confirms; the orchestrator routes accordingly. When both are skipped, the orchestrator passes the user's implementation instructions directly to the architect — the architect plans against frontmatter + user context + coding playbook.
 
 **Never use the generic `Explore` subagent type.** Use `aide-explorer` instead — it understands the AIDE methodology, uses `aide_discover` for `.aide` file lookups, and follows progressive disclosure. The generic `Explore` agent has no methodology context and will fall back to blind file searching.
 
@@ -181,7 +222,7 @@ You are an orchestrator for a methodology you do not inherently know. The `.aide
 
 You also read **`brief-aide.md`** at boot — `brief.aide` files are per-module pipeline state you detect during resume. The strategist authors them during synthesize; the architect refines them during plan; the implementor and QA consume them; the maintainer agent deletes them after QA passes.
 
-You also read **`session-aide.md`** at boot — `session.aide` is a single project-root pipeline-position log at `.aide/session.aide` (replacing the legacy `handoff.aide` pattern). It tracks the in-flight feature's state, settled architectural decisions, and where the cycle paused. If it exists, read it during boot (Step 4 call 8) — it tells you exactly where to resume. It is deleted only when the feature is fully completed.
+You also read **`session-aide.md`** at boot — `session.aide` is a single project-root pipeline-position log at `.aide/session.aide` (replacing the legacy `handoff.aide` pattern). It tracks the in-flight feature's state, settled architectural decisions, and where the cycle paused. If it exists, read it during boot (Step 4 call 8) — it tells you exactly where to resume. It is never deleted: when a feature closes, the next handoff rewrites it for the work that comes next.
 
 **You do NOT need to read** `progressive-disclosure.md`, `agent-readable-code.md`, `automated-qa.md`, `cascading-alignment.md`, or `aide-template.md` — those are implementation details for the subagents, not for you.
 
@@ -214,6 +255,7 @@ Explicit requests override file state. Examples:
 - "synthesize" or "fill the body" → **Stage 3 (Synthesize)** — explicit opt-in even when defaults would skip it
 - "run QA" → **Stage 6 (QA)**, even if `plan.aide` has unchecked items
 - "build it" → **Stage 5 (Build)**, even if no plan exists yet (ask for one first)
+- "handoff", "save session state", "record where we are", "/aide:handoff" → **Session Handoff** — delegate to `aide-spec-writer` to write `.aide/session.aide`. CREATE if file is missing, UPDATE if it exists. The Session state management section below covers what content to gather and supply in the delegation prompt.
 
 **The Resume Protocol only fires when the user's request is ambiguous** — when they invoke `/aide` without specifying a phase, or describe what they want to do without naming a specific pipeline stage. In those cases, use file state to infer where to pick up.
 
@@ -230,23 +272,69 @@ When the user's request does not map to a specific phase, the discover output te
 | `plan.aide` exists with unchecked items | **Build** — plan is ready |
 | `plan.aide` fully checked, no `todo.aide` | **QA** — build is done |
 | `todo.aide` exists with unchecked items | **Fix** — QA found issues |
-| `todo.aide` fully checked | **Done** — promote retro to brain, hand off to maintainer to delete `brief.aide` (if present)/`plan.aide`/`todo.aide`, report completion. Also: if this was the last in-flight feature, the maintainer deletes `.aide/session.aide` |
+| `todo.aide` fully checked | **Done** — promote retro to brain, hand off to maintainer to remove `brief.aide` (if present)/`plan.aide`/`todo.aide` through `aide_cleanup`, update `session.aide` through `aide-handoff`, report completion |
+
+## Session state management — `.aide/session.aide`
+
+`.aide/session.aide` is the project-wide pipeline-position log — the long-lived index to the board's queue. It is never deleted; when a feature closes, the next handoff rewrites it for the work that comes next. **You decide WHEN it needs to be written; the `aide-handoff` skill owns HOW.** You never write the file yourself, and you do NOT duplicate the handoff operation logic in this skill — invoke `aide-handoff` and let it carry the operation.
+
+The user-facing entry point is `/aide:handoff`; the implementation lives in the `aide-handoff` skill which detects CREATE vs UPDATE, gathers content from your conversation context, and delegates the actual write to `aide-spec-writer` in `session.aide` mode. Nothing deletes `session.aide`.
+
+### When to invoke `aide-handoff`
+
+Invoke it proactively (without waiting for the user) whenever:
+
+- A multi-plan feature has just finished Stage 4 (Plan) and is about to enter a multi-cycle build → CREATE
+- The user has just paused the pipeline for review and the conversation will resume in a future session → CREATE or UPDATE
+- An architectural decision was just settled that downstream agents must not re-debate → UPDATE
+- An anti-regression invariant was just added that every future build phase must check → UPDATE
+- A pipeline stage just completed for the in-flight feature → UPDATE
+- An open question resolves or a new one surfaces → UPDATE
+
+Invoke it reactively whenever the user explicitly says `/aide:handoff`, "save the session", "record where we are", or similar handoff phrasing.
+
+Do NOT invoke it for single-cycle builds, trivial fixes, or features that resume from conversation context alone — a handoff there is noise.
+
+### What you owe the skill
+
+`aide-handoff` cannot read your conversation context — it can only read its delegation prompt. When you invoke it, your `args` should supply the content the skill needs to construct the spec-writer delegation:
+
+- **For CREATE:** feature intent (one line), state summary (a few lines: current stage, task in progress, commit/publish state, what's blocking), `## Kanban` task links (see below), `## Where this cycle stopped` content (the next task by slug and its stage, then the tasks after it in order), settled decisions that span the tasks (numbered, if any), anti-regression invariants (bulleted, if any), optional process discipline notes, optional open questions awaiting the user
+
+`session.aide` is an index to the board, not a copy of it. Each task's progress — what was done, its decisions, remaining work, gotchas — goes into that task's stash; the handoff carries only the slug and a one-line summary. Follow-up work becomes a task, never a list in `session.aide`.
+- **For UPDATE:** the change description (what transition occurred) and section-targeted edits (which section gets new content, e.g. "append decision #4: ...", "rewrite `## Where this cycle stopped` to: ..."). Whenever a task is created, moved, finished, or newly tied to the feature, include the matching `## Kanban` edit.
+
+**Task links are mandatory.** Every handoff supplies the `## Kanban` links: one line per task tied to the feature — its slug, its column, and one line on what it covers. The slug is the stable link; the kanban skill finds the task by slug in whatever column it sits. Items in `## Where this cycle stopped` that correspond to a task name its slug. A feature with no task yet gets one through the kanban skill before the handoff, never a handoff without links.
+
+If you don't have the content yet, gather it from conversation first; if it isn't in conversation, ask the user before invoking the skill. The skill will REFUSE on missing load-bearing content (feature intent, `## Kanban` task links, `## Where this cycle stopped`) rather than fabricate.
+
+## Board tracking — the kanban skill
+
+Every piece of pipeline work is tracked on a task, always. Board bookkeeping is a job the orchestrator runs itself (like interviewing and relaying) — through the `kanban` skill's operations, never by editing the board another way. You hold each operation's approval gates with the user; the `kanban-maintainer` agent does the file work and returns what changed.
+
+- **Start.** When a feature pipeline starts or resumes, tie it to an open task from the Step 5 list, or create one with the kanban skill's create operation. Move it to In Progress with the move operation.
+- **Transitions.** At every transition that triggers `aide-handoff`, stash progress into the task with the stash operation, and hand the task link to the handoff (see "What you owe the skill").
+- **New work.** Follow-up work that surfaces mid-pipeline and is not done this cycle becomes a task (ask the user first), and its slug goes into `session.aide`.
+- **Close.** At Completion, after the maintainer cleans up, move the task to In Review with the complete operation, or to Done once the user confirms the feature is closed.
 
 ## Pipeline
 
 ### Stage 1: Interview → `aide:spec`
 
-**Your job (orchestrator):** Gather just enough context from the user to give the spec-writer a clear delegation prompt. Ask the user:
+**Your job (orchestrator):** YOU own the user interview. The spec-writer does NOT talk to the user — it formats the context you pass it into canonical `.aide` frontmatter. Interview the user thoroughly enough to give the spec-writer everything it needs:
+
 - What module or feature is this for? Where does it live?
-- A sentence or two about what they want to build
-- **Implementation context, if any.** If the user already has a clear picture of how this should be built (helpers to reuse, libraries, sequencing, type shapes), capture it verbatim — you'll pass it to the architect later if synthesize is skipped. If the user wants to think aloud about the *domain* but doesn't have implementation details, that's a signal that synthesize may be warranted.
+- What is the module's purpose, in domain terms? (Drives `description` and `intent`.)
+- What does success look like? What does failure look like? Especially the almost-right-but-wrong kind. (Drives `outcomes.desired` and `outcomes.undesired`.)
+- **Is this feature a pipeline?** Several modules that each do one specific thing in a specific order, handing off through calls, events, a clock or state changes. That covers event-driven pipelines and timed lifecycles alike (a drip sequence: start → wait → advance → complete or cancel). If yes, capture in the user's words the real-world problem it solves and how it flows: what starts it, who calls or notifies whom, in what order, what each hand-off carries, and what happens when a step is late, repeated or missing. This is the strategist's main input — pass it verbatim. (See [the pipeline test](../../../.aide/docs/aide-spec.md#when-to-fill-body-sections--the-pipeline-test).)
+- **Implementation context, if any.** If the user already has a clear picture of how this should be built (helpers to reuse, libraries, sequencing, type shapes), capture it verbatim — you'll pass it to the architect.
 - Any domain knowledge already available in the brain? (Determines whether to skip research later.)
 
-You do NOT need a complete requirements interview — the `aide-spec-writer` agent conducts its own deep interview with the user. Your goal is to know enough to write a good delegation prompt and to capture any implementation context the user volunteers.
+If the interview leaves gaps, the spec-writer will return to you listing what's missing — you re-interview the user and re-delegate.
 
 **Then delegate** to the `aide-spec-writer` agent (via Agent tool, `subagent_type: aide-spec-writer`). The agent will:
-- Interview the user about intent, success criteria, and failure modes
-- Write the `.aide` frontmatter only (`scope`, `intent`, `outcomes.desired`, `outcomes.undesired`)
+- Format the intent context you supplied into `.aide` frontmatter only (`scope`, `intent`, `outcomes.desired`, `outcomes.undesired`)
+- Enforce brevity caps and forbidden-content rules
 - Present the frontmatter to the user for confirmation
 - Return two routing signals: **Research needed** (yes/no) and **Strategy needed** (yes/no)
 
@@ -259,11 +347,13 @@ The spec-writer's two signals plus the user's confirmation determine the next st
 | Research needed | Strategy needed | Next stage |
 |---|---|---|
 | no | no | **Skip to Stage 4 (Plan).** Pass the user's implementation context to the architect. The spec is a frontmatter-only navigation stub. |
-| no | yes | **Skip to Stage 3 (Synthesize).** Brain already has the research; strategist fills body sections. |
-| yes | yes | **Stage 2 (Research) → Stage 3 (Synthesize) → Stage 4 (Plan).** Full pipeline. |
-| yes | no | Unusual. Confirm with the user — research without strategy means we're filling the brain but not the spec body. Only proceed if the user wants the brain entry without persisting domain reasoning in the spec itself. |
+| no | yes | **Skip to Stage 3 (Synthesize).** The feature is a pipeline; the strategist writes how its modules hand off, from the flow you captured in the interview (plus any brain research). |
+| yes | yes | **Stage 2 (Research) → Stage 3 (Synthesize) → Stage 4 (Plan).** |
+| yes | no | **Stage 2 (Research) → Stage 4 (Plan).** A self-contained module can need research and still need no Strategy body; the research lives in the brain, where the architect reads it. |
 
-**Default expectation: most modules are "no, no" → straight to Plan.** Synthesize earns its place only when the *domain* — not the implementation — has decisions worth persisting alongside the spec. If the user is uncertain, ask: "Is there domain reasoning here that you'd want to read in 6 months, beyond what intent + outcomes already say?" If no, skip synthesize.
+The two signals are independent. **Research needed** asks whether the domain is unknown territory. **Strategy needed** asks one thing: [is this feature a pipeline?](../../../.aide/docs/aide-spec.md#when-to-fill-body-sections--the-pipeline-test) — several modules each doing one specific thing in a specific order, handing off through calls, events, a clock or state changes. Event-driven pipelines and timed lifecycles both count. Self-contained modules stay frontmatter-only; pipelines get a Strategy — how the system solves its real-world problem — in the parent spec and each module's slice in its own spec.
+
+**Never skip synthesize silently on a pipeline.** If the feature looks like a pipeline and the spec-writer returned "Strategy needed: no", ask the user before routing to Plan. Decisions settled in `session.aide` or `brief.aide` are never a reason to skip — neither is durable intent.
 
 ### Stage 2: Research → `aide:research` (conditional)
 
@@ -281,12 +371,12 @@ Do NOT research anything yourself. The domain expert agent has specialized tools
 
 **Run only if Stage 1 returned "Strategy needed: yes".** Otherwise skip.
 
-**Your job (orchestrator):** Confirm research is complete (or that the brain already has it), then delegate.
+**Your job (orchestrator):** If research ran, confirm it is complete. Then delegate, passing the pipeline flow you captured in the interview verbatim — the strategist cannot read your conversation. For a pipeline, delegate the parent spec first (the end-to-end strategy), then each module spec (its own slice).
 
 **Then delegate** to the `aide-strategist` agent (via Agent tool, `subagent_type: aide-strategist`). The agent will:
 - Use `aide_discover` to understand the intent tree
 - Read the `.aide` frontmatter for intent
-- Read the brain's research entries for domain knowledge
+- Read the pipeline flow from your delegation, and any brain research entries for domain knowledge
 - Fill ALL FIVE body sections — `## Context`, `## Strategy`, `## Good examples`, `## Bad examples`, `## References` (partial bodies are forbidden)
 - Author the sibling `brief.aide` carrying implementation commitments
 
@@ -351,20 +441,22 @@ Repeat until `todo.aide` is clear. Do NOT fix anything yourself — always deleg
 
 When all issues are resolved:
 
-1. **Promote retro findings from `todo.aide` to the brain at `process/retro/`** BEFORE any deletion. Use the brain MCP write tool. The promoted entry's path is the receipt the maintainer verifies in the next step.
+1. **Promote retro findings from `todo.aide` to the brain at `process/retro/`** BEFORE any removal. Use the brain MCP write tool. The promoted entry's path is the receipt the maintainer verifies in the next step. If QA passed without writing a `todo.aide`, there is no retro to promote — say so in the delegation.
 
-2. **Determine whether this is the last in-flight feature.** If `.aide/session.aide` exists, its `## Where this cycle stopped` section should already indicate closure for this feature. Run `aide_discover` to confirm no other module has a `brief.aide`/`plan.aide`/`todo.aide` outside the one being closed. If yes, the maintainer will also delete `.aide/session.aide` in this delegation; if no, leave `session.aide` for the next feature to consume.
-
-3. **Delegate to the `aide-maintainer` agent** (via Agent tool, `subagent_type: aide-maintainer`). The delegation prompt MUST include:
+2. **Delegate to the `aide-maintainer` agent** (via Agent tool, `subagent_type: aide-maintainer`) — once per module that holds ephemerals for the feature. The delegation prompt MUST include:
    - The **target module path** (where `brief.aide`/`plan.aide`/`todo.aide` live)
-   - The **brain path of the promoted retro** (e.g. `process/retro/2026-05-08-<module>.md`) — the maintainer reads it back to verify the promotion landed before deleting the source `todo.aide`
-   - **Whether to also delete `.aide/session.aide`** — explicitly authorize it only when this is the last in-flight feature (per Step 2)
+   - The **brain path of the promoted retro** (e.g. `process/retro/2026-05-08-<module>.md`) — the maintainer reads it back to verify the promotion landed — or the explicit statement that QA wrote no `todo.aide`
+   - **Only if the user confirmed it:** that the module's `plan.aide` is intentionally empty
 
-   The maintainer verifies preconditions (every `todo.aide` and `plan.aide` checkbox is checked; the named retro entry exists in the brain; if `session.aide` deletion is requested, no other in-flight modules remain), deletes `todo.aide` → `plan.aide` → `brief.aide` (and `session.aide` if authorized), and returns CLEANED / REFUSED / PARTIAL with the list of files touched. If REFUSED, route to the appropriate fix step (e.g. `/aide:fix` for unchecked `todo.aide` items) and re-delegate after.
+   The maintainer verifies the retro, then calls the `aide_cleanup` MCP tool, which refuses — removing nothing — on any unchecked `plan.aide` or `todo.aide` item (naming each one), on a missing plan, or on a path outside the project. It returns CLEANED / REFUSED / PARTIAL with the tool's report. If REFUSED, route to the appropriate fix step (e.g. `/aide:fix` for unchecked `todo.aide` items) and re-delegate after.
 
-4. **Report completion to the user** with a summary of what was built and which artifacts the maintainer cleaned up.
+3. **Update `session.aide`.** It is never deleted. Invoke `aide-handoff` to record the closed task and rewrite `## Where this cycle stopped` for the next task.
 
-Do NOT delete any of these files yourself — always delegate to the maintainer. The maintainer is the only agent in the pipeline authorized to delete pipeline ephemerals.
+4. **Update the board.** Through the `kanban` skill's complete operation, move the feature's task to In Review — or to Done once the user confirms the feature is closed.
+
+5. **Report completion to the user** with a summary of what was built, which artifacts the maintainer cleaned up, and where the task now sits.
+
+Do NOT delete any of these files yourself — always delegate to the maintainer, which removes them only through `aide_cleanup`. Never remove pipeline ephemerals with a shell delete.
 
 ### Refactor → `aide:refactor`
 
@@ -451,14 +543,16 @@ This mode is the canonical batched, cascade-aware fix flow when the aligner repo
 
 ## Rules
 
-- **DELEGATE EVERYTHING.** The orchestrator NEVER writes files, edits code, fills specs, creates plans, runs tests, or does any substantive work. Every phase is handled by its specialized agent via the Agent tool. This is the single most important rule. If you are tempted to "just do it quickly" — don't. Spawn the agent.
+- **DELEGATE EVERYTHING.** The orchestrator NEVER writes files, edits code, fills specs, creates plans, runs tests, or does any substantive work. Every phase is handled by its specialized agent via the Agent tool. This is the single most important rule. If you are tempted to "just do it quickly" — don't. Spawn the agent. Two named exceptions: board bookkeeping through the `kanban` skill, and prose edits (agent instructions, documentation, wording-only text changes), which you make yourself.
+- **Track every feature on the board.** Check the open tasks at boot (Step 5), keep the feature's task current through the `kanban` skill at start, at every transition, and at close, and make sure `session.aide`'s `## Kanban` section links every task tied to the feature by slug.
 - **Every stage gets fresh context.** No agent carries conversation from a prior stage. Handoff is via files only: `.aide`, `plan.aide`, `todo.aide`, and entries persisted to the brain.
 - **`aide_discover` is mandatory, not optional.** The orchestrator MUST run `aide_discover` as its very first action on every `/aide` invocation. Do not use native file-search tools (Glob, Grep, Read) to find `.aide` files — the discover tool provides richer, methodology-aware context.
 - **Pause for approval twice:** after spec frontmatter (Stage 1) and after plan (Stage 4). These are the two points where the user's input shapes the work. (Synthesize, when it runs, also pauses to present the filled body — but synthesize is conditional, so it isn't always in the path.)
-- **Stages 2 and 3 are conditional, not default.** The default path is Stage 1 → Stage 4 → 5 → 6 → 7. Research runs only when the spec-writer signals "Research needed: yes". Synthesize runs only when "Strategy needed: yes". Most modules are navigation stubs — frontmatter-only specs whose intent + outcomes + the user's implementation context are sufficient for planning. Adding synthesize when it isn't earned bloats the spec tree and burns context for downstream agents.
+- **Stages 2 and 3 are conditional, not default.** The default path is Stage 1 → Stage 4 → 5 → 6 → 7. Research runs only when the spec-writer signals "Research needed: yes". Synthesize runs only when "Strategy needed: yes" — when the feature is a pipeline. Self-contained modules are navigation stubs — frontmatter-only specs whose intent + outcomes + the user's implementation context are sufficient for planning. Adding synthesize to a self-contained module bloats the spec tree; skipping it on a pipeline loses the design. When a pipeline comes back "Strategy needed: no", ask the user.
 - **For Shape B plans, pass the user's implementation context to the architect verbatim.** When you skip synthesize, the user's words from the Stage 1 interview ARE the architectural input. Quote them in the architect's delegation prompt; do not paraphrase or summarize.
 - **Detect and resume.** If the user runs `/aide` mid-pipeline, detect state from existing files and resume from the correct stage. Never restart from scratch if prior work exists.
 - **Research is filed by domain.** Research entries go to `research/<domain>/` in the brain, not `research/<project>/`. The knowledge is reusable across projects.
 - **Retro is promoted.** When the fix loop closes, extract the `## Retro` section and persist it to `process/retro/` in the brain. This is how the pipeline learns.
 - **No shortcuts.** Even if the task seems trivial, the pipeline exists to maintain intent alignment. A "simple" task handled outside the pipeline is how drift starts. Always delegate.
 - **Suggest alignment, don't force it.** When discover output shows `status: misaligned` on any spec, or when a spec edit touches outcomes, suggest `/aide:align` to the user. Do not invoke it automatically — misalignment is informational, not a pipeline gate. The user decides whether to act.
+- **`.aide/session.aide` is written by `aide-spec-writer`, never by you, and never deleted.** You hold the content (current stage, task links, settled decisions, where the cycle stopped) because the conversation belongs to you. But the canonical-format write belongs to the spec-writer (same agent that owns `.aide` frontmatter). Delegate a CREATE at pipeline kick-off for multi-cycle features and an UPDATE at every meaningful state transition. If you find yourself about to call Write/Edit on `.aide/session.aide`, STOP — construct a delegation prompt instead.

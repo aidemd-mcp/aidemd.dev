@@ -79,15 +79,43 @@ options:
 
 On confirmation, read the config, merge the prescription, write with the Write tool. If `malformed`, tell the user and ask how to proceed.
 
-**brain:** When `brain` reports `missing` or `malformed`, brain.aide cannot be written by upgrade — the canonical home for brain.aide creation is `/aide:brain config`. Call `aide_upgrade` with `category: "brain"`; the manifest entry will carry an `instructions` field. Then use `AskUserQuestion`:
+- **Launch mode is kept.** The prescription keeps the aide entry's current launch mode, global or local, and never switches it.
+- **The local pin moves forward here.** A local npx entry not pinned to the current version gets the pinned prescription. This is how the pin moves forward.
+- **Custom entries are left alone.** A custom aide entry (neither npx nor `aidemd-mcp`, e.g. a dev `node ./dist/index.js`) reports `matches` and is never offered a change.
+- **Tips are information.** If a file carries a `tip`, surface it once, as information. Never turn it into a merge question.
+- **The brain's launcher is not upgrade's.** The brain's launcher and pin change only through `/aide:brain config`.
 
-```
-question: "Brain config — .aide/config/brain.aide is {missing|malformed}. Set it up now?"
-header: "Brain"
-options:
-  - label: "Yes, set up brain" / description: "Invoke /aide:brain config to scaffold brain.aide"
-  - label: "Skip" / description: "Leave brain.aide untouched"
-```
+**brain:** Upgrade never writes the brain config — not to create it, not to add sections, not to fix it. `.aide/config/brain.aide` is user-owned, and its canonical home for creation and repair is `/aide:brain config`. Skip the generic "Yes, update" question for this category and use the case below that matches the file's `status`. (Calling `aide_upgrade` with `category: "brain"` is safe — it writes nothing and returns the file with an `instructions` field.)
+
+- **Behind** (`status` is `differs`, with `missingSections`): the config is missing required sections. Use `AskUserQuestion`:
+
+  ```
+  question: "Your brain config is missing required sections: {missingSections joined by ", "}. Repair now?"
+  header: "Brain"
+  options:
+    - label: "Yes, repair" / description: "Invoke /aide:brain config to add only the missing sections"
+    - label: "Skip" / description: "Leave brain.aide untouched"
+  ```
+
+- **Outdated** (`status` is `differs`, with `staleSections` and/or `legacyLauncher`, alone or alongside `missingSections`): sections still carry an earlier template's text, or the brain launcher is a legacy form (`legacyLauncher` lists why: `unpinned`, `unversioned`, `older-pin`, `missing-auto-confirm`). Sections the user edited and custom launchers are never reported. Fold every kind present into one `AskUserQuestion`:
+
+  ```
+  question: "Your brain config {is missing sections: … / has outdated sections: … / uses a legacy launcher (…)}. Review now?"
+  header: "Brain"
+  options:
+    - label: "Yes, review" / description: "Invoke /aide:brain config — it shows each change as a before/after and changes nothing without your yes"
+    - label: "Skip" / description: "Leave brain.aide untouched"
+  ```
+
+- **Missing or malformed** (`status` is `missing` or `malformed`): use `AskUserQuestion`:
+
+  ```
+  question: "Brain config — .aide/config/brain.aide is {missing|malformed}. Set it up now?"
+  header: "Brain"
+  options:
+    - label: "Yes, set up brain" / description: "Invoke /aide:brain config to create or fix brain.aide"
+    - label: "Skip" / description: "Leave brain.aide untouched"
+  ```
 
 On "Yes," invoke `Skill(skill="aide:brain", args="config")`. On "Skip," move to the next category.
 
