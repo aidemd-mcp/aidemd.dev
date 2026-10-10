@@ -143,4 +143,4 @@ const counts = {
 };
 
 console.log(`\nBreakdown: methodology=${counts.methodology}  commands=${counts.commands}  agents=${counts.agents}  skills=${counts.skills}`);
-console.log(`Total: ${routes.length} ${routes.length === 33 ? '✓' : '✗ EXPECTED 33'}\n`);
+console.log(`Total: ${routes.length} ${routes.length === 42 ? '✓' : '✗ EXPECTED 42'}\n`);
