@@ -30,18 +30,19 @@
     "previousCommit": "2d6ecdd"
   },
   "docs/plan-aide": {
-    "publishedAt": "2026-10-09T11:29:58-07:00",
-    "sourceCommit": "bbc3c40",
-    "previousCommit": "c27c166"
+    "publishedAt": "2026-10-10T20:43:22-07:00",
+    "sourceCommit": "08807f9",
+    "previousCommit": "bbc3c40"
   },
   "docs/todo-aide": {
-    "publishedAt": "2026-05-07T21:50:05-07:00",
-    "sourceCommit": "c27c166",
-    "previousCommit": "b859854"
+    "publishedAt": "2026-10-10T20:43:22-07:00",
+    "sourceCommit": "08807f9",
+    "previousCommit": "c27c166"
   },
   "docs/brief-aide": {
-    "publishedAt": "2026-05-07T21:50:05-07:00",
-    "sourceCommit": "c27c166"
+    "publishedAt": "2026-10-10T20:43:22-07:00",
+    "sourceCommit": "08807f9",
+    "previousCommit": "c27c166"
   },
   "docs/session-aide": {
     "publishedAt": "2026-10-10T16:57:00-07:00",
@@ -174,9 +175,9 @@
     "previousCommit": "1a5d2e8"
   },
   "agents/aide/aide-maintainer": {
-    "publishedAt": "2026-10-10T19:58:02-07:00",
-    "sourceCommit": "6d85560",
-    "previousCommit": "83a86b5"
+    "publishedAt": "2026-10-10T20:43:22-07:00",
+    "sourceCommit": "08807f9",
+    "previousCommit": "6d85560"
   },
   "agents/kanban/kanban-maintainer": {
     "publishedAt": "2026-10-10T07:53:11-07:00",
@@ -194,9 +195,9 @@
     "previousCommit": "6ff0b77"
   },
   "skills/aide": {
-    "publishedAt": "2026-10-10T16:57:00-07:00",
-    "sourceCommit": "8e1a8fb",
-    "previousCommit": "6f1dcc2"
+    "publishedAt": "2026-10-10T20:43:22-07:00",
+    "sourceCommit": "08807f9",
+    "previousCommit": "8e1a8fb"
   },
   "skills/aide-handoff": {
     "publishedAt": "2026-10-10T16:57:00-07:00",
