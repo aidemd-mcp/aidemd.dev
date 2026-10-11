@@ -4,20 +4,19 @@ description: >
   Record current pipeline state to `.aide/session.aide` — the
   project-wide pipeline-position log that lets the next session (yours
   or another agent's) resume from a known point. CREATE on first
-  invocation per feature; UPDATE on every subsequent meaningful
-  transition. This skill is the orchestration layer: it detects
-  CREATE vs UPDATE from file state, gathers content from the invoking
-  agent's conversation context, and delegates the actual write to the
-  `aide-spec-writer` agent in `session.aide` mode. Invoke this skill
-  when the user types `/aide:handoff`, asks to "save the session" or
-  "record where we are", or whenever a multi-cycle feature reaches a
-  state transition the next agent must not re-derive from scratch —
-  stage completed, architectural decision settled, anti-regression
-  invariant added, pipeline paused mid-review. Do NOT invoke for
-  single-cycle builds or trivial fixes — those resume from
-  conversation context alone and a handoff would be noise.
-  `session.aide` is never deleted — when a feature closes, UPDATE it
-  for the next task.
+  invocation; UPDATE every time after. `session.aide` is always kept
+  up to date as the agent works. This skill is the orchestration
+  layer: it detects CREATE vs UPDATE from file state, gathers content
+  from the invoking agent's conversation context, and delegates the
+  actual write to the `aide-spec-writer` agent in `session.aide` mode.
+  Invoke this skill when the user types `/aide:handoff`, asks to "save
+  the session" or "record where we are", and whenever anything changes
+  what `session.aide` says — a stage starts or completes, a decision
+  is settled, an invariant is added, a task moves, a release ships, or
+  work outside the pipeline changes the state or the next step. Never
+  end a turn or a session with `session.aide` behind. `session.aide`
+  is never deleted — when a feature closes, UPDATE it for the next
+  task.
 ---
 
 # /aide:handoff — Session Handoff
@@ -36,9 +35,9 @@ Record current pipeline state to `.aide/session.aide`. This skill owns the orche
   - File missing → **CREATE** mode (first handoff for the in-flight feature)
   - File exists → **UPDATE** mode (apply a surgical diff to the existing log)
 - [ ] **Gather content from conversation context.** Before delegating, identify the specific pieces `aide-spec-writer` needs:
-  - **For CREATE:** feature intent (one line for the frontmatter `intent:` field); state summary (a few lines: current stage, the task in progress, commit/publish state, what's blocking); `## Kanban` task links (one line per task tied to the feature, in work order: slug, column, what it covers); `## Where this cycle stopped` content (the next task by slug and its stage, then the ordered list of tasks after it); architectural decisions that span the feature's tasks (numbered list, if any); anti-regression invariants (bullet list, if any); process discipline notes (optional); open questions awaiting the user (optional)
+  - **For CREATE:** feature intent (one line for the frontmatter `intent:` field); state summary (what was just done, what is paused or blocking, commit/publish state, the task in progress by slug); `## Kanban` task links (one line per task the work touches, in work order: slug, column, what it covers); `## Where this cycle stopped` content (which stage paused and why, artifact statuses, the numbered next steps); what's already done and validated; what's left after the current cycle; every settled decision (numbered list); anti-regression invariants (bullet list, if any); process discipline notes (optional); open questions awaiting the user (optional)
   - **For UPDATE:** change description (what transition occurred); section-targeted edits (e.g. "append decision #4: ...", "rewrite `## Where this cycle stopped` to: ..."); numbered references to preserve (decision #N stays stable across edits). Whenever a task was created, moved, finished, or newly tied to the feature, include the matching `## Kanban` edit — and if the existing file has no `## Kanban` section, add one.
-- [ ] **Keep it an index, not a copy of the tasks.** `session.aide` points at the board; each task's stash holds that task's progress — what was done, its decisions, remaining work, gotchas. Stash that detail into the task through the `kanban` skill, and give the handoff only the slug and a one-line summary. Follow-up work becomes a task, not a list in `session.aide`.
+- [ ] **Keep it the full session record.** `session.aide` holds what was done, every decision, what is validated and what comes next, in full, and it links the board by slug. A fresh agent reading only this file must know where everything stands. Stashing into the task through the `kanban` skill still happens alongside, but never in place of the detail here.
 - [ ] **Task links are mandatory.** `session.aide` always points at the board. If the conversation names no task for the feature, check the board through the `kanban` skill; if no task exists, ask the user to create one there before delegating. Never write a handoff without task links. The slug is the stable link — the kanban skill finds the task by slug in whatever column it sits.
 - [ ] **Delegate to `aide-spec-writer`** via the Agent tool (`subagent_type: aide-spec-writer`). The delegation prompt MUST:
   - **Name the operation type explicitly** — `session.aide CREATE` or `session.aide UPDATE`. The spec-writer's default operation is `.aide` frontmatter; naming the operation is mandatory for correct dispatch.

@@ -274,32 +274,30 @@ When the user's request does not map to a specific phase, the discover output te
 
 ## Session state management — `.aide/session.aide`
 
-`.aide/session.aide` is the project-wide pipeline-position log — the long-lived index to the board's queue. It is never deleted; when a feature closes, the next handoff rewrites it for the work that comes next. **You decide WHEN it needs to be written; the `aide-handoff` skill owns HOW.** You never write the file yourself, and you do NOT duplicate the handoff operation logic in this skill — invoke `aide-handoff` and let it carry the operation.
+`.aide/session.aide` is the project-wide pipeline-position log — the long-lived session record, linked to the kanban board. It is never deleted; when a feature closes, the next handoff rewrites it for the work that comes next. **You decide WHEN it needs to be written; the `aide-handoff` skill owns HOW.** You never write the file yourself, and you do NOT duplicate the handoff operation logic in this skill — invoke `aide-handoff` and let it carry the operation.
 
 The user-facing entry point is `/aide:handoff`; the implementation lives in the `aide-handoff` skill which detects CREATE vs UPDATE, gathers content from your conversation context, and delegates the actual write to `aide-spec-writer` in `session.aide` mode. Nothing deletes `session.aide`.
 
 ### When to invoke `aide-handoff`
 
-Invoke it proactively (without waiting for the user) whenever:
+**`session.aide` is always kept up to date as you work.** Whenever something changes what it says — the state summary, the task links, the decisions, the invariants or the next step — invoke it right then, without waiting for the user and without waiting for a pipeline milestone. A stale `session.aide` sends the next session down the wrong path. That includes, among others:
 
-- A multi-plan feature has just finished Stage 4 (Plan) and is about to enter a multi-cycle build → CREATE
-- The user has just paused the pipeline for review and the conversation will resume in a future session → CREATE or UPDATE
-- An architectural decision was just settled that downstream agents must not re-debate → UPDATE
-- An anti-regression invariant was just added that every future build phase must check → UPDATE
-- A pipeline stage just completed for the in-flight feature → UPDATE
+- A pipeline stage starts or completes, or the pipeline pauses for review → CREATE (if missing) or UPDATE
+- An architectural decision is settled, or an anti-regression invariant is added → UPDATE
+- A task is created, moved, finished, or newly tied to the work → UPDATE
 - An open question resolves or a new one surfaces → UPDATE
+- A release or publish happens, or a commit lands that the state summary should name → UPDATE
+- Work done outside the pipeline changes the state or the next step — a direct prose edit, a fix, a config or environment change (e.g. a global upgrade), a follow-up in another repo → UPDATE
 
-Invoke it reactively whenever the user explicitly says `/aide:handoff`, "save the session", "record where we are", or similar handoff phrasing.
-
-Do NOT invoke it for single-cycle builds, trivial fixes, or features that resume from conversation context alone — a handoff there is noise.
+Batch only within one burst of work: never end a turn, hand back to the user, or finish a session with `session.aide` behind. Invoke it also whenever the user says `/aide:handoff`, "save the session", "record where we are", or similar.
 
 ### What you owe the skill
 
 `aide-handoff` cannot read your conversation context — it can only read its delegation prompt. When you invoke it, your `args` should supply the content the skill needs to construct the spec-writer delegation:
 
-- **For CREATE:** feature intent (one line), state summary (a few lines: current stage, task in progress, commit/publish state, what's blocking), `## Kanban` task links (see below), `## Where this cycle stopped` content (the next task by slug and its stage, then the tasks after it in order), settled decisions that span the tasks (numbered, if any), anti-regression invariants (bulleted, if any), optional process discipline notes, optional open questions awaiting the user
+- **For CREATE:** feature intent (one line), state summary (what was just done, what is paused or blocking, commit/publish state, task in progress by slug), `## Kanban` task links (see below), `## Where this cycle stopped` content (which stage paused and why, artifact statuses, the numbered next steps), what's already done and validated, what's left after the current cycle, every settled decision (numbered), anti-regression invariants (bulleted, if any), optional process discipline notes, optional open questions awaiting the user
 
-`session.aide` is an index to the board, not a copy of it. Each task's progress — what was done, its decisions, remaining work, gotchas — goes into that task's stash; the handoff carries only the slug and a one-line summary. Follow-up work becomes a task, never a list in `session.aide`.
+`session.aide` is the full session record, and it also links the board. Give the handoff the whole picture — what was done, every decision, what is validated, what comes next — not just slugs. Stashing progress into the task through the kanban skill still happens alongside; it never replaces what goes into `session.aide`.
 - **For UPDATE:** the change description (what transition occurred) and section-targeted edits (which section gets new content, e.g. "append decision #4: ...", "rewrite `## Where this cycle stopped` to: ..."). Whenever a task is created, moved, finished, or newly tied to the feature, include the matching `## Kanban` edit.
 
 **Task links are mandatory.** Every handoff supplies the `## Kanban` links: one line per task tied to the feature — its slug, its column, and one line on what it covers. The slug is the stable link; the kanban skill finds the task by slug in whatever column it sits. Items in `## Where this cycle stopped` that correspond to a task name its slug. A feature with no task yet gets one through the kanban skill before the handoff, never a handoff without links.
@@ -312,7 +310,7 @@ Every piece of pipeline work is tracked on a task, always. Board bookkeeping is 
 
 - **Start.** When a feature pipeline starts or resumes, tie it to an open task from the Step 5 list, or create one with the kanban skill's create operation. Move it to In Progress with the move operation.
 - **Transitions.** At every transition that triggers `aide-handoff`, stash progress into the task with the stash operation, and hand the task link to the handoff (see "What you owe the skill").
-- **New work.** Follow-up work that surfaces mid-pipeline and is not done this cycle becomes a task (ask the user first), and its slug goes into `session.aide`.
+- **New work.** Follow-up work that surfaces mid-pipeline goes into `session.aide`'s follow-ups; anything large enough to schedule also becomes a task (ask the user first), and its slug goes next to it.
 - **Close.** At Completion, after the maintainer cleans up, move the task to In Review with the complete operation, or to Done once the user confirms the feature is closed.
 
 ## Pipeline
@@ -553,4 +551,4 @@ This mode is the canonical batched, cascade-aware fix flow when the aligner repo
 - **Retro is promoted.** When the fix loop closes, extract the `## Retro` section and persist it to `process/retro/` in the brain. This is how the pipeline learns.
 - **No shortcuts.** Even if the task seems trivial, the pipeline exists to maintain intent alignment. A "simple" task handled outside the pipeline is how drift starts. Always delegate.
 - **Suggest alignment, don't force it.** When discover output shows `status: misaligned` on any spec, or when a spec edit touches outcomes, suggest `/aide:align` to the user. Do not invoke it automatically — misalignment is informational, not a pipeline gate. The user decides whether to act.
-- **`.aide/session.aide` is written by `aide-spec-writer`, never by you, and never deleted.** You hold the content (current stage, task links, settled decisions, where the cycle stopped) because the conversation belongs to you. But the canonical-format write belongs to the spec-writer (same agent that owns `.aide` frontmatter). Delegate a CREATE at pipeline kick-off for multi-cycle features and an UPDATE at every meaningful state transition. If you find yourself about to call Write/Edit on `.aide/session.aide`, STOP — construct a delegation prompt instead.
+- **`.aide/session.aide` is written by `aide-spec-writer`, never by you, and never deleted.** You hold the content (current stage, task links, settled decisions, where the cycle stopped) because the conversation belongs to you. But the canonical-format write belongs to the spec-writer (same agent that owns `.aide` frontmatter). Delegate a CREATE the first time tracked work starts, and an UPDATE whenever anything changes what the file says — keep it up to date as you work. If you find yourself about to call Write/Edit on `.aide/session.aide`, STOP — construct a delegation prompt instead.
