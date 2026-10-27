@@ -6,6 +6,21 @@ Bullets that change an AIDE file format start with `[migration]` and carry `Dete
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-26
+
+### Added
+- `aide_upgrade` takes an optional `targetVersion` (an exact published `x.y.z`). With it, the `mcp` step judges a project's npx-launched aide entry by its version pin alone and reports the move as `pinMove: { from, to }`; with `category: "mcp"` the tool moves the pin itself, changing only the version inside the package argument and leaving the command form, flags, other servers, formatting and line endings byte-identical. It never moves a pin backwards, never touches a global entry, and refuses without writing when the pin changed since it was checked or the config cannot be edited safely. Without `targetVersion`, nothing changes.
+
+### Changed
+- `/aide` boot now upgrades the server before the project's files, one step per session. When `aide_info` reports the server behind, boot shows the version count and up to three highlights and offers the upgrade: a global install runs `npm i -g`; an npx-launched project first downloads the new version into the npx cache and, only if that works, has `aide_upgrade` move its pin. After a server upgrade, and after any `/aide:upgrade` that changed something, boot asks for a new session before doing more work, so the agent never runs on a mix of old and new docs, skills and agents.
+- `aide_info`'s version notice (`behind`) now covers every launch: a global install, or npx pinned or unpinned. It compares the running server's version against the latest published one and says which launch it is (`launch`), how many releases behind (`versionsBehind`), and up to three one-line `highlights` of what those releases added or fixed, read from the published changelog. Artifact staleness (`outdated`) is still judged only against the version the project runs, so files that match a pinned version are never reported outdated just because a newer release exists. An offline or failed check stays silent and never gates the pipeline.
+
+### Fixed
+- A project whose `.mcp.json` pins the aide server was never told a newer version existed: the version notice fired only for a global install, and the artifact check compared the project's files against the old pinned server's own manifest, so both stayed empty.
+- `/aide:brain config` skips a seeded brain file that already has the new section's text, instead of treating it as edited and asking the user about a file that is already up to date.
+
+## [0.13.1] - 2026-10-26
+
 ### Changed
 - The bundled brain template's kanban index (the `kanban-index` section) says a task slug is never cut off at the 60-character limit: a too-long title gets a shorter whole-word slug that still says what the task is, and the title keeps its full wording. Brain configs with the previous wording are offered the new text through `/aide:brain config`, never overwritten.
 - `/aide:brain config` now carries a replaced seed section through to the brain: after the user accepts a new section in `brain.aide`, it offers to update the seeded brain file agents actually read (for example `kanban/kanban.md`). A file the user never edited is offered as a plain update; an edited file is shown side by side and kept unless the user says replace. Before, only the config changed and the brain file kept the old text.

@@ -60,9 +60,9 @@
     "previousCommit": "027f166"
   },
   "docs/changelog": {
-    "publishedAt": "2026-10-26T09:42:04-07:00",
-    "sourceCommit": "d657a26",
-    "previousCommit": "c8d9dc2"
+    "publishedAt": "2026-10-26T17:08:43-07:00",
+    "sourceCommit": "b62c696",
+    "previousCommit": "5bb3c12"
   },
   "commands/aide/aide": {
     "publishedAt": "2026-05-08T14:55:59-07:00",
@@ -105,9 +105,9 @@
     "previousCommit": "ba5179e"
   },
   "commands/aide/upgrade": {
-    "publishedAt": "2026-10-25T15:07:00-07:00",
-    "sourceCommit": "2421374",
-    "previousCommit": "7470034"
+    "publishedAt": "2026-10-26T16:14:08-07:00",
+    "sourceCommit": "5bb3c12",
+    "previousCommit": "2421374"
   },
   "commands/aide/update-playbook": {
     "publishedAt": "2026-04-28T18:22:30-07:00",
@@ -125,9 +125,9 @@
     "previousCommit": "c27c166"
   },
   "commands/aide/brain": {
-    "publishedAt": "2026-10-26T09:42:04-07:00",
-    "sourceCommit": "d657a26",
-    "previousCommit": "6d85560"
+    "publishedAt": "2026-10-26T10:20:07-07:00",
+    "sourceCommit": "12a5c3a",
+    "previousCommit": "d657a26"
   },
   "commands/aide/handoff": {
     "publishedAt": "2026-05-21T18:27:32-07:00",
@@ -204,9 +204,9 @@
     "previousCommit": "6ff0b77"
   },
   "skills/aide": {
-    "publishedAt": "2026-10-26T09:08:58-07:00",
-    "sourceCommit": "7b8756d",
-    "previousCommit": "dc41576"
+    "publishedAt": "2026-10-26T16:54:52-07:00",
+    "sourceCommit": "7367af2",
+    "previousCommit": "5bb3c12"
   },
   "skills/aide-handoff": {
     "publishedAt": "2026-10-25T15:07:00-07:00",
