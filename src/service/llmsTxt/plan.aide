@@ -1,4 +1,5 @@
 ---
+status: completed
 intent: >
   Build the llms.txt generator at src/service/llmsTxt — consume docsRegistry
   (not duplicate the walk), add a lightweight description accessor to

@@ -1,5 +1,6 @@
 ---
 scope: src/service/docsRegistry
+alignment: unreviewed
 description: Build-time filesystem walker that discovers all markdown docs across four content roots and produces a deterministically-ordered 33-route registry with commit hashes and rendered HTML.
 intent: >
   Walk four content roots (.aide/docs/, .claude/commands/, .claude/agents/,

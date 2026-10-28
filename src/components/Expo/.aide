@@ -1,5 +1,6 @@
 ---
 scope: src/components/Expo
+alignment: unreviewed
 description: Expo mascot — fixed bottom-right sprite with scroll-contextual speech bubble tips driven by IntersectionObserver.
 intent: >
   Expo is the site's resident domain expert, scoped to the marketing landing

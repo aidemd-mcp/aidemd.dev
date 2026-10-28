@@ -1,4 +1,5 @@
 ---
+status: completed
 intent: >
   Two viewport-geometry defects: the hero tip never renders on page load because the
   center-band IntersectionObserver fires threeLayerModel before hero can, and the

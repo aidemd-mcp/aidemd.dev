@@ -1,4 +1,5 @@
 ---
+status: completed
 intent: >
   Two implementation gaps: (1) five CSS variable references use `--color-dim2`
   (no hyphen) while globals.css defines `--color-dim-2` (with hyphen), silently

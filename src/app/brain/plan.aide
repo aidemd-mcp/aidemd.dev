@@ -1,4 +1,5 @@
 ---
+status: approved
 intent: >
   Build the public /brain section as two static-export Next.js routes — Walkthrough at
   /brain (linear §01–§05 guide) and Cookbook at /brain/recipes (3-column rail / recipe /

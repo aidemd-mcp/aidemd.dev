@@ -1,4 +1,5 @@
 ---
+status: completed
 intent: "outcomes.desired[0] (og.png is sRGB), outcomes.undesired[0] (not sRGB causes silent consumer downgrade)"
 misalignment:
   - implementation-drift

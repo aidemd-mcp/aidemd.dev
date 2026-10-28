@@ -1,4 +1,5 @@
 ---
+status: completed
 intent: >
   Refactor aidemd.dev to conform to the coding playbook's on-page SEO depth
   across three pillars — heading structure, accessibility, and metadata —

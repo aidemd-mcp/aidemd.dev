@@ -1,5 +1,6 @@
 ---
 scope: src/service/socialShare
+alignment: unreviewed
 description: Canonical Open Graph + Twitter share card — one site-wide 1200×630 PNG rendered from an in-repo HTML design source and wired into every page's head.
 intent: >
   When an aidemd.dev URL is pasted into Slack, iMessage, Twitter/X, LinkedIn,

@@ -1,5 +1,6 @@
 ---
 scope: src/service/llmsTxt
+alignment: unreviewed
 description: Build-time generator that emits a single /llms.txt file at the site root following the llmstxt.org progressive-disclosure standard — a brief product overview plus the verbatim contents of the methodology docs index so any agent landing on aidemd.dev can orient itself and navigate to full docs without scraping HTML.
 intent: >
   When an AI agent (Claude, ChatGPT, a custom research bot, or any tool that

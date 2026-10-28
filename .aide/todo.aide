@@ -1,5 +1,5 @@
 ---
-status: closed
+status: completed
 intent: >
   Four real gaps from the SEO refactor pass: a systemic canonical/sitemap
   trailing-slash mismatch on all 34 non-section-index routes (ISSUE-01);

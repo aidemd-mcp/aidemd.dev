@@ -1,5 +1,6 @@
 ---
 scope: src/app/brain
+alignment: unreviewed
 description: "Public-facing /brain section shipping two long-form guide pages (Walkthrough at /brain, Cookbook at /brain/recipes) for developers wiring a backend as an AIDE brain; deliberately re-introduces a `brain` nav link and a brain page that the project root intent currently lists as out-of-scope, with root-spec realignment deferred per user direction."
 intent: >
   The /brain section is the public canonical guide for developers who want to wire

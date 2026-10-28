@@ -1,5 +1,6 @@
 ---
 scope: .
+alignment: unreviewed
 description: aidemd.dev marketing landing + canonical docs site for the AIDE methodology and the @aidemd-mcp/server package, statically exported and deployed as the authoritative public reference.
 intent: >
   aidemd.dev is the public, canonical home of the AIDE (Autonomous Intent-Driven
