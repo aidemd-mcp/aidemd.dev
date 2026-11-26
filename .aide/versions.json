@@ -60,9 +60,9 @@
     "previousCommit": "027f166"
   },
   "docs/changelog": {
-    "publishedAt": "2026-11-25T16:41:01-07:00",
-    "sourceCommit": "cf4fa46",
-    "previousCommit": "2459ee9"
+    "publishedAt": "2026-11-25T19:28:43-07:00",
+    "sourceCommit": "ce98c8b",
+    "previousCommit": "f8847c6"
   },
   "commands/aide/aide": {
     "publishedAt": "2026-11-25T12:55:10-07:00",
@@ -205,9 +205,9 @@
     "previousCommit": "6ff0b77"
   },
   "skills/aide": {
-    "publishedAt": "2026-11-25T12:55:10-07:00",
-    "sourceCommit": "32d92f0",
-    "previousCommit": "5afd567"
+    "publishedAt": "2026-11-25T19:18:43-07:00",
+    "sourceCommit": "f8847c6",
+    "previousCommit": "32d92f0"
   },
   "skills/aide-handoff": {
     "publishedAt": "2026-10-25T15:07:00-07:00",
