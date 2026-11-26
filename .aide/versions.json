@@ -50,9 +50,9 @@
     "previousCommit": "8e1a8fb"
   },
   "docs/brain-aide": {
-    "publishedAt": "2026-10-28T05:02:37-07:00",
-    "sourceCommit": "10d12c5",
-    "previousCommit": "6d85560"
+    "publishedAt": "2026-11-25T23:39:35-07:00",
+    "sourceCommit": "db73577",
+    "previousCommit": "10d12c5"
   },
   "docs/cascading-alignment": {
     "publishedAt": "2026-10-25T15:07:00-07:00",
@@ -60,9 +60,9 @@
     "previousCommit": "027f166"
   },
   "docs/changelog": {
-    "publishedAt": "2026-11-25T19:28:43-07:00",
-    "sourceCommit": "ce98c8b",
-    "previousCommit": "f8847c6"
+    "publishedAt": "2026-11-26T08:43:49-07:00",
+    "sourceCommit": "349cad3",
+    "previousCommit": "db73577"
   },
   "commands/aide/aide": {
     "publishedAt": "2026-11-25T12:55:10-07:00",
@@ -125,9 +125,9 @@
     "previousCommit": "c27c166"
   },
   "commands/aide/brain": {
-    "publishedAt": "2026-10-28T05:02:37-07:00",
-    "sourceCommit": "10d12c5",
-    "previousCommit": "12a5c3a"
+    "publishedAt": "2026-11-25T23:39:35-07:00",
+    "sourceCommit": "db73577",
+    "previousCommit": "10d12c5"
   },
   "commands/aide/handoff": {
     "publishedAt": "2026-05-21T18:27:32-07:00",
@@ -220,13 +220,14 @@
     "previousCommit": "82cab85"
   },
   "skills/aide-brain-author": {
-    "publishedAt": "2026-10-28T05:02:37-07:00",
-    "sourceCommit": "10d12c5",
-    "previousCommit": "6d85560"
+    "publishedAt": "2026-11-25T23:39:35-07:00",
+    "sourceCommit": "db73577",
+    "previousCommit": "10d12c5"
   },
   "skills/aide-observer": {
-    "publishedAt": "2026-11-25T12:55:10-07:00",
-    "sourceCommit": "32d92f0"
+    "publishedAt": "2026-11-25T23:39:35-07:00",
+    "sourceCommit": "db73577",
+    "previousCommit": "32d92f0"
   },
   "bin/aide-tree": {
     "publishedAt": "2026-11-24T09:11:53-07:00",
