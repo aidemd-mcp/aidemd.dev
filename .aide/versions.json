@@ -60,9 +60,9 @@
     "previousCommit": "027f166"
   },
   "docs/changelog": {
-    "publishedAt": "2026-11-26T08:43:49-07:00",
-    "sourceCommit": "349cad3",
-    "previousCommit": "db73577"
+    "publishedAt": "2026-11-26T14:21:17-07:00",
+    "sourceCommit": "ca3f529",
+    "previousCommit": "0372145"
   },
   "commands/aide/aide": {
     "publishedAt": "2026-11-25T12:55:10-07:00",
@@ -105,9 +105,9 @@
     "previousCommit": "ba5179e"
   },
   "commands/aide/upgrade": {
-    "publishedAt": "2026-10-28T05:02:37-07:00",
-    "sourceCommit": "10d12c5",
-    "previousCommit": "5bb3c12"
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145",
+    "previousCommit": "10d12c5"
   },
   "commands/aide/update-playbook": {
     "publishedAt": "2026-04-28T18:22:30-07:00",
@@ -150,9 +150,9 @@
     "previousCommit": "1274665"
   },
   "agents/aide/aide-architect": {
-    "publishedAt": "2026-11-25T12:55:10-07:00",
-    "sourceCommit": "32d92f0",
-    "previousCommit": "7b8756d"
+    "publishedAt": "2026-11-26T14:04:36-07:00",
+    "sourceCommit": "aab95a1",
+    "previousCommit": "32d92f0"
   },
   "agents/aide/aide-implementor": {
     "publishedAt": "2026-10-26T09:08:58-07:00",
@@ -165,9 +165,9 @@
     "previousCommit": "bbc3c40"
   },
   "agents/aide/aide-auditor": {
-    "publishedAt": "2026-10-26T09:08:58-07:00",
-    "sourceCommit": "7b8756d",
-    "previousCommit": "6ff0b77"
+    "publishedAt": "2026-11-26T14:04:36-07:00",
+    "sourceCommit": "aab95a1",
+    "previousCommit": "7b8756d"
   },
   "agents/aide/aide-aligner": {
     "publishedAt": "2026-10-25T15:07:00-07:00",
@@ -225,9 +225,93 @@
     "previousCommit": "10d12c5"
   },
   "skills/aide-observer": {
-    "publishedAt": "2026-11-25T23:39:35-07:00",
-    "sourceCommit": "db73577",
-    "previousCommit": "32d92f0"
+    "publishedAt": "2026-11-26T14:04:36-07:00",
+    "sourceCommit": "aab95a1",
+    "previousCommit": "db73577"
+  },
+  "reference/tools/index": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_info": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_discover": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_read": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_inspect": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_validate": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_scaffold": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_frontmatter": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_cleanup": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_brain": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_init": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_upgrade": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_observer_start": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_observer_event": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/tools/aide_observer_end_session": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/hooks/index": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/hooks/SessionStart": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/hooks/UserPromptSubmit": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/hooks/PostToolUse": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/hooks/Stop": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
+  },
+  "reference/hooks/SessionEnd": {
+    "publishedAt": "2026-11-26T14:04:23-07:00",
+    "sourceCommit": "0372145"
   },
   "bin/aide-tree": {
     "publishedAt": "2026-11-24T09:11:53-07:00",
