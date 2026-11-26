@@ -60,9 +60,9 @@
     "previousCommit": "027f166"
   },
   "docs/changelog": {
-    "publishedAt": "2026-11-26T14:21:17-07:00",
-    "sourceCommit": "ca3f529",
-    "previousCommit": "0372145"
+    "publishedAt": "2026-11-26T15:53:52-07:00",
+    "sourceCommit": "b04b496",
+    "previousCommit": "c584151"
   },
   "commands/aide/aide": {
     "publishedAt": "2026-11-25T12:55:10-07:00",
@@ -85,9 +85,9 @@
     "previousCommit": "9a7a094"
   },
   "commands/aide/plan": {
-    "publishedAt": "2026-10-26T07:50:32-07:00",
-    "sourceCommit": "dc41576",
-    "previousCommit": "3165f64"
+    "publishedAt": "2026-11-26T15:46:35-07:00",
+    "sourceCommit": "c584151",
+    "previousCommit": "dc41576"
   },
   "commands/aide/build": {
     "publishedAt": "2026-10-26T09:08:58-07:00",
@@ -95,14 +95,14 @@
     "previousCommit": "2421374"
   },
   "commands/aide/qa": {
-    "publishedAt": "2026-05-07T21:50:05-07:00",
-    "sourceCommit": "c27c166",
-    "previousCommit": "ba5179e"
+    "publishedAt": "2026-11-26T15:46:35-07:00",
+    "sourceCommit": "c584151",
+    "previousCommit": "c27c166"
   },
   "commands/aide/fix": {
-    "publishedAt": "2026-10-25T15:07:00-07:00",
-    "sourceCommit": "2421374",
-    "previousCommit": "ba5179e"
+    "publishedAt": "2026-11-26T15:46:35-07:00",
+    "sourceCommit": "c584151",
+    "previousCommit": "2421374"
   },
   "commands/aide/upgrade": {
     "publishedAt": "2026-11-26T14:04:23-07:00",
@@ -205,9 +205,9 @@
     "previousCommit": "6ff0b77"
   },
   "skills/aide": {
-    "publishedAt": "2026-11-25T19:18:43-07:00",
-    "sourceCommit": "f8847c6",
-    "previousCommit": "32d92f0"
+    "publishedAt": "2026-11-26T15:46:35-07:00",
+    "sourceCommit": "c584151",
+    "previousCommit": "f8847c6"
   },
   "skills/aide-handoff": {
     "publishedAt": "2026-10-25T15:07:00-07:00",
