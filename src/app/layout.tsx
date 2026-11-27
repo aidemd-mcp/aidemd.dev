@@ -11,6 +11,12 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600", "700"],
   variable: "--font-jetbrains-mono",
   display: "swap",
+  // next/font's generated fallback is an Arial-metric face: proportional, so
+  // text wraps differently before the swap (hero headline CLS) and it captures
+  // glyphs outside the latin subset (e.g. "→"). Use the metric-matched
+  // monospace face declared in globals.css instead, then plain monospace.
+  adjustFontFallback: false,
+  fallback: ["JetBrains Mono Fallback", "ui-monospace", "monospace"],
 });
 
 // JSON-LD structured data — global across every route

@@ -46,12 +46,15 @@ function fileDirent(name: string, parentPath: string): object {
 }
 
 /**
- * Builds the complete set of mock Dirent fixtures mirroring the real
- * repository layout, producing exactly 33 routes when walked:
- *   - 9  methodology (.aide/docs/)
- *   - 13 commands (.claude/commands/): aide.md + 12 under aide/
- *   - 9  agents (.claude/agents/): 9 under aide/
- *   - 2  skills (.claude/skills/): SKILL.md in brain/ and study-playbook/
+ * Builds the complete set of mock Dirent fixtures, one group per content root:
+ *   - methodology (.aide/docs/): flat reference pages including index.md
+ *   - commands (.claude/commands/): a top-level page plus nested pages under aide/
+ *   - agents (.claude/agents/): nested pages under aide/
+ *   - skills (.claude/skills/): SKILL.md in subfolders (mixed-case file names)
+ *   - tools (.aide/reference/tools/): reference pages with underscores in their
+ *     names, listed out of order on purpose
+ *   - hooks (.aide/reference/hooks/): mixed-case reference pages (Stop,
+ *     SessionStart), listed out of order on purpose
  *
  * Uses path.resolve(process.cwd(), absRoot) so that parentPath values align
  * with the absRoot that walkDocsRoot receives — required for path.relative()
@@ -64,6 +67,8 @@ function buildFixtures() {
     commands:    path.resolve(cwd, '.claude/commands'),
     agents:      path.resolve(cwd, '.claude/agents'),
     skills:      path.resolve(cwd, '.claude/skills'),
+    tools:       path.resolve(cwd, '.aide/reference/tools'),
+    hooks:       path.resolve(cwd, '.aide/reference/hooks'),
   };
 
   const methodology = [
@@ -91,7 +96,13 @@ function buildFixtures() {
     fileDirent('SKILL.md', path.join(roots.skills, 'study-playbook')),
   ];
 
-  return { methodology, commands, agents, skills };
+  const tools = ['index.md', 'aide_read.md', 'aide_observer_start.md']
+    .map((name) => fileDirent(name, roots.tools));
+
+  const hooks = ['index.md', 'Stop.md', 'SessionStart.md']
+    .map((name) => fileDirent(name, roots.hooks));
+
+  return { methodology, commands, agents, skills, tools, hooks };
 }
 
 // ---------------------------------------------------------------------------
@@ -101,15 +112,18 @@ function buildFixtures() {
 import buildRegistry from './index';
 import parseDocFrontmatter from './parseDocFrontmatter';
 import walkDocsRoot from './walkDocsRoot';
+import { DOCS_CATEGORIES } from '@/data/docsCategories';
 import type { DocRegistry } from '@/types/docs';
 
 let registry: DocRegistry;
+let fixtures: ReturnType<typeof buildFixtures>;
 
 beforeAll(async () => {
   // Default git stub — short hash for every file.
   execSyncMock.mockReturnValue('b75834c\n' as unknown as ReturnType<typeof execSync>);
 
-  const { methodology, commands, agents, skills } = buildFixtures();
+  fixtures = buildFixtures();
+  const { methodology, commands, agents, skills, tools, hooks } = fixtures;
 
   readdirMock.mockImplementation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,6 +135,8 @@ beforeAll(async () => {
       if (p.includes('.claude/commands')) return commands;
       if (p.includes('.claude/agents'))   return agents;
       if (p.includes('.claude/skills'))   return skills;
+      if (p.includes('.aide/reference/tools')) return tools;
+      if (p.includes('.aide/reference/hooks')) return hooks;
       return [];
     },
   );
@@ -129,29 +145,34 @@ beforeAll(async () => {
 });
 
 describe('buildRegistry', () => {
-  it('(i) produces exactly 33 routes: 9 methodology, 13 commands, 9 agents, 2 skills', () => {
-    const bySection = {
-      methodology: registry.routes.filter((r) => r.section === 'methodology').length,
-      commands:    registry.routes.filter((r) => r.section === 'commands').length,
-      agents:      registry.routes.filter((r) => r.section === 'agents').length,
-      skills:      registry.routes.filter((r) => r.section === 'skills').length,
-    };
+  it('(i) produces one route per fixture file in every section', () => {
+    const countBySection = (section: string) =>
+      registry.routes.filter((r) => r.section === section).length;
 
-    expect(registry.routes).toHaveLength(33);
-    expect(bySection.methodology).toBe(9);
-    expect(bySection.commands).toBe(13);
-    expect(bySection.agents).toBe(9);
-    expect(bySection.skills).toBe(2);
+    expect(countBySection('methodology')).toBe(fixtures.methodology.length);
+    expect(countBySection('commands')).toBe(fixtures.commands.length);
+    expect(countBySection('agents')).toBe(fixtures.agents.length);
+    expect(countBySection('skills')).toBe(fixtures.skills.length);
+    expect(countBySection('tools')).toBe(fixtures.tools.length);
+    expect(countBySection('hooks')).toBe(fixtures.hooks.length);
+
+    const total = Object.values(fixtures).reduce((sum, group) => sum + group.length, 0);
+    expect(registry.routes).toHaveLength(total);
+
+    for (const category of DOCS_CATEGORIES) {
+      expect(countBySection(category.section)).toBeGreaterThan(0);
+    }
   });
 
-  it('(ii) every urlPath matches /docs/{section}/<slug>', () => {
-    const validSections = ['methodology', 'commands', 'agents', 'skills'];
-    const pattern = /^\/docs\/(methodology|commands|agents|skills)\/.+$/;
+  it('(ii) every urlPath is the lowercased /docs/{section}/<slug>', () => {
+    const validSections = DOCS_CATEGORIES.map((c) => c.section);
+    const pattern = /^\/docs\/(methodology|commands|agents|skills|tools|hooks)\/.+$/;
 
     for (const route of registry.routes) {
       expect(validSections).toContain(route.section);
       expect(route.urlPath).toMatch(pattern);
-      expect(route.urlPath).toBe(`/docs/${route.section}/${route.slug}`);
+      expect(route.urlPath).toBe(route.urlPath.toLowerCase());
+      expect(route.urlPath).toBe(`/docs/${route.section}/${route.slug.toLowerCase()}`);
     }
   });
 
@@ -160,6 +181,46 @@ describe('buildRegistry', () => {
     expect(first.section).toBe('methodology');
     expect(first.slug).toBe('index');
     expect(first.order).toBe(0);
+  });
+
+  it('(vi) sections appear in DOCS_CATEGORIES order', () => {
+    const sequence = registry.routes
+      .map((r) => r.section)
+      .filter((section, i, all) => i === 0 || section !== all[i - 1]);
+
+    expect(sequence).toEqual(['methodology', 'commands', 'agents', 'skills', 'tools', 'hooks']);
+  });
+
+  it('(vii) routes order index first, then by lowercased urlPath', () => {
+    const slugsIn = (section: string) =>
+      registry.routes.filter((r) => r.section === section).map((r) => r.slug);
+
+    expect(slugsIn('tools')).toEqual(['index', 'aide_observer_start', 'aide_read']);
+    expect(slugsIn('hooks')).toEqual(['index', 'SessionStart', 'Stop']);
+  });
+
+  it('(viii) slugs keep the file case while urlPaths are lowercase', () => {
+    const stop = registry.routes.find((r) => r.section === 'hooks' && r.slug === 'Stop');
+    expect(stop).toBeDefined();
+    expect(stop!.urlPath).toBe('/docs/hooks/stop');
+    expect(stop!.absPath.replace(/\\/g, '/').endsWith('.aide/reference/hooks/Stop.md')).toBe(true);
+
+    const brainSkill = registry.routes.find(
+      (r) => r.section === 'skills' && r.slug === 'brain/SKILL',
+    );
+    expect(brainSkill).toBeDefined();
+    expect(brainSkill!.urlPath).toBe('/docs/skills/brain/skill');
+  });
+
+  it('(ix) getByKey matches case-insensitively on section/slug', () => {
+    expect(registry.getByKey('hooks/index')?.urlPath).toBe('/docs/hooks/index');
+
+    const stop = registry.routes.find((r) => r.slug === 'Stop');
+    expect(registry.getByKey('hooks/stop')).toBe(stop);
+    expect(registry.getByKey('hooks/Stop')).toBe(stop);
+
+    expect(registry.getByKey('tools/aide_read')?.urlPath).toBe('/docs/tools/aide_read');
+    expect(registry.getByKey('hooks/missing')).toBeUndefined();
   });
 
   it('(iii-b) every route carries a commit hash or the "uncommitted" sentinel', () => {

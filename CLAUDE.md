@@ -33,3 +33,7 @@ wrong by definition.
 ## Kanban
 
 Kanban project tag: aidemd-dev
+
+## Project rules
+
+Design-handoff implementation: see `.claude/rules/handoff/` for source-of-truth, Playwright visual-QA, and pixel-fidelity rules.

@@ -1,0 +1,85 @@
+/* /observer — Variant A subset of the handoff stylesheet, every selector scoped under .o2. Container queries: narrow ≤ 760px (≤ 1000px for the capture grid). */
+/* Values exported unchanged from observer-v2.css in the design project; rules for parts this page does not ship are dropped. */
+/* values = assets/observer-aidemd-theme.css, so page and captures match */
+.o2{--bg:#0d0b08;--card:#16120d;--deep:#0a0906;--raised:#231e19;--fg:#e8dfce;--body:#aba497;--dim:#aba497;--dim2:#948e82;--border:#272420;--border2:#6e685d;--hover:#231e19;--accent:#3d6b4a;
+/* page-scoped state colours — four total */--s-live:#6aaa7c;--s-grey:#948e82;--s-red:#ff5f56;--s-amber:#d6b25a;
+/* the site's next/font JetBrains Mono face first, then the handoff's stack kept verbatim */
+container-type:inline-size;background:var(--bg);color:var(--fg);font-family:var(--font-jetbrains-mono),"JetBrains Mono",ui-monospace,monospace;font-size:15px;line-height:1.65;min-height:100%;-webkit-font-smoothing:antialiased}
+.o2 *{box-sizing:border-box}
+.o2 a{color:var(--s-live);text-decoration:none}.o2 a:hover{color:var(--fg)}
+.o2 code{font-family:inherit;font-size:.92em;padding:1px 6px;background:var(--hover);border:1px solid var(--border);border-radius:3px;color:var(--fg);overflow-wrap:anywhere}
+:where(.o2) p{margin:0;text-wrap:pretty}
+/* shared blocks */
+.o2 .o2-in{max-width:1180px;margin:0 auto;padding:0 56px}
+.o2 .o2-k{font-size:13px;letter-spacing:2px;color:var(--s-live)}
+.o2 .o2-h1{font-size:44px;line-height:1.12;font-weight:500;letter-spacing:-.4px;margin:14px 0 0;text-wrap:balance}
+.o2 .o2-sub{font-size:17px;color:var(--fg);margin-top:16px}
+.o2 .o2-pain{font-size:15px;color:var(--body);border-left:2px solid var(--border2);padding-left:14px;margin-top:20px;max-width:640px}
+.o2 .o2-act{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin-top:26px}
+.o2 .o2-cmd{display:flex;align-items:center;gap:12px;background:var(--deep);border:1px solid var(--accent);border-radius:5px;padding:10px 14px;font-size:14px;min-width:0}
+.o2 .o2-cmd .p{color:var(--s-live)}.o2 .o2-cmd span{overflow-wrap:anywhere}
+.o2 .o2-cmd button{margin-left:6px;background:var(--accent);border:0;border-radius:3px;color:#fff;font:inherit;font-size:12.5px;font-weight:600;padding:5px 10px;cursor:pointer}
+.o2 .o2-then{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--body);flex-wrap:wrap}
+.o2 .o2-then b{color:var(--fg);font-weight:500}
+.o2 .o2-facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:18px;font-size:13px;color:var(--dim)}
+.o2 .o2-facts span::before{content:"· ";color:var(--s-live)}
+/* capture */
+.o2 .cap{position:relative;aspect-ratio:1440/1180;width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg);overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.45)}
+.o2 .cap img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.o2 .railshot{margin-top:16px;border:1px solid var(--border);border-radius:6px;background:var(--bg);overflow-x:auto;padding:10px 12px}
+.o2 .railshot img{display:block;width:100%;min-width:620px;max-width:1018px;height:auto}
+.o2 .reply{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.o2 .reply>div{background:var(--deep);border:1px solid var(--border);border-radius:6px;overflow:hidden;min-width:0}
+.o2 .reply .rh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 12px;background:var(--card);border-bottom:1px solid var(--border);font-size:12px;color:var(--dim2)}
+.o2 .reply pre{margin:0;padding:12px 14px;font:inherit;font-size:13px;line-height:1.65;color:var(--fg);white-space:pre-wrap;overflow-wrap:anywhere}
+.o2 .reply pre b{color:var(--s-red);font-weight:700}
+/* states */
+.o2 .si{width:14px;height:14px;flex:none;display:inline-block;vertical-align:-2px}
+.o2 .sl{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.o2 .sl.working{color:var(--s-live)}.o2 .sl.waiting{color:var(--s-amber)}.o2 .sl.ended{color:var(--dim2);font-weight:500}.o2 .sl.halt,.o2 .sl.blocked{color:var(--s-red)}.o2 .sl.stuck{color:var(--dim2)}
+@keyframes o2pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.o2 .sl.working .si{animation:o2pulse 2.4s ease-in-out infinite}
+.o2 .legend{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.o2 .legend h3{margin:0;padding:14px 16px 10px;font-size:12px;letter-spacing:1.4px;color:var(--dim);font-weight:500;text-transform:uppercase}
+.o2 .legend div{padding:11px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:3px}
+.o2 .legend small{font-size:13px;color:var(--body);line-height:1.5}
+.o2 .legend .sep{padding:9px 16px 6px;font-size:12px;color:var(--dim2);letter-spacing:1px;text-transform:uppercase}
+/* sections */
+.o2 .blk h2{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 10px;font-size:21px;font-weight:600;line-height:1.3}
+.o2 .blk p{color:var(--body);font-size:15px;line-height:1.7}
+.o2 .blk p+p,.o2 .blk .rows+p{margin-top:12px}
+.o2 .rows{display:flex;flex-direction:column;margin-top:14px;border-top:1px solid var(--border)}
+.o2 .rows>div{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;padding:11px 0;border-bottom:1px solid var(--border);align-items:baseline}
+.o2 .rows>div p{font-size:14.5px}
+.o2 .hooks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:14px}
+.o2 .hooks div{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:9px 11px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.o2 .hooks code{background:none;border:0;padding:0;font-size:13px;overflow-wrap:anywhere}
+.o2 .kv{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px 16px;font-size:14px;margin-top:14px}
+/* the handoff has no CSS reset and relies on the browser's default dl bottom margin (1em) above the docs link; Tailwind's preflight zeroes it */
+.o2 .kv{margin-bottom:1em}
+.o2 .kv dt{color:var(--dim)}.o2 .kv dd{margin:0;color:var(--body)}
+.o2 .kv dd div+div{margin-top:4px}
+.o2 .docslink{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:10px 16px;border:1px solid var(--accent);border-radius:5px;font-size:14px;font-weight:600}
+.o2 .docslink:hover{background:rgba(61,107,74,.2)}
+.o2 .close{border:1px solid var(--border2);border-radius:10px;background:var(--card);padding:32px 36px}
+.o2 .close h2{margin:0;font-size:24px;font-weight:600}
+/* ── A · capture-led stack ── */
+.o2.va .hero{padding:56px 0 30px;max-width:860px}
+.o2.va .capgrid{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+.o2.va .sects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px 56px;padding:64px 0 0}
+.o2.va .sects .wide{grid-column:1/-1}
+.o2.va .close{margin-top:64px}
+@media (prefers-reduced-motion:reduce){.o2 *{animation:none!important;transition:none!important}}
+@container (max-width:1000px){.o2.va .capgrid{grid-template-columns:minmax(0,1fr)}.o2.va .legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.o2.va .legend h3{grid-column:1/-1}}
+@container (max-width:760px){
+.o2 .o2-in{padding:0 18px}
+.o2 .o2-h1{font-size:29px}.o2 .o2-sub{font-size:15px}
+.o2.va .hero{padding:32px 0 22px}
+.o2 .o2-cmd{flex-wrap:wrap}.o2 .o2-cmd button{margin-left:0}
+.o2.va .legend{grid-template-columns:minmax(0,1fr)}
+.o2.va .sects{grid-template-columns:minmax(0,1fr);gap:36px;padding-top:44px}
+.o2 .rows>div{grid-template-columns:minmax(0,1fr);gap:4px}.o2 .reply{grid-template-columns:minmax(0,1fr)}
+.o2 .hooks{grid-template-columns:repeat(2,minmax(0,1fr))}
+.o2 .kv{grid-template-columns:minmax(0,1fr);gap:2px}.o2 .kv dd{margin-bottom:10px}
+.o2 .close{padding:22px 18px}.o2 .close h2{font-size:20px}
+}

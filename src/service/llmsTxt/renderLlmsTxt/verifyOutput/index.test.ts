@@ -23,8 +23,8 @@ const mockReadFile = vi.mocked(readFile);
 // Skills-before-methodology is the wrong order used to test the order check.
 // ---------------------------------------------------------------------------
 
-const STANDARD_ORDER: DocSection[] = ['methodology', 'commands', 'agents', 'skills'];
-const REVERSED_ORDER: DocSection[] = ['skills', 'commands', 'agents', 'methodology'];
+const STANDARD_ORDER: DocSection[] = ['methodology', 'commands', 'agents', 'skills', 'tools', 'hooks'];
+const REVERSED_ORDER: DocSection[] = ['hooks', 'tools', 'skills', 'agents', 'commands', 'methodology'];
 
 // ---------------------------------------------------------------------------
 // Factory — builds a fully valid llms.txt document string by default.
@@ -72,6 +72,8 @@ const SECTION_LABELS: Record<DocSection, string> = {
   commands: 'Commands',
   agents: 'Agents',
   skills: 'Skills',
+  tools: 'Tools',
+  hooks: 'Hooks',
 };
 
 /** Valid link lines for each section. */
@@ -80,6 +82,8 @@ const DEFAULT_LINKS: Record<DocSection, string> = {
   commands:    '- [Plan](https://aidemd.dev/docs/commands/plan): Plan command.\n',
   agents:      '- [Builder](https://aidemd.dev/docs/agents/builder): Builder agent.\n',
   skills:      '- [Deploy](https://aidemd.dev/docs/skills/deploy): Deploy skill.\n',
+  tools:       '- [aide_read](https://aidemd.dev/docs/tools/aide_read): Reads one spec.\n',
+  hooks:       '- [Stop](https://aidemd.dev/docs/hooks/stop): Turn finished.\n',
 };
 
 function makeDocumentFixture(opts: FixtureOptions = {}): string {
@@ -138,7 +142,7 @@ describe('verifyOutput', () => {
       const result = await verifyOutput('/fake/llms.txt', STANDARD_ORDER);
 
       expect(result.bytes).toBeGreaterThan(0);
-      expect(result.routeCount).toBe(4); // one link per section × 4 sections
+      expect(result.routeCount).toBe(STANDARD_ORDER.length);
     });
   });
 
@@ -194,6 +198,21 @@ describe('verifyOutput', () => {
 
       await expect(verifyOutput('/fake/llms.txt', STANDARD_ORDER)).rejects.toThrow(
         /\.md extension/i,
+      );
+    });
+  });
+
+  describe('link with an uppercase letter in the URL', () => {
+    it('throws with a message matching /must be lowercase/i', async () => {
+      const doc = makeDocumentFixture({
+        sectionLinks: {
+          hooks: '- [Stop](https://aidemd.dev/docs/hooks/Stop): Turn finished.\n',
+        },
+      });
+      mockFile(doc);
+
+      await expect(verifyOutput('/fake/llms.txt', STANDARD_ORDER)).rejects.toThrow(
+        /must be lowercase/,
       );
     });
   });

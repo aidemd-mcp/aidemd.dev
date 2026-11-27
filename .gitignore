@@ -34,6 +34,7 @@ Thumbs.db
 .playwright-mcp/
 test-results/
 playwright-report/
+qa-artifacts/
 
 # Local scratch / debug captures
 /*.png

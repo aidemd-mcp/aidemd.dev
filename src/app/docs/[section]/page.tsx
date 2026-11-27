@@ -25,7 +25,7 @@ type RouteWithFrontmatter = {
 };
 
 /**
- * Generates static params for the 4 section-index pages.
+ * Generates static params for one section-index page per DOCS_CATEGORIES entry.
  * Sourced from DOCS_CATEGORIES — no hardcoded section list.
  */
 export async function generateStaticParams(): Promise<PageParams[]> {
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 /**
- * Section-index page backing /docs/methodology/, /docs/commands/, /docs/agents/, /docs/skills/.
+ * Section-index page backing /docs/<section>/ for every DOCS_CATEGORIES entry.
  * Filters the full registry to the matching section and renders DocsIndexCards.
  * Visually consistent with the global /docs/ index — differs only in scope.
  */

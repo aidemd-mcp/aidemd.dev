@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import cn from "@/lib/cn";
+import navLinks from "@/data/navLinks";
 import TrafficLights from "./TrafficLights";
 
-type ActivePage = "docs" | "brain";
+type ActivePage = "docs" | "brain" | "observer";
 
 interface TopBarProps {
   active?: ActivePage;
@@ -19,41 +20,25 @@ interface TopBarProps {
   hamburgerSlot?: React.ReactNode;
 }
 
-const NAV_LINKS = [
-  { label: "docs", href: "/docs", external: false, mobileVisible: true },
-  { label: "brain", href: "/brain", external: false, mobileVisible: true },
-  {
-    label: "github ↗",
-    href: "https://github.com/aidemd-mcp/server",
-    external: true,
-    mobileVisible: false,
-  },
-  {
-    label: "npm ↗",
-    href: "https://www.npmjs.com/package/@aidemd-mcp/server",
-    external: true,
-    mobileVisible: false,
-  },
-] as const;
-
 /**
  * Marketing top-bar with terminal window chrome.
  * In the docs layout (step 9) this becomes sticky; for the marketing
  * variant it is non-sticky.
  *
- * Four nav entries in order: docs, brain, github ↗, npm ↗.
+ * Five nav entries in order (from `@/data/navLinks`): docs, brain, observer, github ↗, npm ↗.
  * Responsive: external links (github ↗, npm ↗) are hidden below the md: breakpoint.
- * Both `docs` and `brain` remain visible at every viewport — mobile parity required.
+ * `docs`, `brain` and `observer` remain visible at every viewport — mobile parity required.
  * The `aidemd.dev — zsh` label also hides at the smallest sizes to save space.
  *
  * In the docs layout, `hamburgerSlot` is rendered inside the nav area at mobile
- * (block md:hidden) so the hamburger appears after the brain link.
+ * (block md:hidden) so the hamburger appears after the last mobile-visible link.
  */
 export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isDocs = pathname === "/docs" || pathname.startsWith("/docs/");
   const isBrain = pathname === "/brain" || pathname.startsWith("/brain/");
+  const isObserver = pathname === "/observer" || pathname.startsWith("/observer/");
   return (
     <header
       className="w-full bg-[color:var(--color-card)] border-b border-[color:var(--color-border)]"
@@ -86,6 +71,15 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
               {" "}aidemd.dev
               <span style={{ color: "var(--color-dim)" }}>/brain</span>
             </span>
+          ) : isObserver ? (
+            <span
+              className="ml-[18px] text-[12px] hidden md:inline"
+              aria-hidden="true"
+            >
+              <span style={{ color: "var(--color-accent)" }}>$</span>
+              {" "}aidemd.dev
+              <span style={{ color: "var(--color-dim)" }}>/observer</span>
+            </span>
           ) : (
             <span
               className={cn(
@@ -104,7 +98,7 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
           className="ml-auto flex items-center gap-[20px] text-[11px] text-[color:var(--color-dim)]"
           aria-label="Main navigation"
         >
-          {NAV_LINKS.map(({ label, href, external, mobileVisible }) => {
+          {navLinks.map(({ label, href, external, mobileVisible }) => {
             const isActive =
               !external && (active as string) === label;
             const visibilityClass = mobileVisible ? "" : "hidden md:inline";

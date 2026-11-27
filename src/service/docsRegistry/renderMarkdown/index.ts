@@ -8,6 +8,8 @@ import { raw } from 'hast-util-raw';
 import type { Root, Element } from 'hast';
 import type { Plugin } from 'unified';
 import type { Highlighter } from 'shiki';
+import type { DocRoute } from '@/types/docs';
+import resolveDocLinks from './resolveDocLinks';
 
 /**
  * Minimal shiki Highlighter interface — the subset renderMarkdown uses.
@@ -167,15 +169,22 @@ const rehypeCallouts: Plugin<[], Root> = () => async (tree) => {
 /**
  * Converts a markdown string to an HTML string via the unified pipeline:
  * remark-parse → remark-gfm → remark-rehype → rehype-raw →
- * shiki code block replacement → callout detection → rehype-stringify.
+ * shiki code block replacement → callout detection → doc link resolution →
+ * rehype-stringify.
  *
  * Takes a prebuilt ShikiHighlighter so the singleton from step 5 is shared
- * across all 33 docs pages rather than instantiated per render. If no
+ * across every docs page rather than instantiated per render. If no
  * highlighter is supplied, code blocks are left as plain <pre><code> nodes.
+ * `fromPath` (the rendered file's absolute path) and `routes` (the whole route
+ * set) are required because a render without them could not resolve a link.
  */
 export default async function renderMarkdown(
   markdown: string,
-  highlighter?: ShikiHighlighter,
+  context: {
+    highlighter?: ShikiHighlighter;
+    fromPath: string;
+    routes: readonly DocRoute[];
+  },
 ): Promise<string> {
   const processor = unified()
     .use(remarkParse)
@@ -183,17 +192,18 @@ export default async function renderMarkdown(
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw);
 
-  if (highlighter) {
+  if (context.highlighter) {
     // makeShikiPlugin injects { type: 'raw', value: html } nodes into the HAST.
     // rehypeRawMutate re-runs hast-util-raw in-place so those raw nodes are
     // deserialized into proper HAST elements before rehype-stringify sees them.
     // (rehypeRaw returns a new Root, which unified does not propagate from async
     // transforms — hence the mutating variant is required here.)
-    processor.use(makeShikiPlugin(highlighter, 'aide-theme'));
+    processor.use(makeShikiPlugin(context.highlighter, 'aide-theme'));
     processor.use(rehypeRawMutate);
   }
 
   processor.use(rehypeCallouts);
+  processor.use(resolveDocLinks({ fromPath: context.fromPath, routes: context.routes }));
   processor.use(rehypeStringify);
 
   const result = await processor.process(markdown);

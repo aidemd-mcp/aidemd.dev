@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* Metric-matched fallback for JetBrains Mono. Every JetBrains Mono glyph
+   advances 0.6em; Courier New / Courier / Liberation Mono advance the same
+   0.6em, so text wraps identically before and after the web font swaps in
+   (no hero headline re-wrap, no layout shift). Unlike next/font's generated
+   Arial fallback, these faces are monospace, so glyphs outside the latin
+   subset (e.g. "→") keep the monospace advance. Vertical overrides mirror
+   JetBrains Mono's hhea metrics (1020 / 300 / 0 per 1000 upm). */
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New"), local("CourierNewPSMT"), local("Courier"),
+    local("Liberation Mono");
+  font-weight: 100 900;
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 @theme {
   /* Palette — mirror the handoff exactly */
   --color-bg: #0d0b08;
@@ -17,7 +35,7 @@
   --color-danger: #ff5f56;
 
   /* Typography */
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 
   /* Layout */
   --layout-max-width: 1280px;

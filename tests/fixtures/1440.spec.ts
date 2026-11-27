@@ -12,8 +12,15 @@ async function freezeAnimations(page: Page) {
   });
 }
 
+const HERO_HEADLINE = 'Your intent is the contract every agent works from.';
+
 test('home renders', async ({ page }) => {
+  // The hero headline is revealed by a JS timer; reduced motion renders it finished.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
+  await expect
+    .poll(() => page.locator('h1 span.absolute').textContent(), { timeout: 5000 })
+    .toBe(HERO_HEADLINE);
   await freezeAnimations(page);
   await expect(page).toHaveScreenshot('home.png');
 });

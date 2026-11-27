@@ -1,7 +1,7 @@
 import type { DocSection } from '@/types/docs';
 
 /**
- * Single source of truth for the four docs content roots.
+ * Single source of truth for the docs content roots.
  *
  * - `section`     — DocSection discriminant used throughout the registry
  * - `label`       — top-nav link text (note: 'methodology' section uses label 'docs')
@@ -12,7 +12,7 @@ import type { DocSection } from '@/types/docs';
  * filesystem-walk roots in src/service/docsRegistry/.
  *
  * Do NOT reorder — the registry's orderRoutes helper uses this array's index to
- * determine section priority (methodology first, skills last).
+ * determine section priority (methodology, commands, agents, skills, tools, hooks).
  */
 
 /**
@@ -24,6 +24,8 @@ export const SECTION_INDEX_META: Record<DocSection, { label: string; lede: strin
   commands:    { label: 'Commands',    lede: 'the slash commands shipped with @aidemd-mcp/server' },
   agents:      { label: 'Agents',      lede: 'the specialized subagents the AIDE orchestrator delegates to' },
   skills:      { label: 'Skills',      lede: 'the Claude Code skills bundled with the package' },
+  tools:       { label: 'Tools',       lede: 'the MCP tools @aidemd-mcp/server exposes' },
+  hooks:       { label: 'Hooks',       lede: 'the Claude Code hook events AIDE listens to' },
 };
 export const DOCS_CATEGORIES: readonly {
   section: DocSection;
@@ -35,4 +37,6 @@ export const DOCS_CATEGORIES: readonly {
   { section: 'commands',    label: 'commands',   urlSegment: 'commands',    absRoot: '.claude/commands' },
   { section: 'agents',      label: 'agents',     urlSegment: 'agents',      absRoot: '.claude/agents' },
   { section: 'skills',      label: 'skills',     urlSegment: 'skills',      absRoot: '.claude/skills' },
+  { section: 'tools',       label: 'tools',      urlSegment: 'tools',       absRoot: '.aide/reference/tools' },
+  { section: 'hooks',       label: 'hooks',      urlSegment: 'hooks',       absRoot: '.aide/reference/hooks' },
 ] as const;

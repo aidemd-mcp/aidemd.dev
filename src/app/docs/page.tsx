@@ -23,7 +23,7 @@ type RouteWithFrontmatter = {
 };
 
 /**
- * /docs — global docs index. Groups all 33 routes by section and renders
+ * /docs — global docs index. Groups every registry route by section and renders
  * them as DocsIndexCard lists. No hardcoded doc list — all routes come from
  * the filesystem walk in buildRegistry().
  */

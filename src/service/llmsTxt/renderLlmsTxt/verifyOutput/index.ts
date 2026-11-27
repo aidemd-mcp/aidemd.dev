@@ -26,7 +26,8 @@ const FORBIDDEN_PHRASES = ['/llms-full.txt', 'llms-full.txt', '/ai.txt', 'full v
  *   3. First non-blank line after H1 starts with `> ` (blockquote present).
  *   4. Exactly one `## <label>` per section, in `expectedSectionOrder`, no extras.
  *   5. Every bullet line under an H2 matches the canonical link-line regex.
- *   6. No link URL ends in `.md`, is relative, or misses the correct section prefix.
+ *   6. No link URL ends in `.md`, is relative, misses the correct section prefix,
+ *      or contains an uppercase letter (the registry serves only lowercase doc URLs).
  *   7. Each H2 section contains at least one bullet before the next H2.
  *   8. Document does not contain `AIDEY` or the standalone token ` AID `.
  *   9. Document does not advertise companion files (`/llms-full.txt`, `/ai.txt`, "full version").
@@ -138,6 +139,13 @@ export default async function verifyOutput(
       if (!url.startsWith(expectedPrefix)) {
         throw new Error(
           `llms.txt: link URL in section "${SECTION_INDEX_META[section].label}" must start with "${expectedPrefix}" — got ${url}`,
+        );
+      }
+
+      // 6d. URL is lowercase — the registry serves only lowercase doc URLs, so an uppercase link would 404
+      if (url !== url.toLowerCase()) {
+        throw new Error(
+          `llms.txt: link URL in section "${SECTION_INDEX_META[section].label}" must be lowercase — got ${url}`,
         );
       }
 

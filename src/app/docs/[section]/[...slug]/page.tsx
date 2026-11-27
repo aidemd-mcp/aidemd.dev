@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import buildRegistry, { renderDoc } from '@/service/docsRegistry';
-import type { DocSection, DocRouteKey } from '@/types/docs';
 import DocsTemplate from '../../_components/DocsTemplate/DocsTemplate';
 
 interface PageParams {
@@ -32,15 +31,18 @@ function slugFromParts(parts: string[]): string {
  */
 export async function generateStaticParams(): Promise<PageParams[]> {
   const { routes } = await buildRegistry();
-  return routes.map((r) => ({ section: r.section, slug: r.slug.split('/') }));
+  return routes.map((r) => ({
+    section: r.section,
+    slug: r.urlPath.slice(`/docs/${r.section}/`.length).split('/'),
+  }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { section, slug } = await params;
   const slugStr = slugFromParts(slug);
   const { routes } = await buildRegistry();
-  const key: DocRouteKey = `${section as DocSection}/${slugStr}`;
-  const route = routes.find((r) => `${r.section}/${r.slug}` === key);
+  const urlPath = `/docs/${section}/${slugStr}`;
+  const route = routes.find((r) => r.urlPath === urlPath);
 
   if (!route) return { title: 'Not Found' };
 
@@ -71,8 +73,8 @@ export default async function DocLeafPage({ params }: PageProps) {
   const slugStr = slugFromParts(slug);
   const { routes } = await buildRegistry();
 
-  const key: DocRouteKey = `${section as DocSection}/${slugStr}`;
-  const route = routes.find((r) => `${r.section}/${r.slug}` === key);
+  const urlPath = `/docs/${section}/${slugStr}`;
+  const route = routes.find((r) => r.urlPath === urlPath);
 
   if (!route) notFound();
 
@@ -80,7 +82,7 @@ export default async function DocLeafPage({ params }: PageProps) {
 
   // Prev/next by order — sorted routes are deterministic.
   const sortedRoutes = [...routes].sort((a, b) => a.order - b.order);
-  const idx = sortedRoutes.findIndex((r) => `${r.section}/${r.slug}` === key);
+  const idx = sortedRoutes.findIndex((r) => r.urlPath === route.urlPath);
   const prev = idx > 0 ? sortedRoutes[idx - 1] : undefined;
   const next = idx < sortedRoutes.length - 1 ? sortedRoutes[idx + 1] : undefined;
 

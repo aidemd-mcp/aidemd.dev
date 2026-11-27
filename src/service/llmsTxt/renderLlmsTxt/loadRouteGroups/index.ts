@@ -11,7 +11,8 @@ import type { LinkEntry, RouteGroup } from '../../types';
  *
  * The file's bullet list uses the shape `- [label](./slug.md)` or
  * `- [label](slug.md)`.  We strip the `.md` extension and relative-path prefix
- * to get bare slugs.  The methodology `index` slug (the file itself) is not
+ * to get bare slugs, lowercased so they match the registry's lowercase slugs
+ * even if the hub ever links a mixed-case file name.  The methodology `index` slug (the file itself) is not
  * listed inside the file, so we prepend it as position 0.
  *
  * Example return value for the current index.md:
@@ -28,7 +29,7 @@ async function loadMethodologySlugOrder(): Promise<string[]> {
   const linkRe = /\]\(\.?\/?([^)]+\.md)\)/g;
   let match: RegExpExecArray | null;
   while ((match = linkRe.exec(raw)) !== null) {
-    const slug = match[1].replace(/\.md$/, '');
+    const slug = match[1].replace(/\.md$/, '').toLowerCase();
     slugs.push(slug);
   }
 
@@ -47,11 +48,11 @@ async function loadMethodologySlugOrder(): Promise<string[]> {
  * Routes not present in the index file sort to the end, preserving their
  * registry order relative to each other.
  *
- * The other three sections (commands, agents, skills) keep the registry's
- * deterministic within-section order (index-first, alphabetical).
+ * Every other section keeps the registry's deterministic within-section
+ * order (index-first, alphabetical).
  *
  * Per-route frontmatter descriptions are fetched in parallel via Promise.all
- * to keep I/O latency low across all four sections.
+ * to keep I/O latency low across every section.
  *
  * Drift-resistance contract: this function never re-walks the filesystem and
  * never reads a markdown file that docsRegistry has not already registered as

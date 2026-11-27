@@ -1,29 +1,29 @@
 ---
 scope: .
 alignment: unreviewed
-description: aidemd.dev marketing landing + canonical docs site for the AIDE methodology and the @aidemd-mcp/server package, statically exported and deployed as the authoritative public reference.
+description: aidemd.dev marketing landing, canonical docs and custom guide and feature pages for the AIDE methodology and @aidemd-mcp/server, statically exported as the authoritative public reference.
 intent: >
   aidemd.dev is the public, canonical home of the AIDE (Autonomous Intent-Driven
   Engineering) methodology and the @aidemd-mcp/server package. A founder,
   operator, or technical lead arriving cold must, within one scroll of the
   landing page, understand that AIDE treats a short intent spec next to the code
   as the contract every agent works from, and within one click of the nav be
-  able to read the methodology docs, commands, agents, and skills that ship with
-  the MCP server — each rendered directly from this repo's filesystem so the
-  site can never drift from the package. The visual execution must match the
-  chosen Terminal direction of the design handoff pixel-for-pixel at 1440px,
+  able to read the methodology docs, commands, agents, skills, and tools and hooks
+  reference that ship with the MCP server — each rendered directly from this repo's filesystem so the
+  site can never drift from the package. The visual execution must match each
+  route's own design handoff pixel-for-pixel at each handoff's own design widths,
   because the design is the source of truth for what "canonical" looks and
   feels like. The mascot is named Expo because AIDE expands to "AI Domain
   Expert" and Expo personifies that role on the site, guiding the visitor
   through the methodology as the site's resident domain expert.
 outcomes:
   desired:
-    - The marketing landing page and docs template render pixel-for-pixel against the chosen Terminal design references (Terminal.html, docs-aide-spec.html, docs-aide-template.html, and their JSX counterparts) at a 1440px desktop viewport — palette, JetBrains Mono typography, spacing scale, borders, radii, and accent-bar treatments all match the handoff exactly.
+    - Every route renders pixel-for-pixel at each handoff's own design widths against its own design handoff — the marketing landing page and docs template at 1440px against the chosen Terminal references (Terminal.html, docs-aide-spec.html, docs-aide-template.html, and their JSX counterparts), the /brain guide at its handoff's widths against the brain handoff, the /observer feature page at 1280 and 390 against its Variant A artboards — palette, JetBrains Mono typography, spacing scale, borders, radii, and accent-bar treatments all match exactly.
     - "On viewports wider than 1440px, chrome anchors to the viewport edges in a GitHub-style top-bar pattern: the header's inner content (traffic-lights + brand-link cluster on the left, nav links on the right) anchors to the viewport left and right edges with modest padding (~16-20px) and carries no max-width constraint, and the docs sidebar `<aside>` anchors to the viewport left edge rather than sitting inside a centered layout grid — only main content retains a centered max-width (marketing `var(--layout-max-width)` / 1280px, docs 1000px prose column)."
     - "All scroll containers render a custom thin scrollbar keyed to the warm-dark palette — document body scroll, docs sidebar internal scroll, code-block horizontal overflow, and any future overflow region — with a transparent or `--color-card` track and a `--color-border`-keyed thumb, never the OS-native (light grey on Chromium, chunky) scrollbar that clashes with the warm-dark surface."
     - The site ships as a fully static Next.js export (output `export`) deployable to GitHub Pages and reachable at https://aidemd.dev/ — zero server-side runtime, zero API routes, zero ISR, all asset paths compatible with the production origin.
-    - The docs area is powered by one template that renders any markdown file found under `.aide/docs/`, `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` in this repository, with the page list generated at build time from the filesystem so drift between the @aidemd-mcp/server package contents and the rendered site is structurally impossible.
-    - "Top-level nav exposes exactly six destinations in order: docs, agents, skills, commands, github ↗, npm ↗ — replacing the handoff's `pipeline` and `brain` links with real per-category docs pages and pointing outbound links to https://github.com/aidemd-mcp/server and https://www.npmjs.com/package/@aidemd-mcp/server."
+    - The docs area is powered by one template that renders any markdown file found under `.aide/docs/`, `.claude/commands/`, `.claude/agents/`, `.claude/skills/`, `.aide/reference/tools/`, and `.aide/reference/hooks/` in this repository, with the page list generated at build time from the filesystem so drift between the @aidemd-mcp/server package contents and the rendered site is structurally impossible. Hand-written reference values on custom pages — such as the observer page's ports, env vars, data roots, hook events, and HALT/BLOCKED reply format — match the @aidemd-mcp/server source.
+    - "Every page's top-level nav reads, in order: docs, brain, observer, github ↗, npm ↗ — agents, skills, and commands live inside the docs surface, and outbound links point to https://github.com/aidemd-mcp/server and https://www.npmjs.com/package/@aidemd-mcp/server."
     - All marketing interactions from the handoff work end-to-end — clickable pipeline stage expansion, intent-tree folder toggles and spec selection, vault-brain tab switching, looping typewriter CLI demo, copy-to-clipboard on code blocks and DocMeta cite URLs, and the Expo mascot showing scroll-contextual tips driven by IntersectionObserver.
     - Code blocks are syntax-highlighted via Shiki or Prism using a custom theme that keys off the handoff accent colors (forest-green `#3d6b4a` for keywords, amber `#d6b25a` for strings, warm off-white `#e8dfce` for identifiers) against the warm-dark background.
     - The floating mascot is named Expo everywhere it appears — speech bubbles, alt text, asset filenames copied to `public/`, component names, and any on-page copy — so a first-time visitor comes away understanding that AIDE is the AI Domain Expert methodology and this site is its authoritative source.
@@ -31,25 +31,25 @@ outcomes:
     - GA4 page-view analytics are wired into the static export with a production measurement ID and respect standard do-not-track behavior.
     - The footer reads "© 2026 TetsuKodai Group LLC" and carries the "canonical" dot as an always-on authority signal that this site is the real, owner-published source of the AIDE methodology.
   undesired:
-    - Any visible deviation from the Terminal design references at 1440px — wrong palette values, a second typeface sneaking in alongside JetBrains Mono, off-scale spacing, missing accent bars or left-border callout treatments, or interactions that omit the animated transitions specified in the handoff.
+    - Any visible deviation from a route's own design handoff at each handoff's own design widths — wrong palette values, a second typeface sneaking in alongside JetBrains Mono, off-scale spacing, missing accent bars or left-border callout treatments, or interactions that omit the animated transitions specified in the handoff.
     - "Header content, nav links, or the docs sidebar rendered inside a centered max-width column on viewports wider than 1440px — producing bare background bleeding beside the chrome, a brand cluster floating adrift from the viewport-left edge, or a sidebar detached from the viewport-left edge and drifting inward with the centered grid. The terminal-frame-centered pattern applies to main content only; chrome and sidebar must hug the viewport."
     - "OS-native scrollbars rendering on any scroll container — specifically the docs sidebar `<aside>` where the default light-grey Chromium scrollbar clashes with the warm-dark palette, but also body scroll, code-block horizontal overflow, and any future overflow region. Every scroll container must ship the custom warm-dark scrollbar treatment; a native scrollbar anywhere is a spec violation."
-    - A hardcoded list of doc pages anywhere in the codebase — if someone adds a markdown file under `.aide/docs/`, `.claude/commands/`, `.claude/agents/`, or `.claude/skills/` and rebuilds, that page must appear in the docs nav and be routable without further edits.
-    - Shipping the docs site with any of the four source categories missing or collapsed together — methodology, commands, agents, and skills must each have their own dedicated top-level docs section.
+    - A hardcoded list of doc pages anywhere in the codebase — if someone adds a markdown file under `.aide/docs/`, `.claude/commands/`, `.claude/agents/`, `.claude/skills/`, `.aide/reference/tools/`, or `.aide/reference/hooks/` and rebuilds, that page must appear in the docs nav and be routable without further edits.
+    - Shipping the docs site with any of the six source categories missing or collapsed together — methodology, commands, agents, skills, tools, and hooks must each have their own dedicated top-level docs section.
     - The mascot being called "AIDEY" or "AID" anywhere in shipped output — copy, alt text, filenames under `public/`, component identifiers, tooltip strings, or any string a user or search engine could see — because those names undermine the Domain Expert framing and leak abandoned naming into shipped output.
     - "Shipping `tweaks.jsx`, any of the rejected variants (`variant-editorial.jsx`, `variant-linear.jsx`, `design-canvas.jsx`, `index.html`), or any other design-tool scaffolding: only the Terminal direction belongs in production."
     - Any server-side runtime, API route, middleware, ISR, or runtime Node dependency that prevents `next build` from producing a fully static export deployable to GitHub Pages.
     - Brand voice that reads as salesy, vague, or hype-driven — the audience is founders, operators, and technical leaders, and the site must sound precise, deliberate, and engineering-credible at every copy surface.
     - Broken or silently failing interactions — a pipeline stage that does not expand on click, a tree folder caret that does not rotate, a vault tab that does not swap content, a CLI demo that does not loop, a copy button that does not provide "✓ copied" feedback, or a mascot tooltip that never rotates with scroll position.
     - Cumulative layout shift on the hero as the typewriter headline types in — the space for the animated headline must be reserved before first paint.
-    - Nav links to destinations that do not exist (the handoff's legacy `pipeline` and `brain` links), or outbound `github`/`npm` links that point anywhere other than `https://github.com/aidemd-mcp/server` and `https://www.npmjs.com/package/@aidemd-mcp/server`.
+    - Nav links to destinations that do not exist (the handoff's legacy `pipeline` link), a nav that differs from page to page, or outbound `github`/`npm` links that point anywhere other than `https://github.com/aidemd-mcp/server` and `https://www.npmjs.com/package/@aidemd-mcp/server`.
 ---
 
 ## Context
 
 aidemd.dev is the public home of a methodology — AIDE (Autonomous Intent-Driven Engineering) — and of the package that ships it, `@aidemd-mcp/server`. The owner is TetsuKodai Group LLC, positioning itself as a thought leader at the intersection of agentic engineering, data pipelines, and practical AI for small and mid-market businesses. The audience is not consumers and not developers casually Googling a tool name: it is founders, operators, and technical leaders evaluating whether AIDE is a credible approach to shipping software with AI agents. Everything on the site filters through that audience's skepticism. Hype reads as amateur to them; precision reads as authority.
 
-The site has two jobs, and they are distinct. Job one is to be the canonical public face of AIDE the methodology — a marketing landing page that communicates, within a single scroll, that AIDE treats a short intent spec next to the code as the contract every agent works from. Job two is to be the canonical reference for `@aidemd-mcp/server` — a docs area that renders the methodology docs, commands, agents, and skills that ship with the package. The two jobs must both be served by a single static export.
+The site has two jobs, and they are distinct. Job one is to be the canonical public face of AIDE the methodology — a marketing landing page that communicates, within a single scroll, that AIDE treats a short intent spec next to the code as the contract every agent works from. Job two is to be the canonical reference for `@aidemd-mcp/server` — a docs area that renders the methodology docs, commands, agents, skills, and the tools and hooks reference that ship with the package. The two jobs must both be served by a single static export.
 
 The docs render directly from this repository's filesystem on purpose. The package and the docs cannot drift, because the docs are literally the same markdown files the package ships. A reader on aidemd.dev and an agent reading the package after `npx @aidemd-mcp/server init` are looking at the same canonical text. This is a structural guarantee, not a workflow promise.
 
@@ -61,17 +61,17 @@ Today's date is 2026-04-22, and the footer year is 2026.
 
 **Ship as a static Next.js 14 App Router export with Tailwind and MDX.** Use `output: 'export'` and target GitHub Pages. The site is a docs+marketing surface with no per-user state and no dynamic data, so static generation is the smallest deploy surface available and the cheapest thing to keep up. Tailwind gives utility-first styling that keeps CSS bloat minimal and lets the warm-dark palette live in a single theme definition. MDX is the native format for markdown-sourced docs and for marketing copy that sometimes needs to embed a React component. No API routes, no ISR, no middleware, no runtime Node — any of those would break static export and move us off GitHub Pages.
 
-**Drive the docs page list from a build-time filesystem walk across four content roots — `.aide/docs/`, `.claude/commands/`, `.claude/agents/`, `.claude/skills/` — with zero exclusions.** Every `.md` file under those roots becomes a route. The full set (today 9 methodology, 13 commands, 9 agents, 2 skills = 33 pages) is discovered via `generateStaticParams` at build time. A hardcoded list anywhere in the codebase is a spec violation — that rule is load-bearing against the drift-resistance guarantee in the frontmatter.
+**Drive the docs page list from a build-time filesystem walk across six content roots — `.aide/docs/`, `.claude/commands/`, `.claude/agents/`, `.claude/skills/`, `.aide/reference/tools/`, `.aide/reference/hooks/` — with zero exclusions.** Every `.md` file under those roots becomes a route. The full set is discovered via `generateStaticParams` at build time. A hardcoded list anywhere in the codebase is a spec violation — that rule is load-bearing against the drift-resistance guarantee in the frontmatter.
 
-**Render the docs with one template that matches the docs-* design references exactly.** Breadcrumb, H1, DocMeta card, body, prev/next, footer — one component tree, driven by MDX frontmatter. Every docs route, regardless of which of the four categories it belongs to, goes through this single template. Uniformity is the credibility signal: the methodology docs and the subagent docs must feel like chapters of the same book.
+**Render the docs with one template that matches the docs-* design references exactly.** Breadcrumb, H1, DocMeta card, body, prev/next, footer — one component tree, driven by MDX frontmatter. Every docs route, regardless of which of the six categories it belongs to, goes through this single template. Uniformity is the credibility signal: the methodology docs and the subagent docs must feel like chapters of the same book.
 
-**Expose four separate docs sections as four separate top-level nav entries.** The six-item nav is `docs`, `agents`, `skills`, `commands`, `github ↗`, `npm ↗`, in that order. This replaces the handoff's `pipeline` and `brain` links, which referred to nothing shippable. Separate nav entries — not a single `/docs` dropdown — because each category has distinct meaning: methodology is the method, commands are the slash commands users invoke, agents are the subagents the orchestrator delegates to, skills are the skill files the AIDE agent loads. Collapsing them understates the surface area of what `@aidemd-mcp/server` ships.
+**Keep the top-level nav to five entries and expose the six docs sections inside the docs surface.** The nav is `docs`, `brain`, `observer`, `github ↗`, `npm ↗`, in that order, identical on every page. This replaces the handoff's legacy `pipeline` link, which referred to nothing shippable. Methodology, commands, agents, skills, tools, and hooks each get their own dedicated section in the docs sidebar, in that order, because each category has distinct meaning: methodology is the method; commands, the slash commands users invoke; agents, the subagents the orchestrator delegates to; skills, the skill files the AIDE agent loads; tools, the MCP tools the server exposes; hooks, the Claude Code hook events AIDE listens to. Collapsing them understates the surface area of what `@aidemd-mcp/server` ships.
 
 **Lock external links to `https://github.com/aidemd-mcp/server` and `https://www.npmjs.com/package/@aidemd-mcp/server`.** The GitHub link doubles as the "contact" channel for v1. Any other target for these links is wrong.
 
-**Treat the JSX prototype files as the visual source of truth; diff production output against them at 1440px desktop.** The handoff README describes the visual system at the level of rules; the JSX files encode the pixel-level truth. When the README and a JSX file disagree, the JSX file wins. Named CSS variables mirror the handoff's `--bg`, `--card`, `--card-2`, `--fg`, `--dim`, `--dim-2`, `--border`, `--hover`, `--accent`, `--todo`, `--plan`, `--danger`. Typography is JetBrains Mono only, weights 400/500/600/700 — introducing a second typeface is a spec violation.
+**Treat each route's own design handoff as its visual source of truth; diff production output against it at each handoff's own design widths.** The landing and docs diff against the Terminal JSX prototype files at 1440px; /brain against the brain handoff at its handoff's widths; /observer against its Variant A artboards at 1280 and 390. The Terminal handoff README describes the visual system at the level of rules; the JSX files encode the pixel-level truth. When the README and a JSX file disagree, the JSX file wins. Named CSS variables mirror the handoff's `--bg`, `--card`, `--card-2`, `--fg`, `--dim`, `--dim-2`, `--border`, `--hover`, `--accent`, `--todo`, `--plan`, `--danger`. Typography is JetBrains Mono only, weights 400/500/600/700 — introducing a second typeface is a spec violation.
 
-**Forest-green `#3d6b4a` is the only accent. No second green, ever.** Specifically: no pure green, no saturated green, no `#4caf50`-style material greens. The accent shows up as the left-border on emphasis cards (2px), as the `##` glyph on H2, as keyword color in syntax highlighting, as the active-state color on nav, and as the "canonical" footer dot.
+**Forest green is the only accent: `#3d6b4a` for fills, `#6aaa7c` wherever the green is text or an icon. No other green in the site palette.** Specifically: no pure green, no saturated green, no `#4caf50`-style material greens. The accent shows up as the left-border on emphasis cards (2px), as the `##` glyph on H2, as keyword color in syntax highlighting, as the active-state color on nav, and as the "canonical" footer dot. Page-scoped palettes are the exception: /observer's state colours (amber `#d6b25a`, danger `#ff5f56`, greys `#948e82`) render only on that page.
 
 **Callouts use the 3px left-border convention with three colors: NOTE is accent-green `#3d6b4a`, WARN is amber `#d6b25a`, INFO is blue `#7aa6d6`.** Every callout in every docs page uses this treatment; no other callout style exists on the site.
 
@@ -101,7 +101,7 @@ Today's date is 2026-04-22, and the footer year is 2026.
 
 **Do not ship any of the design-tool scaffolding or rejected variants.** `tweaks.jsx`, `variant-editorial.jsx`, `variant-linear.jsx`, `design-canvas.jsx`, and the exploration `index.html` stay out of production. Only the Terminal direction ships.
 
-**Anticipate a sub-spec tree.** The architect will likely produce sub-`.aide` files for non-trivial modules — the marketing section composition, the docs shell and its template, the Expo mascot. Each narrows from this root. This spec names the constraints; the sub-specs name the shapes.
+**Anticipate a sub-spec tree.** The architect will likely produce sub-`.aide` files for non-trivial modules — the marketing section composition, the docs shell and its template, the Expo mascot, the /brain guide, the /observer page. Each narrows from this root and is pixel-checked against its own handoff. This spec names the constraints; the sub-specs name the shapes.
 
 ## Good examples
 
@@ -134,10 +134,10 @@ Breadcrumb is uppercase, small, dim. H1 is 36px weight 600. DocMeta is a 2-colum
 A correct top-level nav row, left to right, JetBrains Mono, aligned right of the window chrome:
 
 ```
-docs   agents   skills   commands   github ↗   npm ↗
+docs   brain   observer   github ↗   npm ↗
 ```
 
-Six entries. In that order. Active page gets an accent-green underline.
+Five entries. In that order, on every page. Active page gets an accent-green underline. Commands, agents, skills, tools, and hooks appear in the docs sidebar, not here.
 
 A correct Expo speech bubble tip as the reader scrolls past the pipeline section:
 
@@ -159,11 +159,11 @@ Left border is 3px solid `#3d6b4a`. The `NOTE` label is uppercase, 11px, weight 
 
 ## Bad examples
 
-A nav row that reads `docs   pipeline   brain   github ↗   npm ↗`. This is the handoff's legacy nav and the `pipeline` and `brain` links point at nothing shippable. Failing this shows an audience of technical leaders that the site can't even keep its navigation honest.
+A nav row that reads `docs   pipeline   brain   github ↗   npm ↗`. This is the handoff's legacy nav: `pipeline` points at nothing shippable and `observer` is missing. Failing this shows an audience of technical leaders that the site can't even keep its navigation honest.
 
 A mascot tooltip that says `AIDEY says: welcome to aidemd.dev`. The name is Expo, not AIDEY. The Domain Expert framing is the whole reason the mascot exists; shipping "AIDEY" (or the abandoned interim "AID") undoes it.
 
-A `/docs` index page that lists only the 9 methodology docs and omits the 13 command docs, 9 agent docs, and 2 skill docs. This is the hardcoded-list failure mode — the filesystem walk either did not cover all four roots or was bypassed by a static array somewhere. Adding a new markdown file and rebuilding must produce a new route automatically.
+A `/docs` index page that lists only the methodology docs and omits the command, agent, skill, tool, and hook docs. This is the hardcoded-list failure mode — the filesystem walk either did not cover all six roots or was bypassed by a static array somewhere. Adding a new markdown file and rebuilding must produce a new route automatically.
 
 A hero where the typewriter reveals one character at a time and the headline row visibly grows taller as characters fill the line, pushing the content below down several pixels. This is the CLS failure the frontmatter explicitly forbids. The headline's final box must be reserved before first paint.
 
@@ -186,4 +186,6 @@ A callout that uses a 2px left border and a muted grey label instead of the 3px 
 - `design_handoff_aidemd_site/prototypes/docs-shell.jsx` -- docs shell, sidebar, typography primitives, code-block structure, callout structure, prev/next card shape
 - `design_handoff_aidemd_site/prototypes/shared.jsx` -- pipeline stage definitions and copy, intent-tree sample data and frontmatter, vault-brain note entries
 - `design_handoff_aidemd_site/prototypes/aidey.jsx` -- mascot tip copy (to be rewritten s/AIDEY/Expo/) and IntersectionObserver pattern for scroll-contextual tips
-- Direct owner instructions (session 2026-04-22) -- Next.js 14 static-export hosting on GitHub Pages, GA4 over Plausible, docs rendered from four filesystem roots with no exclusions, six-item nav replacing handoff's pipeline/brain with docs/agents/skills/commands/github/npm, mascot renamed from AIDEY to Expo as the Domain Expert personification (final name; interim "AID" rationale of pronunciation guard abandoned), canonical footer dot as authority signal, cite-as URL commit pinning as credibility move
+- Direct owner instructions (session 2026-04-22) -- Next.js 14 static-export hosting on GitHub Pages, GA4 over Plausible, docs rendered from four filesystem roots with no exclusions, mascot renamed from AIDEY to Expo as the Domain Expert personification (final name; interim "AID" rationale of pronunciation guard abandoned), canonical footer dot as authority signal, cite-as URL commit pinning as credibility move
+- Direct owner instructions (nav realignment, confirmed 2026-11-26) -- five-entry nav docs/brain/observer/github/npm on every page with agents/skills/commands inside the docs surface; each route pixel-checked against its own handoff (Terminal for landing and docs, brain handoff for /brain, observer handoff for /observer)
+- Direct owner instructions (docs reference roots, confirmed 2026-11-26) -- `.aide/reference/tools/` and `.aide/reference/hooks/` added as their own docs sections after Skills; exact page counts dropped from specs

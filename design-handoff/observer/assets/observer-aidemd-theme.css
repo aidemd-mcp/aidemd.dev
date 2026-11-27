@@ -1,0 +1,84 @@
+/* AIDE observer, re-themed onto the aidemd.dev site palette.
+   Drop-in override: load AFTER the observer stylesheet. It only redefines the observer's own
+   design tokens (see aidemd-mcp src/observer/page/styles/viewer/index.css, `.av.t-dark`), so every
+   component, layout value and spacing stays exactly as shipped. Nothing else is restyled.
+
+   Site source: aidemd.dev src/app/globals.css (@theme) and .aide/intent.aide
+   (bg #0d0b08, JetBrains Mono only, forest green #3d6b4a the only accent, amber #d6b25a = WARN).
+
+   Contrast (WCAG 2.x, text on the surfaces it sits on; measured, not estimated):
+     --text     #e8dfce  bg 14.86  surface 14.10  raised 12.48  run-soft 12.62  wait-soft 11.87
+     --text-2   #aba497  bg  7.94  surface  7.54  raised  6.67  run-soft  6.75  wait-soft  6.35
+     --text-3   #948e82  bg  6.04  surface  5.73  raised  5.07  run-soft  5.13  wait-soft  4.82
+     --run      #6aaa7c  bg  7.14  surface  6.78  run-soft 6.07
+     --warn     #d6b25a  bg  9.71  wait-soft 7.76
+     --on-wait  #0d0b08  on --wait #d6b25a  9.71
+     --danger   #ff5f56  bg  6.57  danger-soft 5.62
+     --border-strong #6e685d  bg 3.56  surface 3.37  (UI-component boundary, 3:1 target)
+
+   Adjustments versus the raw site values:
+     - #3d6b4a itself is 3.18:1 on #0d0b08, below 4.5:1, so it is never used as text. Text in the
+       working state uses #6aaa7c: the SAME hue (137deg) and saturation (27%) as #3d6b4a with only
+       lightness raised (33% -> 54%). It is a tint of the one accent, not a second green.
+       The raw #3d6b4a is kept for the soft fill (22% over bg) and for the pressed-tab underline.
+     - Site --color-dim-2 (fg at 38%) is 2.95:1 on bg: too faint for the observer's tertiary text.
+       --text-3 uses fg at ~62% (#948e82) instead; site --color-dim (55%, #858075) fails on raised
+       surfaces (4.20:1).
+     - Site --color-border is rgba(fg,.12); it is flattened to the opaque #272420 so stacked
+       surfaces do not double it.
+*/
+
+html, body { background: #0d0b08; }
+
+html .av.t-dark {
+  color-scheme: dark;
+
+  /* type: the site is JetBrains Mono only */
+  --font: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* radii: site uses 3-6px */
+  --r-1: 4px; --r-2: 6px; --r-3: 8px;
+
+  /* surfaces */
+  --bg: #0d0b08;            /* site --color-bg */
+  --surface: #16120d;       /* site --color-card */
+  --raised: #231e19;        /* card + fg at 6% (site --color-hover over card) */
+  --border: #272420;        /* site --color-border, flattened */
+  --border-strong: #6e685d; /* fg at ~45% */
+
+  /* text */
+  --text: #e8dfce;          /* site --color-fg */
+  --text-2: #aba497;        /* site --color-dim-text (fg 72%), flattened */
+  --text-3: #948e82;        /* fg ~62% (see note) */
+
+  /* working = the site's one accent */
+  --run: #6aaa7c;           /* #3d6b4a, lightness raised for text */
+  --run-soft: #182017;      /* #3d6b4a at 22% over bg */
+
+  /* done = the same accent tint. The observer uses --done for finished-phase icons and the
+     connectors between them, the Live pill, Aligned badges and checked boxes: green there reads
+     as "healthy / progressed", which is the site's own use of the accent. Working stays
+     distinct by shape, not hue: a bordered, filled pill with a play icon and a step/elapsed
+     label, versus a borderless pill with a check icon. */
+  --done: #6aaa7c;
+  --done-soft: #182017;
+
+  /* danger = site --color-danger */
+  --danger: #ff5f56;
+  --danger-soft: #2f1713;   /* #ff5f56 at 14% over bg */
+
+  /* waiting on you = site amber (WARN / --color-todo) */
+  --warn: #d6b25a;
+  --wait: #d6b25a;
+  --wait-soft: #292213;     /* #d6b25a at 14% over bg */
+  --on-wait: #0d0b08;
+  --on-wait-2: #3a2e12;
+
+  --focus: #6aaa7c;
+  --shadow: 0 16px 48px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.45);
+  --wait-glow: 0 0 0 1px #d6b25a, 0 8px 32px rgba(214,178,90,.20);
+}
+
+/* The pressed view switch underlines in the accent itself (a 3px bar, not text). */
+html .av.t-dark .av-switch button[aria-pressed="true"] { box-shadow: inset 0 -3px 0 #3d6b4a; }

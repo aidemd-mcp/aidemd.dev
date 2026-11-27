@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Caret, { CARET_BLINK_PERIOD_MS } from "./Caret";
+import prefersReducedMotion from "./prefersReducedMotion";
 
 interface TypewriterProps {
   text: string;
@@ -13,27 +15,44 @@ interface TypewriterProps {
  * The invisible span containing the full text reserves the final box
  * dimensions before first paint. The visible span overlays it and
  * reveals one character per `speed` ms. Cycles with a 2s pause at
- * full reveal. No layout shift regardless of animation state.
+ * full reveal. The reserve box keeps the text still; the caret is remounted
+ * on every reveal step (keyed by revealed length) with its blink phase carried
+ * over, so it never registers as a shifted element. No layout shift regardless
+ * of animation state. Visitors with prefers-reduced-motion get the finished
+ * headline at once, with no timers.
  */
 export default function Typewriter({ text, speed = 40 }: TypewriterProps) {
-  const [displayed, setDisplayed] = useState("");
+  const [{ displayed, caretPhaseMs }, setReveal] = useState({ displayed: "", caretPhaseMs: 0 });
+  const blinkOriginRef = useRef(0);
   const indexRef = useRef(0);
   const directionRef = useRef<"typing" | "pausing">("typing");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (prefersReducedMotion()) {
+      setReveal({ displayed: text, caretPhaseMs: 0 });
+      return;
+    }
+
+    blinkOriginRef.current = performance.now();
+
+    function reveal(next: string) {
+      const caretPhase = (performance.now() - blinkOriginRef.current) % CARET_BLINK_PERIOD_MS;
+      setReveal({ displayed: next, caretPhaseMs: caretPhase });
+    }
+
     function tick() {
       if (directionRef.current === "pausing") {
         directionRef.current = "typing";
         indexRef.current = 0;
-        setDisplayed("");
+        reveal("");
         timerRef.current = setTimeout(tick, speed);
         return;
       }
 
       indexRef.current += 1;
       const next = text.slice(0, indexRef.current);
-      setDisplayed(next);
+      reveal(next);
 
       if (indexRef.current >= text.length) {
         directionRef.current = "pausing";
@@ -67,10 +86,7 @@ export default function Typewriter({ text, speed = 40 }: TypewriterProps) {
         aria-hidden="true"
       >
         {displayed}
-        <span
-          className="inline-block w-[2px] h-[0.85em] bg-[color:var(--color-accent)] ml-[2px] align-middle animate-[aideCursor_1s_steps(2)_infinite]"
-          aria-hidden="true"
-        />
+        <Caret key={displayed.length} phaseMs={caretPhaseMs} />
       </span>
     </span>
   );

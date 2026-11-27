@@ -33,7 +33,7 @@ function makeRoute(absPath = '/docs/test-section/test-slug.md'): DocRoute {
 }
 
 // ---------------------------------------------------------------------------
-// Cases — the three shapes the 33 real docs exhibit.
+// Cases — the shapes the real docs exhibit.
 // ---------------------------------------------------------------------------
 
 describe('getDocMeta', () => {
@@ -101,5 +101,18 @@ describe('getDocMeta', () => {
 
     expect(result.title).toBe('My Doc');
     expect(result.description).toBe('The explicit frontmatter description.');
+  });
+
+  it('(vii) reference-page shape — name + description frontmatter without title, H1 matches the name', async () => {
+    readFileMock.mockResolvedValueOnce(
+      '---\nname: Stop\ndescription: Fires when the agent finishes its turn; AIDE records the session as waiting on the user.\n---\n\n# Stop\n\nBody text.' as unknown as Awaited<ReturnType<typeof readFile>>,
+    );
+
+    const result = await getDocMeta(makeRoute());
+
+    expect(result.title).toBe('Stop');
+    expect(result.description).toBe(
+      'Fires when the agent finishes its turn; AIDE records the session as waiting on the user.',
+    );
   });
 });

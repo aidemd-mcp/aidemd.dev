@@ -58,7 +58,9 @@ export default async function walkDocsRoot({
       const rel = path.relative(absRoot, absPath);
       const slug = rel.replace(/\\/g, '/').replace(/\.md$/, '');
 
-      const urlPath = `/docs/${urlSegment}/${slug}`;
+      // Only the URL is lowercased — slug keeps the file's own case so titles
+      // and labels read the real names (`Stop`, `aide/SKILL`).
+      const urlPath = `/docs/${urlSegment}/${slug.toLowerCase()}`;
 
       // Read the file to extract the title from the first H1 heading.
       let title = slug;

@@ -4,7 +4,7 @@
  *
  * Dynamic-imports the docs registry and prints a table of
  * (section, slug, urlPath, commit) for human diffing against
- * `ls -R .aide/docs .claude/commands .claude/agents .claude/skills`.
+ * `ls -R .aide/docs .claude/commands .claude/agents .claude/skills .aide/reference/tools .aide/reference/hooks`.
  *
  * Usage: npm run docs:verify
  */
@@ -50,7 +50,7 @@ async function walkRoot({ section, urlSegment, absRoot }) {
       return {
         section,
         slug,
-        urlPath: `/docs/${urlSegment}/${slug}`,
+        urlPath: `/docs/${urlSegment}/${slug.toLowerCase()}`,
         absPath,
         commit: resolveCommit(absPath),
         order: 0,
@@ -65,6 +65,8 @@ const SECTION_PRIORITY = {
   commands: 1,
   agents: 2,
   skills: 3,
+  tools: 4,
+  hooks: 5,
 };
 
 function orderRoutes(routes) {
@@ -75,7 +77,7 @@ function orderRoutes(routes) {
     const ai = a.slug === 'index' ? 0 : 1;
     const bi = b.slug === 'index' ? 0 : 1;
     if (ai !== bi) return ai - bi;
-    return a.slug.localeCompare(b.slug);
+    return a.urlPath.localeCompare(b.urlPath);
   });
   routes.forEach((r, i) => { r.order = i; });
   return routes;
@@ -90,6 +92,8 @@ const CATEGORIES = [
   { section: 'commands',    urlSegment: 'commands',    absRoot: path.resolve(cwd, '.claude/commands') },
   { section: 'agents',      urlSegment: 'agents',      absRoot: path.resolve(cwd, '.claude/agents') },
   { section: 'skills',      urlSegment: 'skills',      absRoot: path.resolve(cwd, '.claude/skills') },
+  { section: 'tools',       urlSegment: 'tools',       absRoot: path.resolve(cwd, '.aide/reference/tools') },
+  { section: 'hooks',       urlSegment: 'hooks',       absRoot: path.resolve(cwd, '.aide/reference/hooks') },
 ];
 
 const allNested = await Promise.all(CATEGORIES.map(walkRoot));
@@ -135,12 +139,9 @@ for (const r of routes) {
 
 console.log(divider);
 
-const counts = {
-  methodology: routes.filter((r) => r.section === 'methodology').length,
-  commands:    routes.filter((r) => r.section === 'commands').length,
-  agents:      routes.filter((r) => r.section === 'agents').length,
-  skills:      routes.filter((r) => r.section === 'skills').length,
-};
+const breakdown = CATEGORIES
+  .map(({ section }) => `${section}=${routes.filter((r) => r.section === section).length}`)
+  .join('  ');
 
-console.log(`\nBreakdown: methodology=${counts.methodology}  commands=${counts.commands}  agents=${counts.agents}  skills=${counts.skills}`);
-console.log(`Total: ${routes.length} ${routes.length === 42 ? '✓' : '✗ EXPECTED 42'}\n`);
+console.log(`\nBreakdown: ${breakdown}`);
+console.log(`Total: ${routes.length}\n`);

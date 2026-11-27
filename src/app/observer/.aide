@@ -1,0 +1,28 @@
+---
+scope: src/app/observer
+alignment: unreviewed
+description: Short product-first feature page explaining the observer, the local live view of every AIDE session's pipeline position, built from Variant A of the observer design handoff.
+intent: >
+  A short (about 500–1,000 words) product-first feature page that explains the
+  observer: what it is, how it works and why it helps. It leads with the
+  pipeline rail, one open session per project (HALT/BLOCKED) and one local web
+  view across projects; working, waiting and ended come after. It is built
+  from Variant A of the observer design handoff, byte-exact on copy, tokens,
+  layout and interactions, inside the site's own top bar and footer. Every
+  fact it states matches the observer's real behaviour in the server source.
+outcomes:
+  desired:
+    - At 1280 and 390 the page matches the Variant A artboard of the observer handoff, with the site top bar and footer excluded from the comparison. At 375–390 there is no horizontal page scroll; only the rail close-up scrolls sideways inside its own frame.
+    - The page renders with no console errors, both captures load at 1x and 2x as captured with no caption, the page is in the sitemap with observer shown as the current nav entry, and pasting its URL into Slack or iMessage renders an OG preview.
+    - "Variant A's drafted copy ships as written with every DRAFT marker removed, changed only where it misstated a fact: the confirmed one-shot init command replaces the install placeholder, Local and private credits the loopback binding rather than the token, and the default-port line is hedged because the port moves up when taken. All page copy lives in one module the founder edits."
+    - The install box in the hero and the closing panel copies the confirmed install command, the copy button is the page's only client-side behaviour, and with reduced motion on the working dot does not pulse.
+    - The HALT and BLOCKED agent-reply snippets use the server's real reply format filled with the capture's demo data, with no placeholder tags left.
+    - Every stated fact (ports, env vars, data roots, hook events, the HALT/BLOCKED format, the 15-minute maybe-stuck threshold) matches the aidemd-mcp source, and the Hooks link lands on the hooks reference page in the docs.
+  undesired:
+    - Page copy names it "AIDE Pipeline Viewer" or anything other than the observer; that name appears only inside the captures.
+    - HALT or BLOCKED shown as an observer screen, capture or state rather than only as agent-reply snippets and legend labels, or any wording that implies the observer sends desktop notifications.
+    - Captures redrawn, re-shot, captioned or swapped for a stylised mock, or the drawn rail and the session capture put on the page.
+    - Copy reworded beyond the approved fact fixes, new wording invented, or a DRAFT marker, placeholder tag or install placeholder left on the live page.
+    - A stated fact that drifts from the server, such as the token keeping data local, a fixed port, 15 quiet minutes presented as an industry standard, or replay and rewind implied.
+    - Variant B's callouts and pins or the handoff's own nav, drawer and footer shipped, or the page's state colours leaking onto other pages or green used for anything but live.
+---

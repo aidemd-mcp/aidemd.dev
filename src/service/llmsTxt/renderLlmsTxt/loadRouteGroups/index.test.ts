@@ -17,6 +17,7 @@ vi.mock('@/service/docsRegistry', () => ({
 import { readFile } from 'node:fs/promises';
 import { getDocMeta } from '@/service/docsRegistry';
 import loadRouteGroups from './index';
+import { DOCS_CATEGORIES } from '@/data/docsCategories';
 import type { DocRegistry, DocRoute } from '@/types/docs';
 
 const mockReadFile = vi.mocked(readFile);
@@ -49,16 +50,12 @@ ${INDEX_MD_SLUGS_IN_ORDER.map(s => `- [${s}.md](./${s}.md)`).join('\n')}
 // ---------------------------------------------------------------------------
 
 function makeRoute(section: DocRoute['section'], slug: string): DocRoute {
-  const urlSegment =
-    section === 'methodology' ? 'methodology' :
-    section === 'commands'    ? 'commands'    :
-    section === 'agents'      ? 'agents'      :
-                                'skills';
+  const urlSegment = section;
   return {
     section,
     slug,
     title: slug,
-    urlPath: `/docs/${urlSegment}/${slug}`,
+    urlPath: `/docs/${urlSegment}/${slug.toLowerCase()}`,
     absPath: `/repo/.aide/docs/${slug}.md`,
     order: 0,
   };
@@ -198,6 +195,57 @@ describe('loadRouteGroups — non-Methodology sections keep registry order', () 
 
     const slugs = agentsGroup!.entries.map((e) => e.absoluteUrl.split('/').pop());
     expect(slugs).toEqual(['index', 'aide-architect', 'aide-qa']);
+  });
+});
+
+describe('loadRouteGroups — six sections', () => {
+  it('returns one group per docs section in DOCS_CATEGORIES order with the section labels', async () => {
+    const routes = DOCS_CATEGORIES.map((c) => makeRoute(c.section, 'index'));
+    const registry = makeRegistry(routes);
+
+    const groups = await loadRouteGroups(registry);
+
+    expect(groups.map((g) => g.section)).toEqual(DOCS_CATEGORIES.map((c) => c.section));
+    expect(groups.map((g) => g.label)).toEqual([
+      'Methodology',
+      'Commands',
+      'Agents',
+      'Skills',
+      'Tools',
+      'Hooks',
+    ]);
+  });
+});
+
+describe('loadRouteGroups — lowercase URLs', () => {
+  it('builds the entry URL from urlPath, never from the mixed-case slug', async () => {
+    mockGetDocMeta.mockResolvedValueOnce({ title: 'Stop', description: 'Turn finished.' });
+    const registry = makeRegistry([makeRoute('hooks', 'Stop')]);
+
+    const groups = await loadRouteGroups(registry);
+    const hooksGroup = groups.find((g) => g.section === 'hooks');
+
+    expect(hooksGroup!.entries[0].absoluteUrl).toBe('https://aidemd.dev/docs/hooks/stop');
+    expect(hooksGroup!.entries[0].title).toBe('Stop');
+  });
+
+  it('matches a mixed-case index.md link to the lowercase registry slug', async () => {
+    mockReadFile.mockResolvedValueOnce(
+      '- [Plan-Aide.md](./Plan-Aide.md)\n- [Aide-Spec.md](./Aide-Spec.md)\n' as unknown as Awaited<
+        ReturnType<typeof readFile>
+      >,
+    );
+    const registry = makeRegistry([
+      makeRoute('methodology', 'index'),
+      makeRoute('methodology', 'aide-spec'),
+      makeRoute('methodology', 'plan-aide'),
+    ]);
+
+    const groups = await loadRouteGroups(registry);
+    const methodologyGroup = groups.find((g) => g.section === 'methodology');
+
+    const slugs = methodologyGroup!.entries.map((e) => e.absoluteUrl.split('/').pop());
+    expect(slugs).toEqual(['index', 'plan-aide', 'aide-spec']);
   });
 });
 

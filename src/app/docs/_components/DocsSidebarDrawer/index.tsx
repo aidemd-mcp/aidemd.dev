@@ -16,8 +16,6 @@ interface DocsSidebarDrawerProps {
   groupedRoutes: GroupedRoutes[];
 }
 
-const VALID_SECTIONS = new Set<string>(['methodology', 'commands', 'agents', 'skills']);
-
 /**
  * Mobile sidebar drawer — rendered block md:hidden. Slides in from the left
  * as an overlay. Body scroll is locked while open. Closes on backdrop click,
@@ -37,8 +35,9 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
   // Join all segments after the section to support nested slugs (e.g. 'aide/align')
   const slugPart = parts.slice(2).join('/') || undefined;
 
+  const validSections = new Set<string>(groupedRoutes.map(({ section }) => section));
   const activeSection: DocSection | undefined =
-    sectionPart && VALID_SECTIONS.has(sectionPart) ? (sectionPart as DocSection) : undefined;
+    sectionPart && validSections.has(sectionPart) ? (sectionPart as DocSection) : undefined;
   const currentKey: string | undefined =
     activeSection && slugPart ? `${activeSection}/${slugPart}` : undefined;
 
@@ -169,11 +168,10 @@ export default function DocsSidebarDrawer({ groupedRoutes }: DocsSidebarDrawerPr
 
                 {/* Route rows */}
                 {routes.map((route, i) => {
-                  const routeKey = `${route.section}/${route.slug}`;
-                  const isActive = currentKey === routeKey;
+                  const isActive = currentKey !== undefined && route.urlPath === `/docs/${currentKey}`;
                   return (
                     <Link
-                      key={routeKey}
+                      key={route.urlPath}
                       href={route.urlPath}
                       aria-current={isActive ? 'page' : undefined}
                       style={{

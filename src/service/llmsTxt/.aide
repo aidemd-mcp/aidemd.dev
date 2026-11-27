@@ -1,29 +1,29 @@
 ---
 scope: src/service/llmsTxt
 alignment: unreviewed
-description: Build-time generator that emits a single /llms.txt file at the site root following the llmstxt.org progressive-disclosure standard — a brief product overview plus the verbatim contents of the methodology docs index so any agent landing on aidemd.dev can orient itself and navigate to full docs without scraping HTML.
+description: Build-time generator that emits a single /llms.txt file at the site root following the llmstxt.org progressive-disclosure standard — a brief product overview plus a linked map of every docs section so any agent landing on aidemd.dev can orient itself and navigate to full docs without scraping HTML.
 intent: >
   When an AI agent (Claude, ChatGPT, a custom research bot, or any tool that
   follows the llmstxt.org convention) fetches https://aidemd.dev/llms.txt, it
   must receive a single plain-text document that (1) tells it in a few sentences
   what AIDE and @aidemd-mcp/server are, (2) tells it why the methodology is
   relevant to an agent's own work, (3) tells it how to get started using the
-  package, and (4) hands it the full contents of .aide/docs/index.md verbatim
-  as a linked map of the canonical methodology docs. The file is the
-  agent-facing entry point to the site — the text-native counterpart to the
-  human-facing marketing landing page — and it must be produced at build time
-  from the same .aide/docs/index.md the docs site renders, so the /llms.txt
-  index can never drift from the real doc set that ships with the package.
+  package, and (4) hands it a linked map of every docs section, one list per
+  section. The file is the agent-facing entry point to the site — the
+  text-native counterpart to the human-facing marketing landing page — and it
+  must be produced at build time from the same doc set the docs site renders,
+  so the /llms.txt index can never drift from the real doc set that ships with
+  the package.
 outcomes:
   desired:
     - "/llms.txt exists at the root of the deployed static export (reachable at https://aidemd.dev/llms.txt), is served as plain text, and follows the llmstxt.org structure: H1 product name, blockquote summary, then prose sections and a linked doc list."
     - The file opens with a brief plain-language overview of what AIDE (the methodology) and @aidemd-mcp/server (the package that ships it) are, an agent-framed why-it-matters paragraph, and a short getting-started pointer to the canonical npm install command and the docs site — enough for an agent to decide within seconds whether to read further.
-    - "The doc-index portion of /llms.txt is produced from the contents of .aide/docs/index.md at build time with zero hand-maintained duplication — adding, removing, or renaming a link in .aide/docs/index.md and rebuilding produces a corresponding change in /llms.txt automatically."
-    - "All relative links inherited from .aide/docs/index.md are rewritten to absolute https://aidemd.dev/docs/... URLs that match the deployed docs routes produced by docsRegistry, so an agent following any link in /llms.txt reaches the live canonical version of that doc."
+    - "The link lists in /llms.txt are produced at build time from the same doc set the docs site renders, one section per docs section, with zero hand-maintained duplication — adding, removing, or renaming a doc in any docs section and rebuilding produces a corresponding change in /llms.txt automatically."
+    - "Every link in /llms.txt, including any relative link inherited from .aide/docs/index.md, is an absolute https://aidemd.dev/docs/... URL matching the deployed route docsRegistry produces for its docs section, so an agent following any link in /llms.txt reaches the live canonical version of that doc."
     - "Only the short-form /llms.txt is shipped — no /llms-full.txt companion exists — so there is exactly one agent-facing index URL on the site and zero ambiguity about which file to fetch."
     - "Generation runs as part of the standard next build pipeline (no separate manual step, no runtime endpoint) and the file lands in the static export output at the site root alongside og.png and index.html."
   undesired:
-    - "A hand-maintained copy of the doc index inside the llms.txt generator — any list of doc titles, slugs, or links embedded in code or a template rather than derived from .aide/docs/index.md — which immediately re-introduces the drift failure mode the root spec's filesystem-driven docs contract exists to prevent."
+    - "A hand-maintained copy of the doc index inside the llms.txt generator — any list of doc titles, slugs, or links embedded in code or a template rather than derived from the doc set the docs site renders — which immediately re-introduces the drift failure mode the root spec's filesystem-driven docs contract exists to prevent."
     - "/llms.txt emitted with relative or bare-slug links copied verbatim from .aide/docs/index.md (e.g. a bullet reading aide-spec.md with a dot-slash prefix) — an agent fetching llms.txt over HTTP has no base path to resolve those against, so every link silently 404s or points at a non-existent path."
     - "Links in /llms.txt that point at URLs the deployed site does not actually serve — e.g. /docs/aide-spec.md with the .md extension, or /docs/<slug> paths that diverge from the /docs/<section>/<slug> structure docsRegistry produces — which breaks the agent-navigation contract silently because the file itself still parses."
     - "A second agent-index file shipped alongside — /llms-full.txt, /ai.txt, /robots.txt overrides claiming to be an LLM index, or any per-section agent-facing index — which fragments the single-entry-point contract and forces agents to guess which file is canonical."
@@ -38,7 +38,7 @@ Agents increasingly land on documentation sites the same way humans do — by fo
 
 aidemd.dev is an unusually high-value target for this convention. The site exists to document a methodology (AIDE) for how AI agents should read, plan, and build software — its entire audience below the human marketing layer is other agents. A founder evaluating AIDE may arrive through the landing page, but the agents those founders run — the Claude Code instance they're evaluating the methodology against, the research bot they use to survey the space, the coding assistant they'll eventually point at their own codebase — will arrive through `/llms.txt` if it exists, or through brittle scraping if it doesn't. Shipping this file correctly is a direct credibility signal to the exact audience AIDE is designed to serve: agent tooling that already speaks the convention immediately recognizes aidemd.dev as a first-class participant in the agent-web, and tooling that doesn't will still get a plain-text index it can handle without HTML parsing.
 
-The file has a single, narrow job: orient an agent in seconds. It is not an executive summary, not a second marketing page, not a docs mirror. Per the llmstxt.org spec it is an H1, an optional blockquote summary, optional prose, and one or more H2-delimited link lists — nothing more. The link lists are the high-value payload, because they are what turn the file from "tell the agent what this is" into "hand the agent a map." For aidemd.dev, that map already exists in the repository: `.aide/docs/index.md` is the curated, canonical doc hub, and the docs site is a direct filesystem-driven rendering of the same four roots the docsRegistry walks. The llms.txt file is the third rendering of that same canonical content — text-native, agent-facing, served at the root — and its correctness is measured by the same drift-resistance guarantee the root spec establishes for the docs site: if a doc exists in the package, it must appear in the index; if a doc is removed, it must disappear from the index; no hand-maintained duplication sits in between.
+The file has a single, narrow job: orient an agent in seconds. It is not an executive summary, not a second marketing page, not a docs mirror. Per the llmstxt.org spec it is an H1, an optional blockquote summary, optional prose, and one or more H2-delimited link lists — nothing more. The link lists are the high-value payload, because they are what turn the file from "tell the agent what this is" into "hand the agent a map." For aidemd.dev, that map already exists in the repository: `.aide/docs/index.md` is the curated, canonical doc hub, and the docs site is a direct filesystem-driven rendering of the six docs content roots the docsRegistry walks. The llms.txt file is the third rendering of that same canonical content — text-native, agent-facing, served at the root — and its correctness is measured by the same drift-resistance guarantee the root spec establishes for the docs site: if a doc exists in the package, it must appear in the index; if a doc is removed, it must disappear from the index; no hand-maintained duplication sits in between.
 
 ## Strategy
 
@@ -48,9 +48,9 @@ The file has a single, narrow job: orient an agent in seconds. It is not an exec
 
 **Keep the preamble to three short prose blocks: an overview, an agent-framed why-it-matters, and a two-line getting-started.** The llmstxt.org spec allows optional paragraphs between the blockquote and the first H2 but not additional headings, so the three blocks run as bare paragraphs with no subheads. Overview restates what AIDE is and what the package does in plain language — a few sentences, the same framing the root intent uses ("a short intent spec next to the code is the contract every agent works from"). Why-it-matters is written directly to the agent reading: AIDE governs how agents plan and build against intent specs, so if this agent is operating in any codebase that ships `.aide` files, the canonical methodology applies. Getting-started is two lines: the `npm install` or `npx` invocation for `@aidemd-mcp/server` (read from `package.json` name) and a pointer to the docs site root. Brevity here is load-bearing against the "verbose essays" undesired outcome — an agent that has to read three screens of preamble before reaching the link list gets less value, not more.
 
-**Generate the link-list body by transforming `.aide/docs/index.md` at build time, not by hand-authoring a second copy.** This is the core drift-resistance decision the frontmatter demands. The methodology doc hub at `.aide/docs/index.md` already lists the canonical methodology docs as markdown links, and the repository's four content roots (`.aide/docs`, `.claude/commands`, `.claude/agents`, `.claude/skills`) are already walked at build time by the docsRegistry service (33 total routes today — see `src/service/docsRegistry/.aide`). The llms.txt generator consumes the same docsRegistry output the site uses, so adding, removing, or renaming any doc in any content root shows up in `/llms.txt` the next build with zero manual step. Hand-maintaining any list of slugs or titles in the generator is explicitly forbidden by `outcomes.undesired`, and the reason is the same one that drives the docs site itself: if the list can drift, it will.
+**Generate the link-list body from the docsRegistry output at build time, not by hand-authoring a second copy.** This is the core drift-resistance decision the frontmatter demands. The methodology doc hub at `.aide/docs/index.md` is one input among the sections, not the whole map: the repository's six docs content roots (`.aide/docs`, `.claude/commands`, `.claude/agents`, `.claude/skills`, `.aide/reference/tools`, `.aide/reference/hooks`) are already walked at build time by the docsRegistry service (see `src/service/docsRegistry/.aide`). The llms.txt generator consumes the same docsRegistry output the site uses, so adding, removing, or renaming any doc in any content root shows up in `/llms.txt` the next build with zero manual step. Hand-maintaining any list of slugs or titles in the generator is explicitly forbidden by `outcomes.undesired`, and the reason is the same one that drives the docs site itself: if the list can drift, it will.
 
-**Emit four H2 sections, one per content root, in the canonical DOCS_CATEGORIES order — Methodology, Commands, Agents, Skills.** The docsRegistry already groups routes by section in this exact priority order (methodology first, skills last, per `src/data/docsCategories.ts`); the llms.txt file mirrors that grouping. Four sections rather than one flat list because the llmstxt.org spec is explicit that H2 file lists are the site's way of expressing what kind of content each link is, and conflating the four categories into one section ("Documentation") strips the semantic distinction between the methodology itself, the slash commands users invoke, the subagents the pipeline delegates to, and the skills that ship with the package. That distinction is the same reason the site's top nav exposes four separate entries — the payload of the file has to carry it too. The Methodology section uses the same ordering `.aide/docs/index.md` ships (index first, then aide-spec, aide-template, plan-aide, todo-aide, progressive-disclosure, agent-readable-code, automated-qa, cascading-alignment); the other three sections follow the docsRegistry's deterministic order (`index.md` first within its section, then alphabetical by slug).
+**Emit one H2 section per docs section, in the canonical DOCS_CATEGORIES order — Methodology, Commands, Agents, Skills, Tools, Hooks.** The docsRegistry already groups routes by section in this exact priority order (per `src/data/docsCategories.ts`); the llms.txt file mirrors that grouping. One section per docs section rather than one flat list because the llmstxt.org spec is explicit that H2 file lists are the site's way of expressing what kind of content each link is, and conflating the categories into one section ("Documentation") strips the semantic distinction between the methodology itself, the slash commands users invoke, the subagents the pipeline delegates to, and the skills, MCP tools and hook events that ship with the package. That distinction is the same reason the docs sidebar exposes separate sections — the payload of the file has to carry it too. The Methodology section uses the same ordering `.aide/docs/index.md` ships (index first, then aide-spec, aide-template, plan-aide, todo-aide, progressive-disclosure, agent-readable-code, automated-qa, cascading-alignment); the other sections follow the docsRegistry's deterministic order (`index.md` first within its section, then alphabetical by slug).
 
 **Rewrite every link to an absolute `https://aidemd.dev/docs/<section>/<slug>` URL — never relative, never `.md`-suffixed, never a raw filesystem path.** An agent fetching `/llms.txt` over HTTP has no base path that resolves `aide-spec.md` or `./aide-spec.md` to anything meaningful, so every relative link silently 404s on the consuming side; this is one of the two most common llms.txt bugs in the wild and the frontmatter calls it out explicitly. The URL shape mirrors exactly what docsRegistry produces for the deployed site — `/docs/<urlSegment>/<slug>` where `<urlSegment>` is the section key and `<slug>` is the docsRegistry slug — so the two renderings always resolve to the same canonical page (e.g. `https://aidemd.dev/docs/methodology/aide-spec`, `https://aidemd.dev/docs/commands/aide/align`, `https://aidemd.dev/docs/agents/aide-architect`). Any URL shape the site does not actually serve (`.md` extensions, dropped section segment, alternative slug schemes) breaks the agent-navigation contract silently because the file itself still parses cleanly.
 
@@ -66,7 +66,7 @@ The file has a single, narrow job: orient an agent in seconds. It is not an exec
 
 ## Good examples
 
-A correctly-structured `/llms.txt` (abridged link lists for space; the real file emits the full 33 entries across four sections):
+A correctly-structured `/llms.txt` (abridged link lists for space; the real file emits every doc, one section per docs section):
 
 ```
 # AIDE — Autonomous Intent-Driven Engineering
@@ -123,6 +123,17 @@ To install the methodology into a host project, run `npx @aidemd-mcp/server init
 
 - [brain](https://aidemd.dev/docs/skills/brain): General-purpose Obsidian vault access for agents — reads the vault CLAUDE.md and follows its navigation rules.
 - [study-playbook](https://aidemd.dev/docs/skills/study-playbook): Navigates the coding playbook hub top-down to load conventions before writing or reviewing code.
+
+## Tools
+
+- [aide_info](https://aidemd.dev/docs/tools/aide_info): Boot-time report: is the server behind, are the project's AIDE files or hooks out of date, is the brain wired.
+- [aide_discover](https://aidemd.dev/docs/tools/aide_discover): Maps where the project's `.aide` specs live, or one module's ancestor chain and subtree.
+- [aide_observer_start](https://aidemd.dev/docs/tools/aide_observer_start): Starts the observer and halts if another session of the project is open.
+
+## Hooks
+
+- [SessionStart](https://aidemd.dev/docs/hooks/SessionStart): Records the session's presence as working.
+- [Stop](https://aidemd.dev/docs/hooks/Stop): Records the session's presence as waiting on the user.
 ```
 
 A correctly-formed H1 line:
@@ -191,7 +202,7 @@ A link list that drops the section segment from the URL, producing a shape the d
 - [aide-architect](https://aidemd.dev/docs/aide-architect): The architect agent.
 ```
 
-A link list that collapses the four content roots into a single generic section, destroying the category distinction the site's nav and docsRegistry both preserve. An agent scanning the file cannot tell the methodology docs apart from the slash commands apart from the subagents:
+A link list that collapses the docs content roots into a single generic section, destroying the category distinction the site's nav and docsRegistry both preserve. An agent scanning the file cannot tell the methodology docs apart from the slash commands apart from the subagents:
 
 ```
 ## Documentation
@@ -256,11 +267,11 @@ AIDE is a methodology guided by AIDEY, the AI Domain Expert mascot.
 ## References
 
 - `https://llmstxt.org/` — public llms.txt specification; supplied the required file shape (H1 mandatory, blockquote optional, paragraphs optional, H2-delimited file lists), the `[name](url): optional notes` link-list format, the canonical file location (`/llms.txt` at site root), the consumer model (LLM inference agents, `llms_txt2ctx` tooling), and the note that `llms-full.txt` is not a spec variant but a FastHTML tool-generated derivative — grounds the "one file only" decision and the structural rules the strategy cites.
-- `.aide/intent.aide` — root intent inherited: static-export contract (disqualifies runtime routes, forces build-time file generation), filesystem-driven docs roots (four content roots, zero hand-maintained duplication), brand-voice rule (no marketing copy, no hype adjectives), mascot-name prohibition (no AIDEY/AID anywhere in shipped output), and the site's positioning as the canonical authority on AIDE and `@aidemd-mcp/server`.
+- `.aide/intent.aide` — root intent inherited: static-export contract (disqualifies runtime routes, forces build-time file generation), filesystem-driven docs roots (six content roots, zero hand-maintained duplication), brand-voice rule (no marketing copy, no hype adjectives), mascot-name prohibition (no AIDEY/AID anywhere in shipped output), and the site's positioning as the canonical authority on AIDE and `@aidemd-mcp/server`.
 - `.aide/docs/index.md` — methodology doc hub; supplied the Methodology section's canonical link ordering (index → aide-spec → aide-template → plan-aide → todo-aide → progressive-disclosure → agent-readable-code → automated-qa → cascading-alignment) and confirmed that this file is the source of truth the generator transforms rather than duplicates.
 - `.aide/docs/aide-spec.md` — AIDE methodology spec; confirmed the "@aidemd-mcp/server" product name that must appear in the blockquote and getting-started lines, plus the "intent is the contract every agent works from" framing used in the overview preamble.
-- `src/service/docsRegistry/.aide` — sibling filesystem-walker spec; supplied the URL shape (`/docs/<section>/<slug>`), the exact 33-route count across four content roots (9 methodology, 13 commands, 9 agents, 2 skills), the deterministic section ordering (methodology first, skills last), and the drift-resistance guarantee the llms.txt generator inherits by consuming the registry rather than rebuilding the walk.
+- `src/service/docsRegistry/.aide` — sibling filesystem-walker spec; supplied the URL shape (`/docs/<section>/<slug>`), the deterministic section ordering (methodology, commands, agents, skills, tools, hooks), and the drift-resistance guarantee the llms.txt generator inherits by consuming the registry rather than rebuilding the walk.
 - `src/service/socialShare/.aide` — sibling build-time static-asset spec; supplied the architectural precedent for build-time generation of a static asset emitted alongside `index.html`, the static-export discipline, and the brand-voice and mascot-name guardrails that generalize to any agent-facing surface on the site.
-- `src/data/docsCategories.ts` — DOCS_CATEGORIES definition; supplied the four section keys (`methodology`, `commands`, `agents`, `skills`), their display labels, and their `urlSegment` values — the exact H2 headings and URL-segment values the four link-list sections use.
+- `src/data/docsCategories.ts` — DOCS_CATEGORIES definition; supplied the six section keys (`methodology`, `commands`, `agents`, `skills`, `tools`, `hooks`), their display labels, and their `urlSegment` values — the exact H2 headings and URL-segment values the link-list sections use.
 - `package.json` — repository package metadata; confirmed the `@aidemd-mcp/server` package identity used in the blockquote and the getting-started `npx @aidemd-mcp/server init` line.
 - `src/service/llmsTxt/plan.aide` — architect's implementation plan; landed 2026-04-24, produced `public/llms.txt` as the canonical artifact shipped at the site root.

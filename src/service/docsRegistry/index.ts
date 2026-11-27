@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { DOCS_CATEGORIES } from '@/data/docsCategories';
 import type { DocRegistry, DocRoute, RenderedDoc } from '@/types/docs';
 import walkDocsRoot from './walkDocsRoot';
+import assertUniqueUrlPaths from './assertUniqueUrlPaths';
 import orderRoutes from './orderRoutes';
 import parseDocFrontmatter from './parseDocFrontmatter';
 import resolveCommitHash from './resolveCommitHash';
@@ -15,19 +16,21 @@ import getDocMetaHelper from './getDocMeta';
 let cached: DocRegistry | null = null;
 
 /**
- * Builds the complete DocRegistry by walking the four content roots defined in
+ * Builds the complete DocRegistry by walking every content root defined in
  * DOCS_CATEGORIES, sorting routes deterministically, and wiring up the getByKey
  * index function.
  *
  * Pipeline:
  *   1. Walk each root via walkDocsRoot — discovers every .md file with zero
- *      exclusions, deriving slugs from relative paths.
- *   2. Concatenate all routes from all four sections.
- *   3. Sort via orderRoutes — section priority, index-first, alphabetical slug —
- *      and assign sequential order integers.
- *   4. Return { routes, getByKey } and memoize the result so generateStaticParams
+ *      exclusions, deriving case-kept slugs and lowercase urlPaths.
+ *   2. Concatenate all routes from every section.
+ *   3. Gate via assertUniqueUrlPaths — two files whose URLs differ only by case
+ *      fail the build.
+ *   4. Sort via orderRoutes — section priority, index-first, alphabetical
+ *      lowercased urlPath — and assign sequential order integers.
+ *   5. Return { routes, getByKey } and memoize the result so generateStaticParams
  *      and every page component in a single build share the same registry instance
- *      without re-walking the filesystem.
+ *      without re-walking the filesystem. getByKey matches case-insensitively.
  *
  * Resolves absRoot paths relative to process.cwd() so the registry works
  * regardless of which directory the Next.js build process starts from.
@@ -47,11 +50,19 @@ export default async function buildRegistry(): Promise<DocRegistry> {
     ),
   );
 
-  const routes = orderRoutes(allRoutesNested.flat());
+  const walked = allRoutesNested.flat();
+
+  // Lowercased URLs can collide; fail before ordering so no doc is dropped silently.
+  assertUniqueUrlPaths(walked);
+
+  const routes = orderRoutes(walked);
 
   const registry: DocRegistry = {
     routes,
-    getByKey: (key) => routes.find((r) => `${r.section}/${r.slug}` === key),
+    getByKey: (key) => {
+      const lowerKey = key.toLowerCase();
+      return routes.find((r) => `${r.section}/${r.slug.toLowerCase()}` === lowerKey);
+    },
   };
 
   cached = registry;
@@ -78,7 +89,8 @@ export async function renderDoc(route: DocRoute): Promise<RenderedDoc> {
   const raw = await readFile(route.absPath, 'utf8');
   const { frontmatter, body } = parseDocFrontmatter(raw, route.slug);
   const commit = resolveCommitHash(route.absPath);
-  const bodyHtml = await renderMarkdown(body, highlighter);
+  const { routes } = await buildRegistry();
+  const bodyHtml = await renderMarkdown(body, { highlighter, fromPath: route.absPath, routes });
 
   return {
     route,

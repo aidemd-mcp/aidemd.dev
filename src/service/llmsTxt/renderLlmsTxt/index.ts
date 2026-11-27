@@ -17,9 +17,9 @@ import verifyOutput from './verifyOutput';
  * `node:fs/promises` writes stay out of the bundle.
  *
  * Pipeline sequence:
- *   1. `buildRegistry()` — walks the four docs roots and returns the
- *      deterministically-ordered DocRegistry (33 routes today; the count
- *      is not hardcoded anywhere — the registry produces whatever it finds).
+ *   1. `buildRegistry()` — walks every docs root in DOCS_CATEGORIES and returns the
+ *      deterministically-ordered DocRegistry (no count is hardcoded — the
+ *      registry produces whatever it finds).
  *   2. `loadRouteGroups(registry)` — groups routes by section in
  *      DOCS_CATEGORIES order, enriches each route with title + description
  *      via getDocMeta (cheap frontmatter-only read, no Shiki).
@@ -46,7 +46,7 @@ import verifyOutput from './verifyOutput';
  * drift gate — a silently malformed llms.txt never reaches the deploy artifact.
  */
 export default async function renderLlmsTxt(): Promise<void> {
-  // 1. Build the deterministically-ordered DocRegistry from the four docs roots.
+  // 1. Build the deterministically-ordered DocRegistry from every docs root.
   const registry = await buildRegistry();
 
   // 2. Enrich each route with title + description; group by section in category order.

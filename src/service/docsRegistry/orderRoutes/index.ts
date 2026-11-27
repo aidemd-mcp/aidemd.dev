@@ -10,12 +10,13 @@ const SECTION_PRIORITY = new Map(
  * Sorts routes deterministically and assigns a sequential `order` integer.
  *
  * Sort tiers (ascending):
- *   1. Section priority — follows DOCS_CATEGORIES array order so methodology
- *      routes come before commands, agents, and skills.
+ *   1. Section priority — follows DOCS_CATEGORIES array order (methodology,
+ *      commands, agents, skills, tools, hooks).
  *   2. index.md first — slug === 'index' sorts before all other slugs in its
  *      section so the section root page is always order 0 within the group.
- *   3. Alphabetical slug — stable lexicographic tie-break within the same
- *      section and index-or-not tier.
+ *   3. Alphabetical by lowercased urlPath, so mixed-case slugs order the way
+ *      readers see them — stable tie-break within the same section and
+ *      index-or-not tier.
  *
  * Mutates the input array in place and returns it, which avoids an extra
  * allocation — callers should not rely on the original order after this call.
@@ -32,8 +33,8 @@ export default function orderRoutes(routes: DocRoute[]): DocRoute[] {
     const bIsIndex = b.slug === 'index' ? 0 : 1;
     if (aIsIndex !== bIsIndex) return aIsIndex - bIsIndex;
 
-    // Tier 3: alphabetical slug.
-    return a.slug.localeCompare(b.slug);
+    // Tier 3: alphabetical by lowercased urlPath.
+    return a.urlPath.localeCompare(b.urlPath);
   });
 
   for (let i = 0; i < routes.length; i++) routes[i].order = i;
