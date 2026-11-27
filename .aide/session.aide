@@ -10,13 +10,13 @@ snapshot of the current architectural intent and the anti-regression
 invariants every build phase must hold. It is NOT historical commentary —
 superseded design decisions are cut, not annotated.
 
-## State summary (set 2026-11-26, hooks docs + /observer shipped locally; SEO/AEO next)
+## State summary (set 2026-11-26, hooks docs + /observer deployed; SEO/AEO next)
 
-Task `aidemd-dev-hooks-observer-docs-and-seo-aeo` In Progress. The hooks/tools reference docs, lowercase URLs, in-doc link resolution, the six-section llms.txt and the /observer page are built, QA-passed and cleaned up. Nothing committed yet. The task stays In Progress for SEO/AEO and GitHub/npm metadata.
+Task `aidemd-dev-hooks-observer-docs-and-seo-aeo` In Progress. All of this cycle's work is committed (3384fed) and live on aidemd.dev. The task stays In Progress for SEO/AEO and GitHub/npm metadata.
 
 ## Kanban
 
-- `aidemd-dev-hooks-observer-docs-and-seo-aeo` (In Progress) — hooks docs + /observer done (uncommitted); SEO/AEO + GitHub/npm metadata remain
+- `aidemd-dev-hooks-observer-docs-and-seo-aeo` (In Progress) — hooks docs + /observer shipped and deployed (3384fed); SEO/AEO + GitHub/npm metadata remain
 - `restructure-aidemd-dev-landing-page` (Backlog) — landing page restructure; not part of this work
 - `add-aide-reference-folder-destructure-tools-add-hooks` (aidemd-mcp project; shipped in @aidemd-mcp/server 0.19.0) — `.aide/reference/` with tools and hooks; unblocked the site's Hooks docs and the /observer Hooks link
 - `fix-shipped-doc-relative-links` (aidemd-mcp project; shipped in @aidemd-mcp/server 0.19.1, synced here in d8b9c2e) — fixed the five one-level-short relative links in shipped command/skill docs
@@ -56,6 +56,7 @@ Task `aidemd-dev-hooks-observer-docs-and-seo-aeo` In Progress. The hooks/tools r
 31. **Tools and Hooks section names and subtitles (user, 2026-11-26).** Sidebar/heading titles are "Tools" and "Hooks"; section-index subtitles (ledes) "the MCP tools @aidemd-mcp/server exposes" and "the Claude Code hook events AIDE listens to" approved.
 32. **1440 goldens re-baselined to the current site (user, 2026-11-26).** User: "Regenerate all three". The new goldens include accumulated drift from earlier shipped changes, not just this cycle. og.png re-render discarded ("Restore to committed version").
 33. **Monospace fallback face matches JetBrains Mono metrics (2026-11-26, fix loop).** next/font's default Arial fallback is replaced by a local "JetBrains Mono Fallback" face (0.6em advance) so out-of-subset glyphs render monospace and the hero headline does not re-wrap on font swap.
+34. **Reduced motion shows the finished headline (2026-11-26).** Under prefers-reduced-motion the hero typewriter renders the full headline with no timers; normal-motion visitors keep the looping reveal. The caret remounts per typing step so the hero has zero layout shift.
 
 ## Anti-regression invariants future build phases must hold
 
@@ -64,13 +65,12 @@ Task `aidemd-dev-hooks-observer-docs-and-seo-aeo` In Progress. The hooks/tools r
 
 ## Where this cycle stopped (CRITICAL READING)
 
-Hooks docs + /observer closed 2026-11-26: built, QA passed (two fix loops), retro promoted, ephemerals cleaned up. Awaiting the user: commit, and whether to start the SEO/AEO part next. Nothing committed; uncommitted: design-handoff/observer/, .claude/rules/handoff/, the CLAUDE.md "Project rules" pointer, .aide/intent.aide, .aide/config/brain.aide, src/app/brain/.aide, src/app/observer/.aide, src/service/docsRegistry/.aide, src/service/llmsTxt/.aide, the removed old .aide/plan.aide, .aide/todo.aide and src/service/llmsTxt plan/todo, vitest.config.ts, .gitignore, src/types/observer/, src/types/docs.ts, src/data/navLinks/, src/data/docsCategories.ts, src/app/_components/TopBar/index.tsx, src/app/sitemap.ts, src/app/sitemap.test.ts, src/app/globals.css, public/observer/, src/app/docs/ (sidebar + pages), scripts/docs-verify.mjs, src/service/docsRegistry/ (code + tests), src/service/llmsTxt/ (code + tests), public/llms.txt, src/app/observer/ (page, css, _data, _components), `tests/visual/*.png` (regenerated), src/app/layout.tsx, and this file.
+Deployed 2026-11-26: 3384fed pushed to main, GitHub Pages deploy succeeded, live pages verified. Next: the SEO/AEO part of the task, when the user wants it. Uncommitted: only this file.
 
 ### What the next agent must do
 
-1. Commit the work when the user asks (branch first if on main per the user's rules).
-2. SEO/AEO per decision #6 (definition page, comparison pages, how-to guide, explainer, MCP listings) — interview, structure gate, specs.
-3. GitHub/npm metadata fixes per decision #7.
+1. SEO/AEO per decision #6 — interview, structure gate, specs.
+2. GitHub/npm metadata fixes per decision #7.
 
 ### What's already done and validated
 
@@ -91,6 +91,7 @@ Hooks docs + /observer closed 2026-11-26: built, QA passed (two fix loops), retr
 - 0.19.1 synced (d8b9c2e): the five shipped links fixed; 67 docs render with zero warnings.
 - Root step 11 done: build exit 0, zero warnings; goldens regenerated (#32), test:visual 3/3; og.png restored.
 - QA passed 2026-11-26 for root, docsRegistry, llmsTxt, observer; /observer 0.061%/0.058% neutralised; font-swap CLS 0 (#33); retro at process/retro/2026-11-26-aidemd-reference-docs-and-observer.md; ephemerals cleaned up.
+- Follow-up fixes (caret CLS, reduced motion, dev sitemap, visual-harness freeze) built and QA-passed; committed and deployed as 3384fed (deploy run 45930896979 succeeded; live routes verified 200).
 
 ### What's left after the current cycle
 
@@ -107,10 +108,9 @@ Hooks docs + /observer closed 2026-11-26: built, QA passed (two fix loops), retr
 - docsRegistry Strategy has 8 decisions (cap ~7): merge the Highlighter decision into link resolution.
 - Rendered doc headings have no ids, so kept anchors (e.g. #brevity-contract) do not scroll — pre-existing.
 - A whole missing content root still yields zero routes silently — pre-existing; llms.txt empty-section check catches it at build.
-- Home typewriter is not frozen in visual tests (freezeAnimations only zeroes CSS durations), so home.png can flake against the 0.5% threshold.
 - tests/playwright.config.ts webServer timed out at 180s; runs may need a pre-started `npx serve out -p 4321`.
-- Pre-existing typewriter caret sub-pixel shifts on / (CLS ~0.0003 at 1280, ~0.0014 at 390) — root spec wants zero hero shift; candidate task.
-- /sitemap.xml and unknown doc URLs return 500 on the dev server (static export without generateStaticParams for them); built out/ is correct.
+- Unknown doc URLs return 500 in dev; `dynamicParams = false` would make them 404s.
+- sitemap.ts still stamps build time and sets priority (playbook forbids both).
 - Linux data-root copy on /observer omits XDG_STATE_HOME precedence (approved wording; founder live review).
 
 ## Process discipline (permanent)
