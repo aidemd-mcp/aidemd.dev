@@ -60,9 +60,9 @@
     "previousCommit": "027f166"
   },
   "docs/changelog": {
-    "publishedAt": "2026-11-27T20:35:20-07:00",
-    "sourceCommit": "87c0325",
-    "previousCommit": "9d86efe"
+    "publishedAt": "2026-11-28T01:12:15-07:00",
+    "sourceCommit": "5108984",
+    "previousCommit": "86049fc"
   },
   "commands/aide/aide": {
     "publishedAt": "2026-11-25T12:55:10-07:00",
