@@ -10,13 +10,13 @@ snapshot of the current architectural intent and the anti-regression
 invariants every build phase must hold. It is NOT historical commentary —
 superseded design decisions are cut, not annotated.
 
-## State summary (set 2026-11-27, committed eef213d, not deployed)
+## State summary (set 2026-11-27, deployed)
 
-SEO/AEO cycle complete and committed (eef213d), not pushed or deployed. tsc clean; full unit suite green; test:seo 149/149; Lighthouse ≥95 on every audited page. Open: push + deploy; founder review of the six draft /learn pages ([VERIFY]/[NEEDS COLLECTION] markers); re-take 1440 visual goldens (approved); site-wide contrast task (Backlog p2); GitHub/npm metadata (#7); aidemd-mcp observer fork review task.
+SEO/AEO cycle complete, committed (eef213d, closing record 8b5aa3f) and deployed 2026-11-27 (GitHub Pages run 46110374627, success). Live check: /, /learn/, /learn/spec-kit-alternatives/, /docs/, /brain/, /observer/, /privacy/, sitemap.xml (86 URLs), robots.txt, llms.txt, llms-full.txt, feed.xml (73 entries), /.well-known/security.txt, manifest.webmanifest all 200; /learn pages show Updated 2026-11-27 · Lowmeadow LLC. Open: founder review of the six draft /learn pages ([VERIFY]/[NEEDS COLLECTION] markers); re-take 1440 visual goldens (approved); site-wide contrast task (Backlog p2); aligner pass on specs (brain spec over Brevity caps); aidemd-mcp observer fork review task. GitHub/npm metadata (#7) is NOT part of this task — it is aidemd-mcp task github-npm-and-mcp-registry-discovery-metadata, being worked by another agent; nothing in this repo depends on it and the deploy was not held for it.
 
 ## Kanban
 
-- `aidemd-dev-hooks-observer-docs-and-seo-aeo` (In Progress) — SEO/AEO committed (eef213d) 2026-11-27; awaiting deploy; GitHub/npm metadata (#7) remains
+- `aidemd-dev-hooks-observer-docs-and-seo-aeo` (Done) — hooks docs + /observer (3384fed) and SEO/AEO (eef213d, 8b5aa3f) shipped and deployed 2026-11-27; moved to Done 2026-11-27 (user approved). GitHub/npm metadata (#7) tracked separately on aidemd-mcp task github-npm-and-mcp-registry-discovery-metadata.
 - `site-wide-text-contrast-lighthouse-accessibility-100` (Backlog, p2) — site-wide text contrast follow-up (#56)
 - `github-npm-and-mcp-registry-discovery-metadata` (aidemd-mcp project, Backlog, p1) — GitHub About/website/topics/README/social preview/releases/CITATION.cff, npm homepage/description/keywords, empty site repos, MCP Registry server.json refresh and MCP directory listings; done from the aidemd-mcp repo, not from this site; private vulnerability reporting already enabled 2026-11-27
 - `ses-inbound-forwarding-for-security-aidemd-dev` (Backlog, p2) — SES inbound forwarding for security@aidemd.dev to the founder's Gmail; then security.txt adds the email contact
@@ -119,6 +119,7 @@ SEO/AEO cycle complete and committed (eef213d), not pushed or deployed. tsc clea
 56. **Ship at ≥95, site-wide contrast is a follow-up (user, 2026-11-27).** Every audited page ≥95 (home/doc/learn 100/96/100/100; /brain 100/96/100/100; /brain/recipes 100/95/100/100; /observer 100/98/100/100). Follow-up task (to be created on the aidemd-dev board): site text green #6aaa7c everywhere #3d6b4a is text outside /brain (mostly docs callouts), dim greys #605c53/#656057/#3d3a34, one #c25a3a, the home copy button's label-content-name-mismatch, /observer heading-order.
 57. **Cycle closed (2026-11-27).** QA + fix loop done; retro promoted to brain `process/retro/2026-11-27-aidemd-seo-aeo.md`; ephemerals cleaned in 20 modules. Still open: `src/app/learn/todo.aide` (dates appear after the first commit of src/data/learn) and `src/app/learn/spec-kit-alternatives/todo.aide` (AIDE row last-push 2026-11-26 vs as-of 2026-11-25 — awaiting founder review). Nothing committed yet. Later the same day: spec-kit AIDE date resolved (asOf 2026-11-26) and that module cleaned up.
 58. **Committed and closed (2026-11-27).** SEO/AEO committed as eef213d (402 files; sh.exe.stackdump left untracked). After the commit, the /learn pages render true dates (all six 2026-11-27T20:10:23-07:00 in byline, Article JSON-LD, sitemap; feed now 73 entries incl. 6 /learn). test:seo 149/149; 358 targeted tests. The last open todo closed and the src/app/learn ephemerals (plan, brief, todo) were cleaned up — no per-module ephemerals remain from this cycle. Not pushed or deployed.
+59. **Deploy not held for GitHub/npm metadata (user, 2026-11-27).** The site deploys independently of aidemd-mcp task github-npm-and-mcp-registry-discovery-metadata; repo and package names are unchanged so every site link stays valid. #7 no longer counts as remaining work on aidemd-dev-hooks-observer-docs-and-seo-aeo.
 
 ## Anti-regression invariants future build phases must hold
 
@@ -132,7 +133,7 @@ Cycle closed.
 
 ### What the next agent must do
 
-Next: push and deploy when the user says; then founder review of /learn drafts; re-take visual goldens; aligner pass on specs left unreviewed (brain spec over Brevity caps); site-wide contrast task; GitHub/npm metadata (#7).
+Next: founder review of /learn drafts; re-take visual goldens; aligner pass on specs left unreviewed (brain spec over Brevity caps); site-wide contrast task. GitHub/npm metadata (#7) is another agent's aidemd-mcp task, not next work here.
 
 ### What's already done and validated
 
@@ -199,6 +200,8 @@ Next: push and deploy when the user says; then founder review of /learn drafts; 
   - socialShare step 6 also fixed a stale path in a comment in loadDesignSource (plan said unchanged).
   - absolutizeDocLinks folder was moved with plain mv (untracked) so git shows no rename.
   - Page-card look approved by the user 2026-11-27.
+- 2026-11-27: committed 8b5aa3f (closing record, /learn ephemerals cleaned), pushed main, Pages run 46110374627 succeeded, live routes verified.
+- 2026-11-27: task aidemd-dev-hooks-observer-docs-and-seo-aeo moved In Progress → Done (user approved); closing note added to the task.
 - Follow-up: align doc H1 with title for docs lacking frontmatter title (#52 answer 6).
 - Follow-up: shared flattenRichText into src/lib and shared Breadcrumb into src/components need their own specs.
 
