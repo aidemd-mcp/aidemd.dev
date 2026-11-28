@@ -1,0 +1,28 @@
+---
+scope: src/app/learn/intent-driven-engineering
+alignment: unreviewed
+description: The /learn definition page for intent-driven engineering — what it is, a glossary of AIDE's core terms that other pages link into, and a short FAQ for searchers.
+intent: >
+  People who search "intent driven engineering" or "intent-driven development"
+  find no owner of the definition; this page is that answer. It opens by
+  defining intent-driven engineering, names intent-driven development in its
+  headings, and holds the glossary of AIDE's core terms — intent spec,
+  cascading intent tree, outcomes, brain, pipeline stages — that other pages
+  link to by anchor. A short FAQ answers what searchers really ask. Every fact
+  comes from the canonical methodology docs; the copy is drafted from research
+  and stays draft until the founder reviews it.
+outcomes:
+  desired:
+    - The first paragraph defines intent-driven engineering in plain words a reader or answer engine can quote without reading further, and the headings also name intent-driven development so either phrasing finds its answer.
+    - A glossary section defines AIDE's core terms — intent spec, cascading intent tree, outcomes, brain and the pipeline stages among them — each under its own stable anchor that other pages link to directly.
+    - Every definition and FAQ answer agrees with the canonical methodology docs, and each glossary term links to the doc that defines it in full.
+    - The glossary and the page's definition records hold the same terms one for one, with the same wording.
+    - A short FAQ answers the questions searchers actually ask about intent-driven engineering, including how it relates to spec-driven development and the criticism specs attract.
+  undesired:
+    - An opening that leads with AIDE's features, install steps or history instead of saying what intent-driven engineering is.
+    - A heading set in only one phrasing, so a searcher who types intent-driven development finds no heading in their own words.
+    - A definition that contradicts or goes beyond the methodology docs — a coined term, a renamed concept, or a capability AIDE does not have.
+    - A glossary anchor that changes or disappears, breaking a link another page made to that term.
+    - A core term missing from the glossary, or a definition record for a term the glossary does not show.
+    - An FAQ padded with questions nobody searches, or answers that promote AIDE instead of answering.
+---

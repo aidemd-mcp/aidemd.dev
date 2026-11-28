@@ -22,7 +22,7 @@ export default function MCPToolSurface() {
         >
           <div
             className="text-[11px]"
-            style={{ color: t.required ? "var(--color-accent)" : "var(--color-dim)" }}
+            style={{ color: t.required ? "var(--color-accent-text)" : "var(--color-dim)" }}
           >
             {t.required ? "req" : "opt"}
           </div>

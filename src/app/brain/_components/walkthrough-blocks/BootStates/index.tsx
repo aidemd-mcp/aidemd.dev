@@ -35,7 +35,7 @@ export default function BootStates() {
               {s.what}
             </div>
             <div className="text-[11px] text-[color:var(--color-dim)] leading-[1.5]">
-              fix: <span className="text-[color:var(--color-accent)]">{s.fix}</span>
+              fix: <span className="text-[color:var(--color-accent-text)]">{s.fix}</span>
             </div>
           </div>
         );

@@ -1,0 +1,27 @@
+---
+scope: src/lib/utils/readFileHistory
+alignment: unreviewed
+description: The shared reader of the repository's version history, answering for any file when it was first added, when it last changed and which commit last touched it.
+intent: >
+  Page dates and doc commit links both depend on the repository's version
+  history. This module reads that history once per build and answers, for any
+  file in the repository, when it was first added (following renames back to
+  its original name), when it last changed and the short id of its last
+  commit. A file with no committed history gets no answers, never guessed or
+  blank ones. Failures to read history surface to the caller. Paths match
+  regardless of separator style or drive-letter case; a path outside the
+  repository is an error.
+outcomes:
+  desired:
+    - A build reads version history once, however many files it asks about.
+    - First-added follows a file's renames back to its original name, and a file deleted and re-added reports its oldest add.
+    - Last-changed and last commit match the newest commit that touched the file.
+    - A file with no committed history gets no answers; they are absent, never empty or guessed.
+    - The same file asked about twice in one build gives the same answer.
+    - Paths with spaces or non-English characters are answered like any other path.
+  undesired:
+    - History is read once per file asked about instead of once per build.
+    - A failed or overflowing history read returns empty answers instead of an error.
+    - A date is taken from the build clock or a file's timestamps instead of its version history.
+    - A path outside the repository is silently answered instead of rejected.
+---

@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Dirent } from 'node:fs';
-import type { DocSection, DocRoute } from '@/types/docs';
+import type { DocSection, WalkedDocRoute } from '@/types/docs';
 
 /** Extracts the first `# ` heading text from markdown content, or returns undefined. */
 function extractFirstH1(content: string): string | undefined {
@@ -16,7 +16,7 @@ function direntDir(dirent: Dirent, fallback: string): string {
 }
 
 /**
- * Recursively walks a single content root directory and returns one DocRoute
+ * Recursively walks a single content root directory and returns one WalkedDocRoute
  * stub per .md file discovered. order is set to 0 and must be assigned by
  * orderRoutes after all roots are concatenated.
  */
@@ -28,7 +28,7 @@ export default async function walkDocsRoot({
   section: DocSection;
   urlSegment: string;
   absRoot: string;
-}): Promise<DocRoute[]> {
+}): Promise<WalkedDocRoute[]> {
   let entries: Dirent[];
 
   try {
@@ -78,7 +78,7 @@ export default async function walkDocsRoot({
         urlPath,
         absPath,
         order: 0,
-      } satisfies DocRoute;
+      } satisfies WalkedDocRoute;
     }),
   );
 

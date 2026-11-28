@@ -1,0 +1,28 @@
+---
+scope: src/service/structuredData
+alignment: unreviewed
+description: Builds the machine-readable records that tell search and answer engines what each page is, all pointing back to one Lowmeadow LLC site identity.
+intent: >
+  Search and answer engines read a page's structured data to learn what the
+  page is and who stands behind it. This module builds those records: one site
+  identity on the home page naming Lowmeadow LLC, the website, its logo and its
+  only real profiles, and per-page records that point back to that identity
+  instead of restating it. Every record says only what its page visibly shows,
+  so the site never tells machines something untrue. Callers hand it page data;
+  it reads nothing else.
+outcomes:
+  desired:
+    - The home page carries exactly one site identity naming Lowmeadow LLC as the organization, the website and its logo, with no person and with profiles only for accounts that exist and belong to the company (today none). Links to the AIDE project's code and package sit only on a separate AIDE product record, never on the organization.
+    - Every other page's records point to that identity rather than restating it, and docs and /learn pages name Lowmeadow LLC as author and publisher through that reference.
+    - Each page gets the record that matches what it is — a technical article for docs, an article for /learn, a breadcrumb trail for docs, section indexes and /learn, and FAQ and defined-term records on the definition and SDLC pages.
+    - FAQ and defined-term records are built from the same items as the visible FAQ and glossary, so what machines read matches what the page shows word for word.
+    - Dates in a record are the page's true dates, and are left out when the true date is unknown.
+    - Every record is safe to embed in a page as-is; no page text can end the embedded record early.
+  undesired:
+    - A record carrying anything the page does not visibly show — an invented rating, review, date, author or text.
+    - A second or contradicting site identity, a page record that restates the organization or website instead of pointing to it, or any person or personal profile.
+    - A profile link to an account or page that does not exist, or the AIDE project's own accounts, such as its GitHub organization or npm package, listed as profiles of Lowmeadow LLC.
+    - Visible FAQ or glossary text and its record drifting apart, so machines quote an answer or definition the visitor never sees.
+    - A build-time or guessed date standing where the page's true date belongs.
+    - Page text that, once embedded, closes the record early and breaks the page or injects markup.
+---

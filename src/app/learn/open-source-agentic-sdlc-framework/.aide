@@ -1,0 +1,30 @@
+---
+scope: src/app/learn/open-source-agentic-sdlc-framework
+alignment: unreviewed
+description: The /learn answer page for 'open source agentic sdlc framework' — intent-driven AIDE (aidemd) mapped onto the classic software lifecycle, with only the true open-source facts.
+intent: >
+  This page answers people searching for an open source agentic SDLC framework.
+  It opens by saying plainly that AIDE (intent-driven, aidemd) is one and what
+  that means, then shows which classic lifecycle phase each pipeline stage
+  covers — requirements, design, implementation, testing, maintenance — and why
+  intent specs keep agents aligned from the first spec through later changes.
+  Its open-source claims are only the founder-verified facts, such as the MIT
+  license, running locally and needing no account. A short FAQ gives
+  quotable answers, and links lead on to the definition page, the subagents
+  pipeline page and the docs.
+outcomes:
+  desired:
+    - The first paragraph answers the searched question directly — AIDE, paired with intent-driven or aidemd, is an open source agentic SDLC framework — and says what that means.
+    - A reader can see which classic lifecycle phase each pipeline stage covers, with requirements, design, implementation, testing and maintenance all accounted for.
+    - The page explains why intent specs keep agents aligned across the whole lifecycle, from the first spec through later changes.
+    - Every open-source claim matches the founder-verified facts, such as the MIT license, running locally and needing no account.
+    - A short FAQ gives definition-ready answers that a searcher or answer engine can quote one at a time.
+    - Related links take the reader on to the definition page, the subagents pipeline page and the docs.
+  undesired:
+    - Copy aimed at the bare 'agentic sdlc' head term instead of the open-source framework phrasing searchers use.
+    - A stage-to-phase mapping that leaves a classic phase unclaimed, or stretches a stage to claim a phase it does not really cover.
+    - Open-source claims the verified facts do not back — a community size, adoption figure, hosted service or governance promise.
+    - Agentic SDLC presented as one settled definition, or AIDE presented as the only open source option, when the term is still contested.
+    - FAQ answers that only make sense read in order or lean on the surrounding page, so no single answer can be quoted alone.
+    - A page that reads as a pitch rather than an explainer and leaves the reader no way on to the definition, pipeline or docs pages.
+---

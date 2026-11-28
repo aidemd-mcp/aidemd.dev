@@ -1,106 +1,83 @@
 ---
 scope: src/service/docsRegistry
 alignment: unreviewed
-description: Build-time filesystem walker that discovers every markdown doc across six content roots and produces a deterministically-ordered route registry with commit hashes and rendered HTML.
+description: Turns every markdown doc across six content roots into a deterministically ordered build-time route registry with commit hashes, true dates and rendered HTML, and each doc's markdown body on request.
 intent: >
-  Walk six content roots (.aide/docs/, .claude/commands/, .claude/agents/,
-  .claude/skills/, .aide/reference/tools/, .aide/reference/hooks/) at build time, discover every .md file with zero exclusions,
-  derive stable URL paths and slugs, inject per-file commit hashes from git,
-  and return a deterministically-ordered DocRegistry that Next.js can hand
-  directly to generateStaticParams. Every discovered file becomes a route — the
-  registry is the single source of truth that makes drift between the shipped
-  package contents and the rendered site structurally impossible.
+  At build time, discover every markdown doc the @aidemd-mcp/server package
+  ships (methodology docs, commands, agents, skills, and the tool and hook
+  references) with zero exclusions, and turn each into a citable route: a stable
+  lowercase address, the commit that last touched it, its true first-published
+  and last-modified dates, and rendered HTML whose links and headings work;
+  each doc's markdown body is given on request. Routes come out in a deterministic order. The registry is the
+  single source of truth that makes drift between the shipped package and the
+  rendered site structurally impossible, and every date it reports is true.
 outcomes:
   desired:
-    - Every .md file under every content root becomes a DocRoute with a stable, lowercase urlPath, an absPath, a git commit hash (or 'uncommitted' for untracked files), and a deterministic order value.
-    - Routes are ordered deterministically — section priority follows DOCS_CATEGORIES array order (methodology first, then each section in the order the categories list gives), index.md sorts first within its section, then alphabetically by the lowercased URL path (case-insensitive) — so generateStaticParams output is stable across builds.
-    - The orchestrator memoizes its output via a module-level cache so repeated calls within a single build return the same DocRegistry instance without re-walking the filesystem.
-    - "getByKey accepts a DocRouteKey of the form `section/slug` and returns the matching route or undefined."
-    - In rendered doc HTML, every relative link whose target doc exists resolves to that doc's live route — no .md suffix, correct section, across content roots. A link whose target doc does not exist is reported as a build warning naming the link and the doc containing it, and is left as written.
+    - Every markdown file under the six content roots becomes exactly one route with a lowercase address under its own section, its doc name in the file's own case for labels, and the commit hash that last touched it, or a named uncommitted marker for an untracked file. Any route can be looked up by section and name regardless of case.
+    - "Routes are ordered deterministically: sections in the site's category order with methodology first, each section's index first, then alphabetically by lowercase address. One build discovers the doc set once, and every page in that build sees the same routes."
+    - Each route carries its first-published date and its true last-modified date, the last commit touching its source in shared version history, so the date a doc page shows, the sitemap, its structured data and the feed all agree.
+    - Each doc's markdown body, frontmatter stripped and relative links made absolute, is available from the registry when asked for, so a markdown copy of any doc reads correctly and links correctly on its own.
+    - In rendered doc HTML, every relative link whose target doc exists resolves to that doc's live route, with no .md suffix, the correct section, across content roots. A link whose target doc does not exist is reported as a build warning naming the link and the doc containing it, and is left as written.
+    - Every rendered heading carries a stable id, so an in-page anchor or a link to a section of a doc scrolls to that heading.
   undesired:
-    - Any hardcoded list of doc filenames or slugs anywhere in the service — if a new .md file is added under a content root and the site is rebuilt, that file must appear as a new route automatically.
-    - Silent failures — a file that exists on disk but is missing from the registry, or a commit hash that silently defaults to an empty string instead of 'uncommitted'.
-    - Non-deterministic ordering — routes whose sort position changes between builds (e.g. sorted by mtime or inode order) break stable URL generation and make diffing the registry impossible.
-    - A route whose urlPath does not match the pattern /docs/{methodology,commands,agents,skills,tools,hooks}/<slug>, or whose URL path is not lowercase.
-    - A rendered link to an existing doc that still points at a .md file path, a relative path, or a route that does not exist — for example a link whose case differs from the lowercase route it targets. A link to a missing doc that passes the build with no warning, or is rewritten into a guessed route.
+    - Any hardcoded list of doc names anywhere in the service. A markdown file added under a content root appears as a new route on the next build with no other edit.
+    - "Silent failures: a file that exists on disk but is missing from the registry, or a commit hash that defaults to empty instead of the named uncommitted marker."
+    - Non-deterministic ordering, where a route's sort position changes between builds (for example by modification time or disk order), breaking stable addresses and making the registry impossible to diff.
+    - A route whose address is not lowercase or does not sit under the docs area in its own section.
+    - A rendered link to an existing doc that still points at a .md file path, a relative path, or a route that does not exist, such as a link whose case differs from the lowercase route it targets. A link to a missing doc that passes the build with no warning, or is rewritten into a guessed route.
+    - A build or deploy date standing in for a doc's published or last-modified date, or filling a date that cannot be known; a missing date stays missing. A markdown copy that still carries frontmatter or relative links that break off the site.
 ---
 
 ## Context
 
-The site's docs area renders directly from this repository's filesystem — the markdown files that ship with `@aidemd-mcp/server` are the docs. The registry is the build-time bridge between raw filesystem entries and Next.js static routes. It must discover files, not enumerate them, because the guarantee "add a file, get a route" is structural: it must be impossible to add a doc without it appearing on the site.
+The docs area is the markdown that ships with the package: methodology docs, commands, agents, skills, and the tool and hook references, six content roots each mapped to one docs section. The registry turns each file into a route at build time. Discovery, not enumeration, is what makes "add a file, get a route" a structural guarantee rather than a habit.
 
-Six content roots exist today: `.aide/docs/` (methodology docs), `.claude/commands/` (a top-level `aide.md` plus subcommands under `aide/`), `.claude/agents/` (agents, all under `aide/`), `.claude/skills/` (one `SKILL.md` per skill subfolder), `.aide/reference/tools/` (an `index.md` plus one page per MCP tool), `.aide/reference/hooks/` (an `index.md` plus one page per hook event). Each root maps to one DocSection discriminant and one URL segment under `/docs/`.
+Each route is read twice. Doc pages render it; the site page list reads its dates, and from there the sitemap, feed, llms files and structured data take them. Only the markdown copies and llms-full need a doc's body, and they ask for it. A wrong fact here therefore surfaces on every machine-readable surface at once.
 
-The commit hash per file is the cite-as versioning mechanism the root intent spec calls non-negotiable. Every docs URL is permanently citable at `https://aidemd.dev/docs/<section>/<lowercased slug>?v=<commit>`, which means the registry must inject commit hashes at build time, not at request time.
+Three facts per route come from version history: the commit that last touched the file, which pins the cite-as link; the first-published date; and the last-modified date. Only full shared history knows them. A shallow checkout answers every date query with the one commit it holds, so every doc looks new and the answers look real.
+
+The markdown body is read off the site, by coding agents and llms-full readers, where frontmatter is noise and a relative link points nowhere. The rendered HTML is read on the site, where a link must land on a live route and a link to a section must land on its heading.
 
 ## Strategy
 
-**Walk the filesystem recursively with zero exclusion rules.** Use the Node 22 `readdir` recursive API and filter only by `isFile() && name.endsWith('.md')`. No allowlist, no denylist, no pattern matching beyond the extension filter. Adding a file automatically adds a route.
+**Discover every markdown file under the six roots, filtered by extension only, once per build.** No allowlist, denylist or name pattern exists, so a new file is a new route on the next build with nothing else to edit. The walk runs once and every page in the build reads that one result, because a second walk could disagree with the first and two pages would then describe different doc sets.
 
-**Derive slugs from relative paths; lowercase only the URL.** The slug is the path relative to `absRoot` without `.md`, with `/` separators, in the file's own case, so labels and titles read `Stop` or `aide/SKILL`. The URL path is the slug lowercased: `.aide/reference/hooks/Stop.md` serves at `/docs/hooks/stop`. Collisions are judged on the lowercased URL path: two files whose paths differ only by case would claim one address, and the registry fails the build loudly rather than silently dropping one.
+**Keep each doc's name in its file's case; lowercase only the address.** Labels and titles read the name its author gave (Stop, aide/SKILL); the address, static params and every link to it are lowercase, so readers and citations meet one spelling. Lookup by section and name ignores case. Two files differing only by case would claim one address, so the build fails naming both, because dropping either is a silent missing route.
 
-**Special-case index.md for sort position only, not for URL derivation.** The slug for `index.md` is `index` (not empty string). It sorts first within its section so the section root page is always the first route.
+**Order routes by section in the site's category order, then each section's index first, then by lowercased address.** Every tier is a property of the file's path, never its modification time or disk order, so the order is identical on every build and the registry diffs cleanly. Index-first makes each section's landing page its first route; sorting by the lowercased address orders mixed-case names the way readers see them.
 
-**Inject commit hashes via `git log -1` per file.** Run synchronously at build time; wrap in a module-level Map cache keyed on absPath so each file is shelled out to git at most once per build. Return `'uncommitted'` on empty stdout — this is a named sentinel, not a silent default.
+**Take every version fact from the full shared history, through the one date resolver every surface uses.** Each route carries its last commit, first-published date and last-modified date. A shallow history fails the build, because it yields wrong dates that look right. An untracked file carries the named uncommitted marker and no dates: a missing date stays missing, never filled by build or deploy time, so the page, sitemap, feed and structured data agree.
 
-**Sort routes in three tiers: section priority, index-first, lowercased URL path.** Section priority is derived from the position of the category in DOCS_CATEGORIES (lower index = higher priority). Within a section, `index.md` (slug === 'index') sorts before all other slugs. Within the same section at the same index-or-not tier, sort alphabetically by the lowercased URL path, so mixed-case slugs order the way readers see them. Assign the final `order` integer after sorting.
+**Give each doc's markdown body, frontmatter stripped and links absolute, only on request, once per doc per build.** Its links pass through the same resolution as the rendered HTML, so a doc's two outputs never point at different pages. The site-files script asks on behalf of the AI-facing outputs, so no surface parses markdown itself. Building the registry never produces a body: the link rewrite dominated its cost, and doc pages, sidebar and sitemap never read it.
 
-**Memoize at the orchestrator level.** A module-level `let cached` variable holds the DocRegistry after the first call. All subsequent calls return the cached value. This prevents redundant filesystem walks when Next.js calls `generateStaticParams` and page components in the same build process.
+**Resolve in-doc links against the whole route set by file path at render time.** Each relative link resolves against the linking doc's location and is matched to a route by file, never by rewriting the href, so cross-root and index links land on live routes; anchors are kept, external links untouched. A missing target warns naming link and doc, and stays as written. One code highlighter serves every render in the build.
 
-**Accept a Highlighter instance as input to renderMarkdown.** The markdown-to-HTML pipeline (remark to rehype to shiki) takes a prebuilt Highlighter so the highlighter singleton from step 5 can be shared across every route rather than constructed once per render.
-
-**Resolve in-doc relative links against the registry at render time.** Each relative link's target is resolved against the linking doc's own location and looked up among the routes by file path — never by string-munging the href — so cross-root links (hooks to tools) and links to `index.md` land on live routes. Anchors are kept; external and absolute links are left alone. A link whose target does not exist prints a build warning naming the link and its doc and is left as written; the build passes, because silence, not the broken link, is the failure mode. Rendering therefore needs the whole route set.
+**Give every rendered heading an id derived from its text, numbered in order when repeated.** The docs are written and read on GitHub too, so the id follows GitHub's heading-anchor rule: a section link written there lands on the same heading here. Derived from text, not position, the id survives edits elsewhere in the doc, so a cited section link keeps working across releases.
 
 ## Good examples
 
-A correctly discovered and ordered route for the methodology index:
+The Stop hook page: discovered from the hooks root with no list naming it, labelled `Stop`, served at `/docs/hooks/stop/`, carrying its last commit, the date it first entered shared history and the date of the last commit touching it (illustrative: `b75834c`, 2026-11-26, 2026-11-27). The sitemap, the page's visible date and its structured data all show that same last-modified date.
 
-```
-{ section: 'methodology', slug: 'index', title: 'AIDE', urlPath: '/docs/methodology/index', absPath: '/abs/path/.aide/docs/index.md', order: 0 }
-```
+The hooks index, rendered and copied. In its HTML, `[Stop](./Stop.md)` becomes `href="/docs/hooks/stop/"` and the cross-root `[aide_observer_event](../tools/aide_observer_event.md)` becomes `href="/docs/tools/aide_observer_event/"`. Its markdown copy opens on the first heading, with no frontmatter block, and reads `[Stop](https://aidemd.dev/docs/hooks/stop/)`, so an agent holding only the copy can follow it.
 
-A correctly discovered route for a nested command (order values here are illustrative):
-
-```
-{ section: 'commands', slug: 'aide/align', title: 'Align', urlPath: '/docs/commands/aide/align', absPath: '/abs/path/.claude/commands/aide/align.md', order: N }
-```
-
-A correctly discovered route for a hook reference page:
-
-```
-{ section: 'hooks', slug: 'Stop', title: 'Stop', urlPath: '/docs/hooks/stop', absPath: '/abs/path/.aide/reference/hooks/Stop.md', order: M }
-```
-
-Correctly rendered in-doc links (the site serves trailing-slash URLs): inside the hooks index, `[Stop](./Stop.md)` renders as `href="/docs/hooks/stop/"`; the cross-root `[aide_observer_event](../tools/aide_observer_event.md)` renders as `href="/docs/tools/aide_observer_event/"`.
-
-A correctly resolved commit hash for a committed file:
-
-```
-commit: 'b75834c'
-```
-
-A correctly resolved commit hash for an untracked file:
-
-```
-commit: 'uncommitted'
-```
+The heading `### Brevity Contract` renders with id `brevity-contract`, so the link `./aide-spec.md#brevity-contract` in the template doc, written for GitHub, lands on it at `/docs/methodology/aide-spec/#brevity-contract`. A new untracked doc shows commit `uncommitted` and no dates.
 
 ## Bad examples
 
-A route whose slug is derived from the filename only, ignoring the subfolder: `.claude/commands/aide/align.md` producing slug `align` instead of `aide/align`. This collapses the namespace and produces URL collisions when two different subfolders have files with the same name.
+A deploy that checks out one commit of history builds cleanly, and every doc reports that commit's day as both first-published and last-modified. The sitemap tells search engines every doc changed today, the feed lists every doc as new, and nothing fails, because the dates look real.
 
-A registry that returns `commit: ''` when git returns empty stdout. This is a silent default — the cite-as URL would read `?v=` with no hash, which looks like a bug rather than a named state.
+A link rewritten by string-munging, `./Stop.md` to `/docs/hooks/Stop` or `../tools/x.md` to `/docs/hooks/tools/x`, renders and passes a markdown check but 404s on the site. Equally wrong: a link to a missing doc passing with no warning, or rewritten into a guessed route.
 
-A route with `urlPath: '/docs/aide/align'` instead of `/docs/commands/aide/align`. This omits the section segment and breaks the URL structure that the nav relies on.
-
-An ordering that changes between builds because the filesystem returned files in inode order rather than alphabetical order. Any non-deterministic ordering breaks the stable-params guarantee.
-
-A link to an existing doc left as `href="./Stop.md"`, or rewritten by string-munging into `/docs/hooks/Stop` or `/docs/hooks/tools/aide_observer_event`. Each looks like a link and passes a markdown render, but 404s on the live site.
-
-A link to a doc that does not exist that passes the build with no warning, or is rewritten into a guessed route such as `/docs/tools/missing_tool/`. The build looks clean while a dead link ships unnoticed.
+A markdown copy that opens with the doc's frontmatter block and keeps `./Stop.md`: on the site it looks fine, but an agent reading the copy from llms-full or the `.md` URL gets metadata as prose and a link that resolves to nothing.
 
 ## References
 
-- `.aide/intent.aide` -- root intent spec; establishes the "zero exclusions" filesystem walk requirement, the cite-as URL commit hash contract, and the six content roots
-- `src/data/docsCategories.ts` -- section priority order used by orderRoutes; single source of truth for absRoot paths and urlSegment values
-- `src/types/docs.ts` -- DocRoute, DocRegistry, DocRouteKey, DocSection types the registry must satisfy
+- `.aide/intent.aide` -- root outcome "every page tells the truth about itself to machines" (the shown last-updated date is true and matches the sitemap and structured data) and the undesired "a build-time date anywhere a true last-updated date belongs"; root Strategy decisions on the zero-exclusion filesystem walk, the commit-pinned cite-as link, and one true date per page feeding every machine-readable surface (a missing date omitted, never build-stamped)
+- `src/app/_shared/listSitePages/.aide` -- the downstream reader of each route's dates (it never reads bodies; `scripts/publishSiteFiles/.aide` asks for them, for the markdown copies and llms-full); its undesired outcome that a shallow-history build fails rather than ship plausible wrong dates
+- Direct owner instructions (in-doc links, confirmed 2026-11-26) -- links resolved by file path through the registry, never string-munged; a missing target warns naming link and doc and is left as written, the build passes
+- Direct owner instructions (lowercase URLs, confirmed 2026-11-26) -- only the address is lowercased; names keep the file's case for labels; index first, then lowercased address; case-insensitive lookup
+- Direct owner instructions (full SEO/AEO scope, confirmed 2026-11-26) -- true dateModified, a markdown copy of each docs page, llms-full.txt
+- Direct owner instructions (SEO/AEO surface tree, confirmed 2026-11-27) -- full history in the deploy, one shared date resolver that fails on a shallow repo, routes carrying the true last-modified date and a markdown body with frontmatter stripped and links absolute, heading ids
+- Direct owner instructions ("Rewrite on demand", decided 2026-11-27) -- routes no longer carry the body; it is given on request for the AI-facing outputs, because the link rewrite was ~1.8s of the ~2s registry build
+- `src/data/docsCategories.ts` -- category order that sets section priority; each root's section and URL segment
+- `src/types/docs.ts` -- the route, registry and route-key shapes the registry satisfies

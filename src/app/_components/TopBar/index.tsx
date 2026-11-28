@@ -29,6 +29,7 @@ interface TopBarProps {
  * Responsive: external links (github ↗, npm ↗) are hidden below the md: breakpoint.
  * `docs`, `brain` and `observer` remain visible at every viewport — mobile parity required.
  * The `aidemd.dev — zsh` label also hides at the smallest sizes to save space.
+ * The home link is named by its visible label (WCAG 2.5.3), with an sr-only name below md.
  *
  * In the docs layout, `hamburgerSlot` is rendered inside the nav area at mobile
  * (block md:hidden) so the hamburger appears after the last mobile-visible link.
@@ -50,33 +51,23 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
         <Link
           href="/"
           className="flex items-center hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)] rounded-sm"
-          aria-label="Home"
         >
           <TrafficLights />
           {isDocs ? (
-            <span
-              className="ml-[18px] text-[12px] hidden md:inline"
-              aria-hidden="true"
-            >
-              <span style={{ color: "var(--color-accent)" }}>$</span>
+            <span className="ml-[18px] text-[12px] hidden md:inline">
+              <span style={{ color: "var(--color-accent)" }} aria-hidden="true">$</span>
               {" "}aidemd.dev
               <span style={{ color: "var(--color-dim)" }}>/docs</span>
             </span>
           ) : isBrain ? (
-            <span
-              className="ml-[18px] text-[12px] hidden md:inline"
-              aria-hidden="true"
-            >
-              <span style={{ color: "var(--color-accent)" }}>$</span>
+            <span className="ml-[18px] text-[12px] hidden md:inline">
+              <span style={{ color: "var(--color-accent)" }} aria-hidden="true">$</span>
               {" "}aidemd.dev
               <span style={{ color: "var(--color-dim)" }}>/brain</span>
             </span>
           ) : isObserver ? (
-            <span
-              className="ml-[18px] text-[12px] hidden md:inline"
-              aria-hidden="true"
-            >
-              <span style={{ color: "var(--color-accent)" }}>$</span>
+            <span className="ml-[18px] text-[12px] hidden md:inline">
+              <span style={{ color: "var(--color-accent)" }} aria-hidden="true">$</span>
               {" "}aidemd.dev
               <span style={{ color: "var(--color-dim)" }}>/observer</span>
             </span>
@@ -88,11 +79,11 @@ export default function TopBar({ active, sticky, hamburgerSlot }: TopBarProps) {
                   ? "text-[color:var(--color-fg)]"
                   : "text-[color:var(--color-dim)]",
               )}
-              aria-hidden="true"
             >
               aidemd.dev — zsh
             </span>
           )}
+          <span className="sr-only md:hidden">aidemd.dev</span>
         </Link>
         <nav
           className="ml-auto flex items-center gap-[20px] text-[11px] text-[color:var(--color-dim)]"

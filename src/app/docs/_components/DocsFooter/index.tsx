@@ -1,5 +1,5 @@
 /**
- * Docs-variant footer. Links: install (→ npm package), github ↗, privacy (→ /privacy).
+ * Docs-variant footer. Links: install (→ npm package), github ↗, discord ↗, privacy (→ /privacy).
  * Left: copyright + canonical-dot authority signal.
  */
 export default function DocsFooter() {
@@ -16,16 +16,7 @@ export default function DocsFooter() {
       }}
     >
       <span>
-        © 2026{' '}
-        <a
-          href="https://tetsukod.ai"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: 'inherit', textDecoration: 'none' }}
-        >
-          TetsuKodai Group LLC
-        </a>{' '}
-        · <span style={{ color: 'var(--color-accent)' }}>●</span> canonical
+        © 2026 Lowmeadow LLC · <span style={{ color: 'var(--color-accent)' }}>●</span> canonical
       </span>
       <nav style={{ display: 'flex', gap: 20 }} aria-label="Docs footer navigation">
         <a
@@ -43,14 +34,6 @@ export default function DocsFooter() {
           style={{ color: 'inherit', textDecoration: 'none' }}
         >
           github ↗
-        </a>
-        <a
-          href="https://www.linkedin.com/in/jacob-carpenter-nodejs/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: 'inherit', textDecoration: 'none' }}
-        >
-          linkedin <span aria-hidden="true">↗</span>
         </a>
         <a
           href="https://discord.gg/N4NqMXuvTR"

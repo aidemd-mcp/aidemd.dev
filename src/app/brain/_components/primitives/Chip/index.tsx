@@ -11,7 +11,7 @@ interface ChipProps {
 
 /**
  * Pill button used as a backend-preset selector and as a horizontal tab.
- * Active state: filled accent background with dark #0d0b08 text.
+ * Active state: filled accent background with --color-fg text.
  * Inactive state: transparent background, foreground text, border.
  * Renders as <button> for accessibility (not <div role="button">).
  * The click handler is passed in by the parent client component.
@@ -33,7 +33,7 @@ export default function Chip({
       className={cn(
         "px-[13px] py-[7px] font-mono text-[12px] rounded border cursor-pointer transition-colors",
         active
-          ? "bg-[color:var(--color-accent)] text-[#0d0b08] border-[color:var(--color-accent)]"
+          ? "bg-[color:var(--color-accent)] text-[color:var(--color-fg)] border-[color:var(--color-accent)]"
           : "bg-transparent text-[color:var(--color-fg)] border-[color:var(--color-border)]",
         className
       )}

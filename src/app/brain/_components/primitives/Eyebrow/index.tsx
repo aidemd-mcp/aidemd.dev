@@ -16,7 +16,7 @@ export default function Eyebrow({ children, className }: EyebrowProps) {
   return (
     <div
       className={cn(
-        "text-[11px] text-[color:var(--color-accent)] uppercase tracking-[1.5px]",
+        "text-[11px] text-[color:var(--color-accent-text)] uppercase tracking-[1.5px]",
         className
       )}
     >

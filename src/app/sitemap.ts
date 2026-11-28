@@ -1,11 +1,6 @@
 import type { MetadataRoute } from "next";
-import path from "node:path";
-import buildRegistry from "@/service/docsRegistry";
-import resolvePublishedDate from "@/service/docsRegistry/resolvePublishedDate";
-import { DOCS_CATEGORIES } from "@/data/docsCategories";
-import { LAST_UPDATED as PRIVACY_LAST_UPDATED } from "@/app/privacy/constants";
-
-const BASE = "https://aidemd.dev";
+import listSitePages from "@/app/_shared/listSitePages";
+import siteIdentity from "@/data/siteIdentity";
 
 /**
  * Makes `next dev` able to serve /sitemap.xml under `output: "export"`.
@@ -22,61 +17,21 @@ export function generateStaticParams(): Array<{ __metadata_id__: string[] }> {
 }
 
 /**
- * Build-time sitemap covering:
- *   - / (priority 1.0)
- *   - /privacy (priority 0.4)
- *   - /docs/ (priority 0.8)
- *   - one section-index route /docs/{section}/ per DOCS_CATEGORIES entry (priority 0.6)
- *   - every leaf route from the docs registry (priority 0.5)
- *   - /observer/ (no priority; lastModified only from the copy module's git date)
+ * Build-time sitemap: every indexable page once, from the one page list
+ * (`listSitePages`). A `lastModified` date appears only on a page whose version
+ * history proves one, passed through as the git ISO string with its offset so
+ * the sitemap names the same calendar day the page shows (a `Date` would
+ * serialise to UTC and can shift the day); every other entry carries the URL alone. Google ignores
+ * the optional weighting and frequency fields, so none is emitted.
  *
  * Next's metadata-route system serializes this to /sitemap.xml at build time.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { routes } = await buildRegistry();
-
-  const buildDate = new Date();
-
-  // The observer copy module is the page's content source. resolvePublishedDate
-  // returns '' while the file is uncommitted, in which case lastModified is omitted.
-  const observerDate = resolvePublishedDate(
-    path.join(process.cwd(), "src/app/observer/_data/observerCopy/index.ts"),
-  );
-
-  const sectionIndexes: MetadataRoute.Sitemap = DOCS_CATEGORIES.map((cat) => ({
-    url: `${BASE}/docs/${cat.urlSegment}/`,
-    lastModified: buildDate,
-    priority: 0.6,
-  }));
-
-  const leafRoutes: MetadataRoute.Sitemap = routes.map((route) => {
-    const isoDate = resolvePublishedDate(route.absPath);
-    const lastModified = isoDate ? new Date(isoDate) : buildDate;
-    // Normalise to trailing slash — next.config.mjs sets trailingSlash: true, so
-    // every HTML canonical is emitted with a trailing slash. Sitemap URLs must
-    // match those canonicals exactly or crawlers see a mismatch on every leaf
-    // route. urlPath values from walkDocsRoot have no trailing slash by default.
-    const urlPath = route.urlPath.endsWith("/")
-      ? route.urlPath
-      : `${route.urlPath}/`;
-    return {
-      url: `${BASE}${urlPath}`,
-      lastModified,
-      priority: 0.5,
-    };
+  const pages = await listSitePages();
+  return pages.map((page) => {
+    const url = `${siteIdentity.url}${page.urlPath}`;
+    return page.modified
+      ? { url, lastModified: page.modified }
+      : { url };
   });
-
-  return [
-    { url: `${BASE}/`, lastModified: buildDate, priority: 1.0 },
-    // /privacy canonical is emitted with trailing slash due to trailingSlash: true
-    { url: `${BASE}/privacy/`, lastModified: PRIVACY_LAST_UPDATED, priority: 0.4 },
-    { url: `${BASE}/docs/`, lastModified: buildDate, priority: 0.8 },
-    { url: `${BASE}/brain/`, lastModified: buildDate, priority: 0.7 },
-    { url: `${BASE}/brain/recipes/`, lastModified: buildDate, priority: 0.6 },
-    observerDate
-      ? { url: `${BASE}/observer/`, lastModified: new Date(observerDate) }
-      : { url: `${BASE}/observer/` },
-    ...sectionIndexes,
-    ...leafRoutes,
-  ];
 }

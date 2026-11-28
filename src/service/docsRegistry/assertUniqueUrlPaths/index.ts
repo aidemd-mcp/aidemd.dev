@@ -1,4 +1,4 @@
-import type { DocRoute } from '@/types/docs';
+import type { WalkedDocRoute } from '@/types/docs';
 
 /**
  * Fails the build when two docs map to the same URL. Lowercasing slugs into
@@ -6,7 +6,7 @@ import type { DocRoute } from '@/types/docs';
  * `stop.md`) onto one URL; a silent overwrite would drop a doc, so the
  * registry must fail loudly instead.
  */
-export default function assertUniqueUrlPaths(routes: readonly DocRoute[]): void {
+export default function assertUniqueUrlPaths(routes: readonly WalkedDocRoute[]): void {
   const absPathByUrlPath = new Map<string, string>();
 
   for (const route of routes) {

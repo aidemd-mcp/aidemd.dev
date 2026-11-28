@@ -1,0 +1,27 @@
+---
+scope: src/service/atomFeed
+alignment: unreviewed
+description: Renders a valid Atom feed of the site's docs and /learn pages from page data it is handed, so readers and agents learn when content changes.
+intent: >
+  Feed readers and AI agents subscribe to aidemd.dev to learn when its docs and
+  /learn pages change. This module turns the page data it is handed into a
+  valid Atom feed whose dates are true: each entry carries its page's real
+  last-modified date, the feed's own updated time is its newest entry's date,
+  and a page with no known date stays out rather than getting a guessed one.
+  Entries point at canonical page addresses, match each page's title and
+  summary, and credit Lowmeadow LLC as author. It reads nothing beyond what it
+  is given.
+outcomes:
+  desired:
+    - The feed validates as Atom and lists every docs and /learn page it is handed that has a known last-modified date, each entry carrying that page's true date.
+    - The feed's own updated time equals its newest entry's date, so rebuilding the site with no content change leaves the feed's dates unchanged.
+    - Each entry links to the page's canonical address with its trailing slash, and its title and summary match what the page itself shows.
+    - Every entry and the feed name Lowmeadow LLC as author, naming no person.
+    - The feed is built only from the page data it is handed, so it lists exactly the pages the rest of the site publishes.
+  undesired:
+    - A build time, today's date, or any guessed date standing in for a page's real last-modified date, or for the feed's own updated time.
+    - A page with no known date included in the feed with a made-up date instead of being left out.
+    - An entry pointing at a non-canonical address, such as one missing its trailing slash, or carrying a title or summary the page does not show.
+    - A person named as author, or an author other than Lowmeadow LLC.
+    - A feed that reads like valid XML but fails Atom validation, so feed readers reject it or show it empty.
+---

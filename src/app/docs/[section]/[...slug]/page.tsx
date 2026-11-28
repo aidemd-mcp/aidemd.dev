@@ -1,6 +1,10 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import buildRegistry, { renderDoc } from '@/service/docsRegistry';
+import buildStructuredData from '@/service/structuredData';
+import JsonLd from '@/components/JsonLd';
+import buildPageMetadata from '@/app/_shared/buildPageMetadata';
+import findSitePage from '@/app/_shared/listSitePages/findSitePage';
 import DocsTemplate from '../../_components/DocsTemplate/DocsTemplate';
 
 interface PageParams {
@@ -46,22 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!route) return { title: 'Not Found' };
 
-  const { frontmatter, published } = await renderDoc(route);
-  const description =
-    frontmatter.description ?? `${route.title} — AIDE canonical documentation`;
-
-  return {
-    title: route.title,
-    description,
-    alternates: {
-      canonical: `https://aidemd.dev${route.urlPath}`,
-    },
-    openGraph: {
-      type: 'article',
-      publishedTime: published,
-      modifiedTime: published,
-    },
-  };
+  return buildPageMetadata(await findSitePage(`${route.urlPath}/`));
 }
 
 /**
@@ -78,7 +67,8 @@ export default async function DocLeafPage({ params }: PageProps) {
 
   if (!route) notFound();
 
-  const { frontmatter, bodyHtml, commit, published } = await renderDoc(route);
+  const { frontmatter, bodyHtml, commit } = await renderDoc(route);
+  const page = await findSitePage(`${route.urlPath}/`);
 
   // Prev/next by order — sorted routes are deterministic.
   const sortedRoutes = [...routes].sort((a, b) => a.order - b.order);
@@ -86,28 +76,15 @@ export default async function DocLeafPage({ params }: PageProps) {
   const prev = idx > 0 ? sortedRoutes[idx - 1] : undefined;
   const next = idx < sortedRoutes.length - 1 ? sortedRoutes[idx + 1] : undefined;
 
-  const techArticleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'TechArticle',
-    headline: route.title,
-    datePublished: published,
-    dateModified: published,
-    author: { '@type': 'Organization', name: 'TetsuKodai Group LLC' },
-    isPartOf: { '@type': 'WebSite', url: 'https://aidemd.dev' },
-    mainEntityOfPage: `https://aidemd.dev${route.urlPath}`,
-  };
-
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleSchema) }}
-      />
+      <JsonLd document={buildStructuredData({ page })} />
       <DocsTemplate
         route={route}
         frontmatter={frontmatter}
         commit={commit}
-        published={published}
+        modified={page.modified}
+        breadcrumb={page.breadcrumb}
         renderedHtml={bodyHtml}
         prev={prev}
         next={next}

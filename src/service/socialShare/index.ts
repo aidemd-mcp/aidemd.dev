@@ -9,11 +9,14 @@ import ogImageConfig from './ogImageConfig';
  * root metadata export so every statically-exported page carries the full
  * Open Graph and Twitter Card tag set.
  *
- * The render script at renderOgImage/ is a build-time sibling invoked only
- * via the `og:render` npm script (through the `prebuild` hook). It is never
- * imported here — keeping Playwright out of the Next.js build graph is the
- * load-bearing constraint that preserves the zero-runtime-Node-dependency
- * contract from the root intent.
+ * The render pipeline at renderOgCards/ is a build-time sibling called by
+ * scripts/publishSiteFiles (the `site:publish` npm script, run through the
+ * `prebuild` hook). ogCardAddress/ and
+ * ogCardAlt/ are Playwright-free and are imported directly by the page list
+ * and the metadata helper. None of the render pipeline is imported here —
+ * keeping Playwright out of the Next.js build graph is the load-bearing
+ * constraint that preserves the zero-runtime-Node-dependency contract from
+ * the root intent.
  */
 export const ogImage: OgImageConfig = ogImageConfig();
 

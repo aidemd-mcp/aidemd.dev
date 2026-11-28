@@ -16,18 +16,29 @@ function stripFirstH1(body: string): string {
   return body.replace(/^#\s+.+\n?/m, '');
 }
 
+/** Removes newlines and whitespace-only lines before the first non-blank line. */
+function stripLeadingBlankLines(text: string): string {
+  return text.replace(/^(?:[ \t]*\r?\n)+/, '');
+}
+
 /**
  * Parses YAML frontmatter from a markdown file's raw content. Files without a
  * frontmatter block (e.g. .claude/commands/*.md and .claude/agents/*.md plain
  * markdown files) are treated as first-class — this function never throws on
  * missing or malformed frontmatter, returning a synthesized title instead.
+ *
+ * Two body outputs come from the one parse. `body` feeds the HTML render, whose
+ * template prints its own H1, so the first H1 is stripped when it supplied the
+ * title. `content` feeds the markdown body, which keeps the first H1: it is the
+ * doc with only its frontmatter block and leading blank lines removed.
  */
 export default function parseDocFrontmatter(
   fileContents: string,
   slug: string,
-): { frontmatter: DocFrontmatter; body: string } {
+): { frontmatter: DocFrontmatter; body: string; content: string } {
   try {
     const { data, content } = matter(fileContents);
+    const markdownContent = stripLeadingBlankLines(content);
 
     if (!data || Object.keys(data).length === 0) {
       // No frontmatter block — synthesize title from first H1 and strip it from body.
@@ -35,6 +46,7 @@ export default function parseDocFrontmatter(
       return {
         frontmatter: { title: h1 ?? slug },
         body: h1 ? stripFirstH1(content) : content,
+        content: markdownContent,
       };
     }
 
@@ -45,17 +57,17 @@ export default function parseDocFrontmatter(
     const frontmatter: DocFrontmatter = {
       title: data.title ?? h1 ?? data.name ?? slug,
       description: data.description,
-      published: data.published,
       commit: data.commit,
     };
 
-    return { frontmatter, body: bodyStripped };
+    return { frontmatter, body: bodyStripped, content: markdownContent };
   } catch {
     // gray-matter threw on unparseable content — treat the whole file as body.
     const h1 = deriveFromFirstH1(fileContents);
     return {
       frontmatter: { title: h1 ?? slug },
       body: h1 ? stripFirstH1(fileContents) : fileContents,
+      content: stripLeadingBlankLines(fileContents),
     };
   }
 }

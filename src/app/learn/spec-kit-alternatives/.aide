@@ -1,0 +1,28 @@
+---
+scope: src/app/learn/spec-kit-alternatives
+alignment: unreviewed
+description: The /learn page answering spec-kit alternatives and spec-kit vs OpenSpec, with an honest feature table of the spec-driven tools and intent-driven AIDE, and who each one fits.
+intent: >
+  This page answers people searching 'spec-kit alternatives' and 'spec-kit vs
+  openspec'. It compares spec-kit, OpenSpec, BMAD, superpowers, Kiro, Tessl,
+  Agent OS, Task Master and intent-driven AIDE in a table on concrete
+  dimensions, then says briefly who each tool fits. Every competitor is
+  described fairly and accurately, every fact traces to the research, and
+  GitHub star counts carry a visible 'as of' date. AIDE is one option among
+  them, not the only right answer. Readers leave able to choose, with links on
+  to the spec vs intent comparison and the definition page.
+outcomes:
+  desired:
+    - The H1 and an H2 carry the searched phrases 'spec-kit alternatives' and 'spec-kit vs OpenSpec', and the page opens with a direct answer before any table or section.
+    - A feature table compares all nine tools on concrete dimensions, with any fact the research does not establish marked unknown in its cell.
+    - Every GitHub star count shown carries a visible 'as of' date and matches the research figure for that date; a tool with no figure in the research shows unknown.
+    - A short take on each tool says who it fits, in terms that tool's own users would recognise, with AIDE presented as one option among them.
+    - The page links on to the spec-driven vs intent-driven comparison page and the intent-driven engineering definition page.
+  undesired:
+    - A competitor misdescribed, given a feature it lacks, denied one it has, or written off as abandoned on evidence the research marks unverified.
+    - A guessed cell, star count or date filled in where the research has no figure, instead of a cell marked unknown.
+    - A star count with no 'as of' date, or one that is refreshed automatically rather than entered by hand from a dated source.
+    - A page framed as AIDE versus everyone, where every row favours AIDE or AIDE is presented as the only right choice.
+    - Headings in house wording rather than the searched phrases, or an answer buried under preamble.
+    - A tool from the nine left out of the table or the take on who each fits.
+---

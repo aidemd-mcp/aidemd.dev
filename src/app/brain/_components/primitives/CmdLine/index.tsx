@@ -52,13 +52,13 @@ export default function CmdLine({ cmd, className }: CmdLineProps) {
         className
       )}
     >
-      <span className="text-[color:var(--color-accent)]">$</span>
+      <span className="text-[color:var(--color-accent-text)]">$</span>
       <span className="flex-1">{cmd}</span>
       <span
         className={cn(
           "text-[11px]",
           copied
-            ? "text-[color:var(--color-accent)]"
+            ? "text-[color:var(--color-accent-text)]"
             : "text-[color:var(--color-dim)]"
         )}
       >

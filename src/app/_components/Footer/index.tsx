@@ -1,8 +1,10 @@
 /**
  * Site footer.
  *
- * Left: "© 2026 TetsuKodai Group LLC · ● canonical" (● is accent-green).
- * Right: install (→ npm package), github ↗, privacy (→ /privacy).
+ * Left: "© 2026 Lowmeadow LLC · ● canonical" (● is accent-green); no link
+ * around the company name and no personal profile anywhere in the footer.
+ * Right: install (→ npm package), github ↗, discord ↗, learn (→ /learn/),
+ * privacy (→ /privacy).
  */
 export default function Footer() {
   return (
@@ -12,16 +14,7 @@ export default function Footer() {
     >
       {/* Left */}
       <span>
-        © 2026{" "}
-        <a
-          href="https://tetsukod.ai"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-[color:var(--color-fg)] transition-colors"
-        >
-          TetsuKodai Group LLC
-        </a>{" "}
-        · <span className="text-[color:var(--color-accent)]">●</span>{" "}
+        © 2026 Lowmeadow LLC · <span className="text-[color:var(--color-accent)]">●</span>{" "}
         canonical
       </span>
 
@@ -44,20 +37,18 @@ export default function Footer() {
           github ↗
         </a>
         <a
-          href="https://www.linkedin.com/in/jacob-carpenter-nodejs/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-[color:var(--color-fg)] transition-colors"
-        >
-          linkedin <span aria-hidden="true">↗</span>
-        </a>
-        <a
           href="https://discord.gg/N4NqMXuvTR"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-[color:var(--color-fg)] transition-colors"
         >
           discord <span aria-hidden="true">↗</span>
+        </a>
+        <a
+          href="/learn/"
+          className="hover:text-[color:var(--color-fg)] transition-colors"
+        >
+          learn
         </a>
         <a
           href="/privacy"

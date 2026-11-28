@@ -18,9 +18,9 @@ export default function Section02Wire() {
     >
       <div className="text-[13px] text-[color:var(--color-dim)] mb-[18px] leading-[1.7] max-w-[880px]">
         Run{" "}
-        <span className="text-[color:var(--color-accent)]">/aide:brain config</span> from
+        <span className="text-[color:var(--color-accent-text)]">/aide:brain config</span> from
         inside Claude Code. The command reads the{" "}
-        <span className="text-[color:var(--color-accent)]">aide-config</span> body section,
+        <span className="text-[color:var(--color-accent-text)]">aide-config</span> body section,
         which is integration-specific prose that knows how to handle the unwired slots for{" "}
         <em>this</em> backend. Click the buttons below to see what fires when:
       </div>
@@ -30,7 +30,7 @@ export default function Section02Wire() {
         <em>just-wired</em> brain isn&apos;t loaded in the running session — sync wrote
         the entry but Claude Code didn&apos;t see it boot. So the wiring flow stops, you
         restart, and the <em>second</em> run of{" "}
-        <span className="text-[color:var(--color-accent)]">/aide:brain config</span> takes
+        <span className="text-[color:var(--color-accent-text)]">/aide:brain config</span> takes
         the seeding path.
       </Callout>
     </SectionScaffold>

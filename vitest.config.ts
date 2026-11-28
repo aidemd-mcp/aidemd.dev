@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
+  esbuild: { jsx: 'automatic' },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -14,6 +15,7 @@ export default defineConfig({
       'src/lib/**/*.test.ts',
       'src/app/**/*.test.ts',
       'src/data/**/*.test.ts',
+      'scripts/**/*.test.ts',
     ],
   },
 });

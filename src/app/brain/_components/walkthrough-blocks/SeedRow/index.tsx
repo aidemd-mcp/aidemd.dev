@@ -15,7 +15,7 @@ export default function SeedRow({ path, fromTag }: SeedRowProps) {
     <div className="text-[12px] items-start">
       {/* Mobile layout: glyph + stacked path/tag */}
       <div className="flex md:hidden gap-[10px] items-start py-[2px]">
-        <span className="text-[color:var(--color-accent)] shrink-0">◆</span>
+        <span className="text-[color:var(--color-accent-text)] shrink-0">◆</span>
         <div className="flex flex-col gap-[2px] min-w-0">
           <span className="text-[color:var(--color-fg)] break-all">{path}</span>
           <span className="text-[color:var(--color-dim)] break-all">{`<!-- ${fromTag}-* -->`}</span>
@@ -26,7 +26,7 @@ export default function SeedRow({ path, fromTag }: SeedRowProps) {
         className="hidden md:grid gap-[10px] items-center"
         style={{ gridTemplateColumns: "20px 1fr 14px 1fr" }}
       >
-        <span className="text-[color:var(--color-accent)]">◆</span>
+        <span className="text-[color:var(--color-accent-text)]">◆</span>
         <span className="text-[color:var(--color-fg)]">{path}</span>
         <span className="text-[color:var(--color-dim)]">←</span>
         <span className="text-[color:var(--color-dim)]">{`<!-- ${fromTag}-* -->`}</span>

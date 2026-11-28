@@ -15,7 +15,7 @@ import {
  * both routes. The RICHER WalkthroughFooter (FooterCard grid + trio row)
  * lives inside <Walkthrough /> and only appears on /brain.
  *
- * FOOTER_LINE value: "© 2026 TetsuKodai Group LLC · ● brain plugin interface"
+ * FOOTER_LINE value: "© 2026 Lowmeadow LLC · ● brain plugin interface"
  * The dot is inlined as a span so the accent color token can apply.
  */
 export default function BrainFooter() {
@@ -30,10 +30,10 @@ export default function BrainFooter() {
         borderTop: "1px solid var(--color-border)",
       }}
     >
-      {/* Left: "© 2026 TetsuKodai Group LLC · ● brain plugin interface" */}
+      {/* Left: "© 2026 Lowmeadow LLC · ● brain plugin interface" */}
       <div>
-        {"© 2026 TetsuKodai Group LLC · "}
-        <span className="text-[color:var(--color-accent)]" aria-hidden="true">
+        {"© 2026 Lowmeadow LLC · "}
+        <span className="text-[color:var(--color-accent-text)]" aria-hidden="true">
           ●
         </span>
         {" brain plugin interface"}

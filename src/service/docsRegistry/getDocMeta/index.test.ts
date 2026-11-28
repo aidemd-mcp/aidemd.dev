@@ -29,6 +29,7 @@ function makeRoute(absPath = '/docs/test-section/test-slug.md'): DocRoute {
     urlPath: '/docs/methodology/test-slug',
     absPath,
     order: 0,
+    commit: 'b75834c',
   };
 }
 

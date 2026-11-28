@@ -28,7 +28,7 @@ export default function Section05BuildOwn() {
       <div className="text-[13px] text-[color:var(--color-dim)] leading-[1.7] mb-[22px] max-w-[880px]">
         Authoring a custom brain is three artifacts: an MCP server that exposes the right
         tools, a
-        <span className="text-[color:var(--color-accent)]"> brain.aide </span>
+        <span className="text-[color:var(--color-accent-text)]"> brain.aide </span>
         file with frontmatter that launches it, and the body sections (orientation +
         aide-config + the four seeds) that teach AIDE how to use it.
       </div>
@@ -78,7 +78,7 @@ export default function Section05BuildOwn() {
       <SubHeader>D · live skeleton generator</SubHeader>
       <div className="text-[12px] text-[color:var(--color-dim)] mb-[12px] leading-[1.7]">
         # pick a preset, name it, optionally override orientation. copy the result into{" "}
-        <span className="text-[color:var(--color-accent)]">.aide/config/brain.aide</span>.
+        <span className="text-[color:var(--color-accent-text)]">.aide/config/brain.aide</span>.
       </div>
       <SkeletonGenerator />
     </SectionScaffold>

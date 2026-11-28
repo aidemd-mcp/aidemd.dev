@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
-import { ogImage } from "@/service/socialShare";
+import buildPageMetadata from "@/app/_shared/buildPageMetadata";
+import findSitePage from "@/app/_shared/listSitePages/findSitePage";
 import Cookbook from "../_components/Cookbook";
-import { PAGE_TITLE_B, OG_DESCRIPTION } from "../_data/brainCopy";
+
+/**
+ * Metadata comes from the site page list through the shared helper, never
+ * hand-written (a hand-written openGraph object replaces the layout's whole one).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await findSitePage("/brain/recipes/"));
+}
 
 /**
  * /brain/recipes — cookbook: recipes for the brain plugin interface.
@@ -13,35 +21,6 @@ import { PAGE_TITLE_B, OG_DESCRIPTION } from "../_data/brainCopy";
  *
  * No 'use client' — server component.
  */
-export const metadata: Metadata = {
-  title: PAGE_TITLE_B,
-  description: OG_DESCRIPTION,
-  alternates: {
-    canonical: "https://aidemd.dev/brain/recipes/",
-  },
-  openGraph: {
-    type: "article",
-    url: "https://aidemd.dev/brain/recipes/",
-    siteName: ogImage.siteName,
-    title: PAGE_TITLE_B,
-    description: OG_DESCRIPTION,
-    images: [
-      {
-        url: ogImage.imagePath,
-        width: ogImage.width,
-        height: ogImage.height,
-        alt: ogImage.alt,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: PAGE_TITLE_B,
-    description: OG_DESCRIPTION,
-    images: [ogImage.imagePath],
-  },
-};
-
 export default function BrainRecipesPage() {
   return <Cookbook />;
 }

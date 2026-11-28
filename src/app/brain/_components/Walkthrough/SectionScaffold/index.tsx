@@ -24,7 +24,7 @@ export default function SectionScaffold({
   return (
     <div className="px-[24px] md:px-[64px] py-[44px] max-w-[1180px]">
       <div className="flex items-baseline gap-[14px] mb-[6px]">
-        <span className="text-[14px] text-[color:var(--color-accent)]">§{num}</span>
+        <span className="text-[14px] text-[color:var(--color-accent-text)]">§{num}</span>
         <span className="text-[24px] font-semibold text-[color:var(--color-fg)]">{title}</span>
       </div>
       {sub && (

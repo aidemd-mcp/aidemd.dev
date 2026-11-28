@@ -46,7 +46,7 @@ export default function CopyChip({ text, label = "⧉ copy", className }: CopyCh
       className={cn(
         "cursor-pointer text-[11px] select-none bg-transparent border-0 p-0",
         copied
-          ? "text-[color:var(--color-accent)]"
+          ? "text-[color:var(--color-accent-text)]"
           : "text-[color:var(--color-dim)]",
         className
       )}

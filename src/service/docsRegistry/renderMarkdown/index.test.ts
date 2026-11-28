@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import getHighlighter from '@/lib/shiki';
-import type { DocRoute } from '@/types/docs';
+import type { WalkedDocRoute } from '@/types/docs';
 import renderMarkdown from './index';
 
 const NO_LINKS_CONTEXT = { fromPath: '/repo/.aide/docs/x.md', routes: [] };
@@ -18,7 +18,7 @@ describe('renderMarkdown — heading rendering', () => {
   it('renders a markdown H1 as an <h1> element containing the heading text', async () => {
     const html = await renderMarkdown('# Title\n\nParagraph.', NO_LINKS_CONTEXT);
 
-    expect(html).toContain('<h1>Title</h1>');
+    expect(html).toContain('<h1 id="title">Title</h1>');
   });
 });
 
@@ -47,7 +47,57 @@ describe('renderMarkdown — Shiki syntax highlighting', () => {
   });
 });
 
-function makeRoute(overrides: Partial<DocRoute> & Pick<DocRoute, 'slug' | 'absPath'>): DocRoute {
+describe('renderMarkdown — heading ids', () => {
+  it('gives a heading its lowercase-hyphenated id', async () => {
+    const html = await renderMarkdown('### Brevity Contract', NO_LINKS_CONTEXT);
+
+    expect(html).toContain('<h3 id="brevity-contract">');
+  });
+
+  it('keeps the double hyphen the real aide-spec anchor relies on', async () => {
+    const html = await renderMarkdown('### When to fill body sections — the pipeline test', NO_LINKS_CONTEXT);
+
+    expect(html).toContain('id="when-to-fill-body-sections--the-pipeline-test"');
+  });
+
+  it('numbers duplicate headings in document order', async () => {
+    const html = await renderMarkdown('## Setup\n\n## Setup', NO_LINKS_CONTEXT);
+
+    expect(html).toContain('id="setup"');
+    expect(html).toContain('id="setup-1"');
+    expect(html.indexOf('id="setup"')).toBeLessThan(html.indexOf('id="setup-1"'));
+  });
+
+  it('keeps the underscore and drops the backticks of an inline-code heading', async () => {
+    const html = await renderMarkdown('## `aide_read`', NO_LINKS_CONTEXT);
+
+    expect(html).toContain('id="aide_read"');
+  });
+
+  it('leaves an id the heading already carries', async () => {
+    const html = await renderMarkdown('<h2 id="custom">X</h2>', NO_LINKS_CONTEXT);
+
+    expect(html).toContain('id="custom"');
+    expect(html).not.toContain('id="x"');
+  });
+
+  it('restarts duplicate numbering for every render', async () => {
+    const first = await renderMarkdown('## Setup', NO_LINKS_CONTEXT);
+    const second = await renderMarkdown('## Setup', NO_LINKS_CONTEXT);
+
+    expect(first).toContain('id="setup"');
+    expect(second).toContain('id="setup"');
+  });
+
+  it('still gives a heading its id when a highlighter is supplied', async () => {
+    const highlighter = await getHighlighter();
+    const html = await renderMarkdown('## Usage\n\n```ts\nconst x = 1\n```', { ...NO_LINKS_CONTEXT, highlighter });
+
+    expect(html).toContain('<h2 id="usage">');
+  });
+});
+
+function makeRoute(overrides: Partial<WalkedDocRoute> & Pick<WalkedDocRoute, 'slug' | 'absPath'>): WalkedDocRoute {
   return {
     section: 'hooks',
     title: overrides.slug,

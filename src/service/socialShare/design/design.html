@@ -41,6 +41,7 @@
     --dim2: rgba(232,223,206,0.35);
     --border: rgba(232,223,206,0.12);
     --accent: #3d6b4a;
+    --accent-text: #6aaa7c;
     --todo: #d6b25a;
     --plan: #7aa6d6;
   }
@@ -294,6 +295,62 @@
   .mark.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
   .mark.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
 
+  /* ---- page card: per-page share card, reuses the .og frame ---- */
+  .page-stage {
+    position: absolute;
+    inset: 46px 0 0 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    z-index: 2;
+  }
+  .page-copy {
+    padding: 56px 40px 0 70px;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-brand {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    color: var(--fg);
+  }
+  .page-brand .dot-i { color: var(--accent-text); }
+  .page-section {
+    margin-top: 28px;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    line-height: 1.5;
+    color: var(--dim);
+  }
+  .page-section[hidden] { display: none; }
+  .page-section .hash { color: var(--accent-text); }
+  .page-title {
+    margin: 18px 0 0;
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 1.08;
+    letter-spacing: -0.022em;
+    color: var(--fg);
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: manual;
+  }
+  .page-mascot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-right: 40px;
+  }
+  .page-mascot img {
+    height: 300px;
+    width: auto;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.55));
+    position: relative;
+    z-index: 2;
+  }
+
   /* ---- handoff notes ---- */
   .notes {
     width: 1200px;
@@ -372,7 +429,7 @@
           <span class="sep">/</span>
           <span>install with one line</span>
           <span class="sep">·</span>
-          <span class="meta">© 2026 TETSUKODAI GROUP LLC</span>
+          <span class="meta">© 2026 Lowmeadow LLC</span>
         </div>
       </div>
 
@@ -387,10 +444,48 @@
     </div>
   </div>
 
+  <div class="frame-label">
+    <span># og-image · page card</span>
+    <span>1200 × 630</span>
+  </div>
+
+  <div class="og og-page" id="og-page">
+    <!-- top chrome bar -->
+    <div class="chrome">
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
+      <span class="prompt"><span class="sigil">$</span>aidemd.dev<span class="path" data-slot="path">/learn/spec-driven-vs-intent-driven-development/</span></span>
+      <span class="meta">
+        <span class="live">LIVE</span>
+        <span>v0.1.0</span>
+      </span>
+    </div>
+
+    <!-- registration corner marks -->
+    <span class="mark tl"></span>
+    <span class="mark tr"></span>
+    <span class="mark bl"></span>
+    <span class="mark br"></span>
+
+    <div class="page-stage">
+      <div class="page-copy">
+        <div class="page-brand">AIDEMD<span class="dot-i">.</span>DEV</div>
+        <div class="page-section" data-slot="section-row"><span class="hash">##</span> <span data-slot="section">learn</span></div>
+        <h1 class="page-title" data-slot="title">Spec-driven development vs intent-driven development</h1>
+      </div>
+
+      <div class="page-mascot">
+        <img src="./expo-wave.png" alt="Expo waving" />
+      </div>
+    </div>
+  </div>
+
   <div class="notes">
     <h3># handoff notes for your agent</h3>
     <ul>
-      <li>Render target: <code>1200 × 630</code> PNG. Capture the <code>.og</code> element only (no labels, no notes).</li>
+      <li>Render target: <code>1200 × 630</code> PNG. Capture <code>#og</code> (site card) or <code>#og-page</code> (page card) only (no labels, no notes).</li>
+      <li>The renderer fills the page card's <code>data-slot</code> title, section and path from each page record and fits the title from 64px down to 44px in 4px steps, at most 3 lines, ending above y = 510 (the bottom 120px stays clear of text).</li>
       <li>Source: <code>assets/expo-wave.png</code> — keep the same filename once deployed to <code>public/</code>.</li>
       <li>Font: <code>JetBrains Mono</code> (already used site-wide). Embed or self-host before static export so OG cards render outside the browser.</li>
       <li>Meta tags to add to every page's <code>&lt;head&gt;</code>:

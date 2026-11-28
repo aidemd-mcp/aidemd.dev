@@ -13,10 +13,27 @@ import Quickstart from "./_components/Quickstart";
 import Footer from "./_components/Footer";
 import { ExpoTipProvider } from "@/components/Expo/ExpoTipContext";
 import Expo from "@/components/Expo";
+import JsonLd from "@/components/JsonLd";
+import buildStructuredData from "@/service/structuredData";
+import buildPageMetadata from "./_shared/buildPageMetadata";
+import findSitePage from "./_shared/listSitePages/findSitePage";
 
-export default function HomePage() {
+/**
+ * The home page's metadata, built from its record in the one site-page list.
+ */
+export async function generateMetadata() {
+  return buildPageMetadata(await findSitePage("/"));
+}
+
+/**
+ * The home page. Carries the one site graph (Organization + WebSite) as
+ * ld+json; no other route emits site identity.
+ */
+export default async function HomePage() {
+  const page = await findSitePage("/");
   return (
     <ExpoTipProvider>
+      <JsonLd document={buildStructuredData({ page })} />
       <a href="#main" className="skip-link">Skip to main content</a>
       <TopBar sticky />
 

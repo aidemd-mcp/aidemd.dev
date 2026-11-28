@@ -23,16 +23,16 @@ export default function Section01Install() {
           <CmdLine cmd="npx @aidemd-mcp/server@latest init" />
           <div className="text-[12px] text-[color:var(--color-dim)] mt-[14px] leading-[1.7]">
             Run this in any project root. It creates{" "}
-            <span className="text-[color:var(--color-accent)]">.aide/</span> with the
+            <span className="text-[color:var(--color-accent-text)]">.aide/</span> with the
             methodology docs, scaffolds{" "}
-            <span className="text-[color:var(--color-accent)]">.aide/config/brain.aide</span>{" "}
+            <span className="text-[color:var(--color-accent-text)]">.aide/config/brain.aide</span>{" "}
             using the bundled Obsidian template, and stops. The file lands with{" "}
             <span className="text-[color:var(--color-warn)]">YAML null</span> at the unwired
             arg slot — that&apos;s the signal that you still need to point it at a vault.
           </div>
           <div className="text-[11px] text-[color:var(--color-dim-2)] mt-[18px] leading-[1.7]">
             # alternative:{" "}
-            <span className="text-[color:var(--color-accent)]">
+            <span className="text-[color:var(--color-accent-text)]">
               --brain &lt;integration&gt;
             </span>{" "}
             selects a different

@@ -30,7 +30,7 @@ export function P({
 export function Bullet({ children }: { children: ReactNode }) {
   return (
     <div className="grid gap-[8px] text-[13px] text-[color:var(--color-fg)] leading-[1.65] my-[4px]" style={{ gridTemplateColumns: "14px 1fr" }}>
-      <span className="text-[color:var(--color-accent)]">·</span>
+      <span className="text-[color:var(--color-accent-text)]">·</span>
       <span>{children}</span>
     </div>
   );
@@ -43,7 +43,7 @@ export function Bullet({ children }: { children: ReactNode }) {
  */
 export function C({ children }: { children: ReactNode }) {
   return (
-    <code className="font-mono text-[12.5px] px-[6px] py-[1px] bg-[rgba(232,223,206,0.06)] border border-[color:var(--color-border)] rounded-[3px] text-[color:var(--color-accent)]">
+    <code className="font-mono text-[12.5px] px-[6px] py-[1px] bg-[rgba(232,223,206,0.06)] border border-[color:var(--color-border)] rounded-[3px] text-[color:var(--color-accent-text)]">
       {children}
     </code>
   );

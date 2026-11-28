@@ -39,7 +39,7 @@ export default function FooterCard({
 
   const content = (
     <>
-      <div className="text-[11px] text-[color:var(--color-accent)] tracking-[1.5px] mb-[6px]">
+      <div className="text-[11px] text-[color:var(--color-accent-text)] tracking-[1.5px] mb-[6px]">
         {cta}
       </div>
       <div className="text-[18px] font-semibold mb-[8px]">{title}</div>

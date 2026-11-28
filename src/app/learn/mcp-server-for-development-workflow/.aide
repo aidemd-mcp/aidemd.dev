@@ -1,0 +1,29 @@
+---
+scope: src/app/learn/mcp-server-for-development-workflow
+alignment: unreviewed
+description: The /learn install quickstart for people searching 'mcp server for development workflow', covering what the aidemd MCP server adds, the real install, the first run and its tools.
+intent: >
+  This page answers people searching 'mcp server for development workflow'
+  with an install quickstart. It opens with one paragraph on what
+  @aidemd-mcp/server is and what an MCP server adds to a development workflow,
+  then gives the real install command with a copy button and says what that
+  command sets up. It walks the first run of /aide, names the tools the server
+  exposes with a link to the Tools docs, and lists only the clients the package
+  supports. Nothing on the page is invented. Readers leave installed, with links
+  on to the Claude Code subagents pipeline page and the docs.
+outcomes:
+  desired:
+    - The page opens with one paragraph saying what the aidemd MCP server is and what an MCP server adds to a development workflow, before any section.
+    - The page shows the one real install command with a copy button, and says what running it sets up in the reader's project.
+    - The page walks the first run of /aide after install, so a reader knows what to type and what happens next.
+    - The page names the tools the server exposes and links to the Tools docs for the detail of each.
+    - Supported clients appear only as the package actually supports them.
+    - The page links on to the Claude Code subagents pipeline page and the docs.
+  undesired:
+    - An install command, flag or step the package does not have, or a shown command that differs from what the copy button copies.
+    - A client named as supported, or given setup steps, that the package does not support.
+    - A tool list that names a tool the server does not expose or disagrees with the Tools docs.
+    - A first run described with prompts, output or results that /aide does not actually produce.
+    - An opening that defines or pitches intent-driven engineering at length before saying what the server is and how to install it, work that belongs to the definition page.
+    - A walkthrough of the full spec-to-QA pipeline in place of the first run, work that belongs to the subagents pipeline page.
+---

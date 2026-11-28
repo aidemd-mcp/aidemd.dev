@@ -2,6 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import buildRegistry from '@/service/docsRegistry';
+import buildStructuredData from '@/service/structuredData';
+import JsonLd from '@/components/JsonLd';
+import buildPageMetadata from '@/app/_shared/buildPageMetadata';
+import findSitePage from '@/app/_shared/listSitePages/findSitePage';
 import parseDocFrontmatter from '@/service/docsRegistry/parseDocFrontmatter';
 import { DOCS_CATEGORIES, SECTION_INDEX_META } from '@/data/docsCategories';
 import type { DocSection, DocRoute, DocFrontmatter } from '@/types/docs';
@@ -38,13 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!meta) return { title: 'Not Found' };
 
-  return {
-    title: meta.label,
-    description: meta.lede,
-    alternates: {
-      canonical: `https://aidemd.dev/docs/${section}/`,
-    },
-  };
+  return buildPageMetadata(await findSitePage(`/docs/${section}/`));
 }
 
 /**
@@ -58,6 +56,7 @@ export default async function SectionIndexPage({ params }: PageProps) {
 
   if (!meta) notFound();
 
+  const page = await findSitePage(`/docs/${section}/`);
   const { routes } = await buildRegistry();
   const sectionRoutes = routes.filter((r) => r.section === section);
 
@@ -75,16 +74,13 @@ export default async function SectionIndexPage({ params }: PageProps) {
     }),
   );
 
-  const sectionUpper = meta.label.toUpperCase();
-
   return (
     <>
+      <JsonLd document={buildStructuredData({ page })} />
       <Breadcrumb
-        segments={[
-          { label: 'AIDE', href: '/' },
-          { label: 'DOCS', href: '/docs' },
-          { label: sectionUpper },
-        ]}
+        segments={page.breadcrumb.map((item, i) =>
+          i < page.breadcrumb.length - 1 ? { label: item.name, href: item.urlPath } : { label: item.name },
+        )}
       />
 
       <h1

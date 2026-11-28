@@ -1,0 +1,28 @@
+---
+scope: src/data/learn
+alignment: unreviewed
+description: The single source of every /learn page's words — one copy record per page plus the six pages in priority order — drafted from SEO/AEO research and marked draft for founder review.
+intent: >
+  The /learn pages exist to be found and quoted by people searching for
+  intent-driven engineering. This module holds every word those pages say, one
+  record per page, plus the six pages in the research's priority order. The
+  page, its share preview, its FAQ and definition records, its markdown copy,
+  the sitemap, the llms files and the feed all read the same record, so wording
+  never diverges. Copy is drafted from the brain's SEO/AEO research and stays
+  marked draft until the founder reviews it live; the founder changes a page by
+  editing its one record.
+outcomes:
+  desired:
+    - Each /learn page has exactly one copy record holding all of its words — search title and description, an H1 in the searcher's exact wording, the answer or definition paragraph, sections, comparison rows, FAQ items, glossary terms and related links. Every surface that shows that page's words reads them from that record.
+    - The six pages are listed once, in the research's priority order, and every listing of /learn pages follows that order.
+    - Every page opens with its definition or answer, each section runs 120–180 words under a heading that matches a searched phrase, 'spec-driven' appears where searchers use it, and AIDE always appears paired with 'intent-driven' or 'aidemd'.
+    - Every comparison fact is real and traceable to the research, and every competitor number carries the date it was true as of.
+    - Each page's copy is marked draft until the founder has reviewed it, and the founder changes any page's wording by editing that page's one record alone.
+  undesired:
+    - The same page's wording differs between surfaces — a FAQ answer on the page that does not match its structured data or markdown copy, or a title in the sitemap, feed or llms files that differs from the page's own.
+    - A page's words written outside its record, such as a heading, answer or FAQ hard-coded in a page or a generated file, so editing the record leaves a stale copy behind.
+    - Invented facts — a competitor star count, feature claim or date with no source in the research, or a placeholder filled with a guess instead of shipped as a visible marker.
+    - A competitor number shown without its 'as of' date, or a comparison row that credits AIDE or faults a competitor with claims the research does not support.
+    - Copy that buries the answer under preamble, sections far outside 120–180 words, or a bare 'AIDE' a reader could confuse with an unrelated project of the same name.
+    - Draft copy presented as final, with the draft marking dropped before the founder has reviewed the page.
+---

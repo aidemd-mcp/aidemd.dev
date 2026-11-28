@@ -1,11 +1,12 @@
-import type { LlmsTxtConfig } from '../types';
+import type { LlmsTxtConfig } from '@/types/llmsTxt';
 
 /**
- * Returns the frozen canonical LlmsTxtConfig for aidemd.dev/llms.txt.
- * Every static copy surface the generator emits — product name, blockquote
- * summary, three prose preamble paragraphs, canonical origin, and output
- * paths — is centralised here. All link-list text is derived from
- * docsRegistry at render time; this file never names a doc slug.
+ * Returns the frozen canonical LlmsTxtConfig for aidemd.dev/llms.txt and
+ * llms-full.txt. Every static copy surface the composers emit — product name,
+ * blockquote summary, and three prose preamble paragraphs — is centralised
+ * here. Link-list text comes from the page list handed to the orchestrator;
+ * this file never names a page. The site origin comes from siteIdentity, and
+ * writing the files belongs to the pre-deploy step, so neither lives here.
  *
  * Object.freeze ensures mutation attempts throw in strict mode, matching the
  * drift-guard pattern established by ogImageConfig.
@@ -25,11 +26,5 @@ export default function llmsTxtConfig(): LlmsTxtConfig {
 
     gettingStarted:
       'To install the methodology into a host project, run `npx @aidemd-mcp/server init`. To browse the docs in a human-readable form, visit https://aidemd.dev/.',
-
-    origin: 'https://aidemd.dev',
-
-    outputPath: '/llms.txt',
-
-    filesystemPath: 'public/llms.txt',
   });
 }

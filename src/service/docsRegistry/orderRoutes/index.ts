@@ -1,5 +1,5 @@
 import { DOCS_CATEGORIES } from '@/data/docsCategories';
-import type { DocRoute } from '@/types/docs';
+import type { WalkedDocRoute } from '@/types/docs';
 
 /** Lookup of section → priority index derived from DOCS_CATEGORIES order. */
 const SECTION_PRIORITY = new Map(
@@ -21,7 +21,7 @@ const SECTION_PRIORITY = new Map(
  * Mutates the input array in place and returns it, which avoids an extra
  * allocation — callers should not rely on the original order after this call.
  */
-export default function orderRoutes(routes: DocRoute[]): DocRoute[] {
+export default function orderRoutes(routes: WalkedDocRoute[]): WalkedDocRoute[] {
   routes.sort((a, b) => {
     // Tier 1: section priority.
     const aPriority = SECTION_PRIORITY.get(a.section) ?? Number.MAX_SAFE_INTEGER;

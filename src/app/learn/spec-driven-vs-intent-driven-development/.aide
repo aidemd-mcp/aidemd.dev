@@ -1,0 +1,29 @@
+---
+scope: src/app/learn/spec-driven-vs-intent-driven-development
+alignment: unreviewed
+description: The /learn page answering spec-driven development vs intent-driven development, with a direct answer, a comparison table and a fair account of the criticisms of spec-driven.
+intent: >
+  This page answers people searching 'spec-driven development vs intent-driven
+  development'. It opens with one paragraph on how the two differ, then sets
+  them side by side in a table on concrete dimensions, using 'spec-driven' the
+  way searchers do. It treats spec-driven development fairly, stating its common
+  criticisms (the waterfall feel, too much markdown to review) and saying
+  plainly where intent-driven engineering answers them and where it does not.
+  Every claim about another tool traces to the research. Readers leave able to
+  choose, with links on to the definition page, the spec-kit alternatives page
+  and the methodology docs.
+outcomes:
+  desired:
+    - The page opens with one paragraph that says how spec-driven and intent-driven development differ, before any section or table.
+    - A comparison table sets the two approaches side by side on concrete dimensions, describing spec-driven development in terms its own practitioners would recognise.
+    - The common criticisms of spec-driven development, that it feels like waterfall and produces more markdown than anyone reviews, are stated fairly, each with where intent-driven engineering answers it and where it does not.
+    - Every claim about spec-driven development, its critics or a named tool is real and traceable to the research.
+    - The page links on to the intent-driven engineering definition page, the spec-kit alternatives page and the methodology docs.
+  undesired:
+    - A strawman of spec-driven development, such as a comparison that lists only its weaknesses or describes it in a way its practitioners would not recognise.
+    - A page that claims intent-driven engineering answers every criticism of spec-driven development, hiding the costs the two share.
+    - A table built on vague or marketing dimensions, or one where every row favours intent-driven.
+    - A claim about a named tool or about the critics that the research does not support.
+    - An opening that defines intent-driven engineering at length before saying how the two differ, work that belongs to the definition page.
+    - A tool-by-tool comparison of spec-driven products, which belongs to the spec-kit alternatives page, in place of a comparison of the two approaches.
+---

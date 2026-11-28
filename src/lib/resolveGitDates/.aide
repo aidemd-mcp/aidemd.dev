@@ -1,0 +1,22 @@
+---
+scope: src/lib/resolveGitDates
+alignment: unreviewed
+description: The single source of true page dates, answering for any content file when it was first published and when it was last modified, read only from version history.
+intent: >
+  Search signals depend on honest dates. Given a content file, this module
+  answers when it was first published (its first commit, following renames)
+  and when it was last modified (its last commit). Version history is the
+  only source: when history cannot answer, the date is absent or the build
+  stops with a clear message, never guessed.
+outcomes:
+  desired:
+    - Every first-published and last-modified date comes only from the file's version history.
+    - A renamed file keeps the first-published date of its original commit.
+    - A file with no history yet has no dates; they are absent, never empty or invented.
+    - The same file asked about twice in one build gives the same answer.
+    - A build reads version history once, however many files it dates.
+  undesired:
+    - A build from an incomplete (shallow) history silently stamps every page with the deploy day. The build must stop with a clear message instead.
+    - A version-history failure is swallowed into a blank or guessed date.
+    - A build-time or current timestamp is used as a page date.
+---

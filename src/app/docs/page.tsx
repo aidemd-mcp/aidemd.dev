@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import type { Metadata } from 'next';
 import buildRegistry from '@/service/docsRegistry';
+import buildPageMetadata from '@/app/_shared/buildPageMetadata';
+import findSitePage from '@/app/_shared/listSitePages/findSitePage';
 import parseDocFrontmatter from '@/service/docsRegistry/parseDocFrontmatter';
 import { DOCS_CATEGORIES } from '@/data/docsCategories';
 import type { DocRoute, DocFrontmatter } from '@/types/docs';
@@ -8,14 +10,9 @@ import Breadcrumb from './_components/DocsTemplate/Breadcrumb';
 import DocsIndexCard from './_components/DocsIndexCard';
 import DocsFooter from './_components/DocsFooter';
 
-export const metadata: Metadata = {
-  title: 'Canonical Docs',
-  description:
-    'The byte-faithful, timestamped, archivable record of the AIDE methodology. Every page is a direct render of the source file in the .aide/ hub.',
-  alternates: {
-    canonical: 'https://aidemd.dev/docs/',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await findSitePage('/docs/'));
+}
 
 type RouteWithFrontmatter = {
   route: DocRoute;
@@ -28,6 +25,7 @@ type RouteWithFrontmatter = {
  * the filesystem walk in buildRegistry().
  */
 export default async function DocsPage() {
+  const page = await findSitePage('/docs/');
   const { routes } = await buildRegistry();
 
   // Read frontmatter for every route (needed for the description preview).
@@ -54,10 +52,9 @@ export default async function DocsPage() {
   return (
     <>
       <Breadcrumb
-        segments={[
-          { label: 'AIDE', href: '/' },
-          { label: 'DOCS' },
-        ]}
+        segments={page.breadcrumb.map((item, i) =>
+          i < page.breadcrumb.length - 1 ? { label: item.name, href: item.urlPath } : { label: item.name },
+        )}
       />
 
       <h1

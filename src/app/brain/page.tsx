@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
-import { ogImage } from "@/service/socialShare";
+import buildPageMetadata from "@/app/_shared/buildPageMetadata";
+import findSitePage from "@/app/_shared/listSitePages/findSitePage";
 import Walkthrough from "./_components/Walkthrough";
-import { PAGE_TITLE_A, OG_DESCRIPTION } from "./_data/brainCopy";
+
+/**
+ * Metadata comes from the site page list through the shared helper, never
+ * hand-written (a hand-written openGraph object replaces the layout's whole one).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await findSitePage("/brain/"));
+}
 
 /**
  * /brain — wire any backend as a brain.
@@ -14,35 +22,6 @@ import { PAGE_TITLE_A, OG_DESCRIPTION } from "./_data/brainCopy";
  *
  * No 'use client' — server component.
  */
-export const metadata: Metadata = {
-  title: PAGE_TITLE_A,
-  description: OG_DESCRIPTION,
-  alternates: {
-    canonical: "https://aidemd.dev/brain/",
-  },
-  openGraph: {
-    type: "article",
-    url: "https://aidemd.dev/brain/",
-    siteName: ogImage.siteName,
-    title: PAGE_TITLE_A,
-    description: OG_DESCRIPTION,
-    images: [
-      {
-        url: ogImage.imagePath,
-        width: ogImage.width,
-        height: ogImage.height,
-        alt: ogImage.alt,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: PAGE_TITLE_A,
-    description: OG_DESCRIPTION,
-    images: [ogImage.imagePath],
-  },
-};
-
 export default function BrainPage() {
   return <Walkthrough />;
 }

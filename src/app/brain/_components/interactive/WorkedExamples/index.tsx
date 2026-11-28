@@ -52,7 +52,7 @@ export default function WorkedExamples() {
 
         {/* tools row */}
         <Eyebrow className="mb-[4px]">MCP TOOLS EXPOSED</Eyebrow>
-        <div className="text-[12px] text-[color:var(--color-accent)] mb-[16px] font-mono">
+        <div className="text-[12px] text-[color:var(--color-accent-text)] mb-[16px] font-mono">
           {ex.tools}
         </div>
 

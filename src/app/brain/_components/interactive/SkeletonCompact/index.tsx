@@ -66,7 +66,7 @@ ${preset.config.trim()}
             className={cn(
               'flex-1 px-[8px] py-[6px] font-mono text-[11px] border rounded-[4px] cursor-pointer transition-colors',
               backend === k
-                ? 'bg-[color:var(--color-accent)] text-[#0d0b08] border-[color:var(--color-accent)]'
+                ? 'bg-[color:var(--color-accent)] text-[color:var(--color-fg)] border-[color:var(--color-accent)]'
                 : 'bg-transparent text-[color:var(--color-fg)] border-[color:var(--color-border)]'
             )}
           >

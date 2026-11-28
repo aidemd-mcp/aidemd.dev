@@ -12,7 +12,7 @@ interface SubHeaderProps {
  */
 export default function SubHeader({ children }: SubHeaderProps) {
   return (
-    <div className="text-[12px] text-[color:var(--color-accent)] tracking-[1.5px] mb-[14px] mt-[8px] uppercase">
+    <div className="text-[12px] text-[color:var(--color-accent-text)] tracking-[1.5px] mb-[14px] mt-[8px] uppercase">
       {children}
     </div>
   );

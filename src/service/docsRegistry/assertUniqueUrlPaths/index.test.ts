@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import assertUniqueUrlPaths from './index';
-import type { DocRoute } from '@/types/docs';
+import type { WalkedDocRoute } from '@/types/docs';
 
-function makeRoute(overrides: Partial<DocRoute> = {}): DocRoute {
+function makeRoute(overrides: Partial<WalkedDocRoute> = {}): WalkedDocRoute {
   return {
     section: 'hooks',
     slug: 'Stop',

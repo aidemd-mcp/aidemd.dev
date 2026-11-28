@@ -63,3 +63,39 @@ describe('parseDocFrontmatter', () => {
     expect(frontmatter.description).toBe('Verifies spec alignment.');
   });
 });
+
+describe('parseDocFrontmatter — content (markdown body)', () => {
+  it('keeps the first H1 and drops the frontmatter block (SKILL.md shape)', () => {
+    const raw =
+      '---\nname: study-playbook\ndescription: Load playbook context\n---\n\n# /study-playbook — Load Coding Playbook Context\n\nBody.';
+    const { content } = parseDocFrontmatter(raw, 'skills/study-playbook/SKILL');
+    expect(content.startsWith('# /study-playbook')).toBe(true);
+    expect(content).toContain('Body.');
+    expect(content).not.toContain('---');
+    expect(content).not.toContain('name:');
+  });
+
+  it('equals the input when there is no frontmatter block', () => {
+    const raw = '# Title\n\nBody.';
+    const { content } = parseDocFrontmatter(raw, 'plain-slug');
+    expect(content).toBe(raw);
+  });
+
+  it('is the body text without the block when frontmatter has a title and no H1', () => {
+    const raw = '---\ntitle: Explicit Title\n---\n\nBody text only.';
+    const { content } = parseDocFrontmatter(raw, 'slug');
+    expect(content).toBe('Body text only.');
+  });
+
+  it('is the whole input when the frontmatter cannot be parsed', () => {
+    const raw = '---\ntitle: [unclosed\n---\nX';
+    const { content } = parseDocFrontmatter(raw, 'bad-slug');
+    expect(content).toBe(raw);
+  });
+
+  it('strips leading blank and whitespace-only lines but nothing else', () => {
+    const raw = '\n  \r\n\t\n# Title\n\nBody.';
+    const { content } = parseDocFrontmatter(raw, 'blank-slug');
+    expect(content).toBe('# Title\n\nBody.');
+  });
+});

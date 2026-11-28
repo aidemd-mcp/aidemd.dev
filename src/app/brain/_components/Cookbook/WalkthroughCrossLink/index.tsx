@@ -17,7 +17,7 @@ export default function WalkthroughCrossLink() {
       </div>
       <Link
         href="/docs/methodology/brain-aide/"
-        className="block text-[12px] text-[color:var(--color-accent)] no-underline mb-[6px] hover:underline"
+        className="block text-[12px] text-[color:var(--color-accent-text)] no-underline mb-[6px] hover:underline"
       >
         docs / brain-aide.md →
       </Link>

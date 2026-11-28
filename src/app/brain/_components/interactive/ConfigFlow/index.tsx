@@ -56,7 +56,7 @@ function FlowCol({ label, active, steps }: FlowColProps) {
         className={cn(
           'text-[11px] tracking-[1.5px] mb-[10px]',
           active
-            ? 'text-[color:var(--color-accent)]'
+            ? 'text-[color:var(--color-accent-text)]'
             : 'text-[color:var(--color-dim)]'
         )}
       >
@@ -64,7 +64,7 @@ function FlowCol({ label, active, steps }: FlowColProps) {
       </div>
       {steps.map(([n, s], i) => (
         <div key={i} className="flex gap-[10px] py-[5px] text-[12px] text-[color:var(--color-fg)]">
-          <span className="text-[color:var(--color-accent)] w-[30px] text-[10px] shrink-0">{n}</span>
+          <span className="text-[color:var(--color-accent-text)] w-[30px] text-[10px] shrink-0">{n}</span>
           <span>{s}</span>
         </div>
       ))}
@@ -105,7 +105,7 @@ export default function ConfigFlow() {
             className={cn(
               'px-[12px] py-[6px] font-mono text-[11px] border rounded-[4px] cursor-pointer transition-colors',
               state === s.id
-                ? 'bg-[color:var(--color-accent)] text-[#0d0b08] border-[color:var(--color-accent)]'
+                ? 'bg-[color:var(--color-accent)] text-[color:var(--color-fg)] border-[color:var(--color-accent)]'
                 : 'bg-transparent text-[color:var(--color-fg)] border-[color:var(--color-border)]'
             )}
           >
@@ -127,7 +127,7 @@ export default function ConfigFlow() {
           brain wired and seeded — boot reporter shows{' '}
           <span className="text-[color:var(--color-good)]">ok</span>
           . you can now run{' '}
-          <span className="text-[color:var(--color-accent)]">/aide</span>{' '}
+          <span className="text-[color:var(--color-accent-text)]">/aide</span>{' '}
           normally.
         </Callout>
       )}

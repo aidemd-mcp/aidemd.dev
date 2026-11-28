@@ -51,7 +51,7 @@ export const SECTION_SUBHEADS: Record<"01" | "02" | "03" | "04" | "05", string> 
 };
 
 export const FOOTER_LINE =
-  "© 2026 TetsuKodai Group LLC · ● brain plugin interface";
+  "© 2026 Lowmeadow LLC · ● brain plugin interface";
 
 export const FOOTER_TRIO: [string, string, string] = ["github ↗", "npm ↗", "discuss"];
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import cn from '@/lib/cn';
 import CopyChip from '@/app/brain/_components/primitives/CopyChip';
 import { BACKEND_PRESETS, type PresetKey } from '@/app/brain/_data/backendPresets';
@@ -25,6 +25,7 @@ export default function SkeletonGenerator() {
   const [name, setName] = useState<string>(BACKEND_PRESETS.obsidian.name);
   const [overrideOrient, setOverrideOrient] = useState<boolean>(false);
   const [orient, setOrient] = useState<string>(BACKEND_PRESETS.obsidian.orientation);
+  const nameInputId = useId();
 
   // Matches JSX lines 165–168: on backend change, always refresh name;
   // refresh orient only when override is NOT active.
@@ -99,7 +100,7 @@ ${preset.config.trim()}
   return (
     <div className="border border-[color:var(--color-border)] rounded-[8px] font-mono bg-[color:var(--color-card)]">
       {/* header bar */}
-      <div className="px-[16px] py-[12px] border-b border-[color:var(--color-border)] text-[11px] text-[color:var(--color-accent)] tracking-[1.5px] uppercase">
+      <div className="px-[16px] py-[12px] border-b border-[color:var(--color-border)] text-[11px] text-[color:var(--color-accent-text)] tracking-[1.5px] uppercase">
         SKELETON GENERATOR · live
       </div>
 
@@ -119,7 +120,7 @@ ${preset.config.trim()}
                   className={cn(
                     'text-left px-[10px] py-[6px] font-mono text-[12px] border rounded-[4px] cursor-pointer transition-colors',
                     backend === k
-                      ? 'bg-[color:var(--color-accent)] text-[#0d0b08] border-[color:var(--color-accent)]'
+                      ? 'bg-[color:var(--color-accent)] text-[color:var(--color-fg)] border-[color:var(--color-accent)]'
                       : 'bg-transparent text-[color:var(--color-fg)] border-[color:var(--color-border)]'
                   )}
                 >
@@ -131,8 +132,9 @@ ${preset.config.trim()}
 
           {/* name input */}
           <div>
-            <div className="text-[11px] text-[color:var(--color-dim)] mb-[6px]">name (label)</div>
+            <label htmlFor={nameInputId} className="block text-[11px] text-[color:var(--color-dim)] mb-[6px]">name (label)</label>
             <input
+              id={nameInputId}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-[8px] py-[6px] bg-[color:var(--color-card-2)] border border-[color:var(--color-border)] rounded-[4px] text-[color:var(--color-fg)] font-mono text-[12px] outline-none"

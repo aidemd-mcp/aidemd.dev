@@ -22,7 +22,7 @@ export default function Hero() {
       <Eyebrow className="mb-[10px]">{HERO_B_EYEBROW}</Eyebrow>
       <h1 className="text-[38px] m-0 font-medium leading-[1.1] tracking-[-0.5px]">
         {HERO_B_LINE_1}
-        <span className="text-[color:var(--color-accent)]">{HERO_B_LINE_2}</span>
+        <span className="text-[color:var(--color-accent-text)]">{HERO_B_LINE_2}</span>
         {HERO_B_LINE_3}
       </h1>
       <div className="text-[13px] text-[color:var(--color-dim)] mt-[12px] max-w-[760px] leading-[1.65]">

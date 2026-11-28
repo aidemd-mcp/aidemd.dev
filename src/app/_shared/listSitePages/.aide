@@ -1,0 +1,27 @@
+---
+scope: src/app/_shared/listSitePages
+alignment: unreviewed
+description: The one list of every indexable page on the site, each with its canonical URL, title, description, kind, breadcrumb, share image and dates proven by version history.
+intent: >
+  Every surface that names or dates a page (the sitemap, feed, llms files,
+  markdown copies, share cards, visible dates and structured data) reads from
+  this one list, so none of them can disagree. It lists every indexable page
+  exactly once, each with its canonical URL, title, description, kind,
+  breadcrumb trail, share image, markdown copy link where one exists, and the
+  first-published and last-modified dates its version history proves. A date it
+  cannot prove is left out, never guessed.
+outcomes:
+  desired:
+    - Every indexable page appears exactly once — home, the docs index, every docs section index and doc, /brain and its recipes, /observer, /privacy, the /learn index and each /learn page.
+    - Each page carries its canonical URL with a trailing slash, its own title, description, kind, breadcrumb trail and share image, and a markdown copy link exactly when a markdown copy of it exists.
+    - A page with one content source carries the first-published and last-modified dates its version history records for that source.
+    - Home, /brain, /observer, /privacy, the docs index and the /learn index carry no last-modified date, because no single content source dates them.
+    - The sitemap, feed, llms files, markdown copies, share cards, visible dates and structured data all take their pages and dates from this list, so no two of them show a page differently.
+  undesired:
+    - A build, deploy or checkout date standing in for any page's first-published or last-modified date.
+    - A guessed last-modified date on a page that has no single content source.
+    - An unindexable page such as the 404 in the list, a page listed twice, or an indexable page left out.
+    - A build from a shallow version history that completes with dates that look real but are wrong, instead of failing.
+    - A surface that keeps its own page list or works out its own dates, so two surfaces can disagree about what exists or when it changed.
+    - A page's breadcrumb, share image or markdown copy link that belongs to another page or points at a copy that does not exist.
+---

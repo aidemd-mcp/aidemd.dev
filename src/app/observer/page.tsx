@@ -1,17 +1,25 @@
 import "./observer.css";
+import type { Metadata } from "next";
 import Footer from "@/app/_components/Footer";
 import TopBar from "@/app/_components/TopBar";
+import buildPageMetadata from "@/app/_shared/buildPageMetadata";
+import findSitePage from "@/app/_shared/listSitePages/findSitePage";
 import CaptureFigure from "./_components/CaptureFigure";
 import ClosePanel from "./_components/ClosePanel";
 import Hero from "./_components/Hero";
 import Sections from "./_components/Sections";
-import observerMetadata from "./_data/observerMetadata";
+import observerCopy from "./_data/observerCopy";
 
-export const metadata = observerMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await findSitePage("/observer/"), observerCopy.capture);
+}
 
 /**
  * The /observer feature page, built from Variant A of the observer design
  * handoff (`design-handoff/observer/`).
+ *
+ * Metadata comes from the page list through the shared helper, with the hero
+ * capture as the share image.
  *
  * Orchestrator only: it lays the regions out in order and holds no copy.
  * The site TopBar (observer active) and Footer replace the handoff's own

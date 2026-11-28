@@ -31,3 +31,14 @@ const ico = await toIco(pngs);
 await writeFile(out, ico);
 
 console.log(`favicon.ico written — ${sizes.join('/')} px, ${ico.length} bytes → ${out}`);
+
+const iconSizes = [192, 512];
+for (const n of iconSizes) {
+  const iconPath = path.resolve(here, `../public/icon-${n}.png`);
+  const icon = await sharp(square)
+    .resize(n, n, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
+  await writeFile(iconPath, icon);
+  console.log(`icon-${n}.png written — ${icon.length} bytes → ${iconPath}`);
+}

@@ -1,0 +1,132 @@
+---
+status: approved
+intent: >
+  Build the /learn section shell: the layout (site TopBar and Footer, docs
+  reading column, no sidebar), the private server-only template that renders
+  one copy record in its fixed order, and the /learn index page with its
+  metadata and records. The six answer-page routes are built by their own
+  plans, one per page folder, on top of this template.
+---
+
+## Project Structure
+
+Additive inside an existing folder: `.aide`, `brief.aide` and the six page
+folders' `.aide` files exist; everything else is NEW. No file under
+`src/app/learn/` carries `'use client'` (brief #4). The six page folders are
+child modules with their own specs and their own plans; their `page.tsx` files
+are not built by this plan.
+
+```
+src/app/learn/
+├── .aide                                   ← intent spec (exists)
+├── brief.aide                              ← commitments (exists; updated by this plan)
+├── plan.aide                               ← this plan
+├── layout.tsx                              ← NEW default LearnLayout({ children }: { children: ReactNode }):
+│                                             skip link, <TopBar sticky />, <main id="main"> centring the docs
+│                                             reading column (max-width 1000, px 20 / md 64, padding 40 / 80),
+│                                             <Footer />
+├── page.tsx                                ← NEW /learn index: generateMetadata(): Promise<Metadata>; default
+│                                             LearnIndexPage(): Promise<JSX.Element>
+├── _components/
+│   ├── LearnArticle/
+│   │   └── index.tsx                       ← NEW default LearnArticle({ copy, page }: { copy: LearnCopy;
+│   │                                         page: SitePage }): JSX.Element — <article className="docs-body">
+│   │                                         in the fixed order (brief #3)
+│   ├── LearnBreadcrumb/
+│   │   └── index.tsx                       ← NEW default LearnBreadcrumb({ breadcrumb }: { breadcrumb:
+│   │                                         BreadcrumbItem[] }): JSX.Element — <nav aria-label="Breadcrumb">
+│   │                                         around the docs Breadcrumb
+│   ├── LearnHeader/
+│   │   ├── index.tsx                       ← NEW default LearnHeader({ h1, answer, modified }: { h1: string;
+│   │   │                                     answer: RichText; modified?: string }): JSX.Element — H1, answer
+│   │   │                                     paragraph as its next sibling, then the byline
+│   │   └── LearnByline/
+│   │       └── index.tsx                   ← NEW default LearnByline({ modified }: { modified?: string }):
+│   │                                         JSX.Element — "Updated <time>2026-11-27</time> · Lowmeadow LLC",
+│   │                                         or the author alone when no date is known
+│   ├── LearnSection/
+│   │   ├── index.tsx                       ← NEW default LearnSection({ section }: { section: LearnSection }):
+│   │   │                                     JSX.Element — <section aria-labelledby>, <h2 id={section.id}>
+│   │   ├── LearnBlock/
+│   │   │   └── index.tsx                   ← NEW async default LearnBlock({ block }: { block: LearnBlock }):
+│   │   │                                     Promise<JSX.Element> — paragraph, list, Shiki code block, glossary
+│   │   └── GlossaryList/
+│   │       └── index.tsx                   ← NEW default GlossaryList({ terms }: { terms: GlossaryTerm[] }):
+│   │                                         JSX.Element — <ul>, one <li id={term.id}> per term
+│   ├── ComparisonTable/
+│   │   └── index.tsx                       ← NEW default ComparisonTable({ table }: { table: ComparisonTable }):
+│   │                                         JSX.Element — caption paragraph + semantic <table>
+│   ├── FaqList/
+│   │   └── index.tsx                       ← NEW default FaqList({ items }: { items: FaqItem[] }): JSX.Element
+│   ├── RelatedLinks/
+│   │   └── index.tsx                       ← NEW default RelatedLinks({ links }: { links: RelatedLink[] }):
+│   │                                         JSX.Element
+│   ├── LearnIndexList/
+│   │   └── index.tsx                       ← NEW default LearnIndexList({ entries }: { entries:
+│   │                                         LearnRosterEntry[] }): JSX.Element
+│   └── shared/
+│       └── RichTextRuns/
+│           └── index.tsx                   ← NEW default RichTextRuns({ text }: { text: RichText }):
+│                                             JSX.Element — text runs as text, internal links as next/link,
+│                                             external links as <a>
+├── intent-driven-engineering/              ← child module: .aide (exists), plan.aide (own plan), page.tsx
+├── spec-driven-vs-intent-driven-development/  ← child module, own plan
+├── spec-kit-alternatives/                  ← child module, own plan
+├── claude-code-subagents-pipeline/         ← child module, own plan
+├── mcp-server-for-development-workflow/    ← child module, own plan
+└── open-source-agentic-sdlc-framework/     ← child module, own plan
+```
+
+## Prerequisites
+
+- `src/data/learn/plan.aide` complete: `@/data/learn` default `learnRoster`; `@/data/learn/learnIndex` default `LearnIndexCopy`; `@/data/learn/templateLabels` default (`faqHeading`, `faqId`, `relatedHeading`, `relatedId`, `asOfPrefix`, `updatedLabel`).
+- `src/app/_shared/listSitePages/plan.aide` complete: `@/app/_shared/listSitePages/findSitePage` default `findSitePage(urlPath): Promise<SitePage>`.
+- Root plan `.aide/plan.aide` steps 9 and 10 complete: `@/components/JsonLd` default `JsonLd({ document }: { document: JsonLdDocument }): JSX.Element`; `@/app/_shared/buildPageMetadata` default `buildPageMetadata(page: SitePage, image?: PageImage): Metadata`.
+- Root plan step 12 (Footer `learn` link) before this plan's step 3 verify, so the section is reachable from the footer when checked.
+- Built (no work): `@/service/structuredData` default `buildStructuredData(input: StructuredDataInput): JsonLdDocument`; `@/data/siteIdentity` default (`name`); `@/lib/shiki` default `getHighlighter()` with the `aide-theme` theme; `@/components/CodeBlock` default `CodeBlock({ html, label, code })`; `@/app/_components/TopBar`, `@/app/_components/Footer`; `@/app/docs/_components/DocsTemplate/Breadcrumb` default `Breadcrumb({ segments })`.
+
+## Plan
+
+### 1. Layout
+
+Read: `coding-playbook/client/components.md` — sections "Page Layout Pattern" and "Styling Rules", `coding-playbook/client/seo.md` — section "1. Skip-to-Main Link (WCAG 2.4.1 Bypass Blocks)"
+
+Traces to: brief #1; learn desired 1 (site top bar and footer, docs prose styles, no sidebar, a single reading-width column); undesired 1; brief open question 5 (resolved: the docs body width is reused). Every value is one the docs layout already uses (`src/app/docs/layout.tsx`: `paddingTop: 40`, `paddingBottom: 80`, inner `maxWidth: 1000`, `px-[20px] md:px-[64px]`), so the section introduces no new spacing.
+
+- [x] Create `layout.tsx` (server component): `<a href="#main" className="skip-link">Skip to main content</a>`, `<TopBar sticky />` (no `active`: /learn is not a nav destination), `<main id="main" className="flex justify-center" style={{ paddingTop: 40, paddingBottom: 80 }}>` holding `<div className="w-full px-[20px] md:px-[64px]" style={{ maxWidth: 1000 }}>{children}</div>`, then `<Footer />`. JSDoc: why this is not the docs layout (no sidebar; docsRegistry renders only package markdown) nor the /brain layout (brain palette and footer).
+- [x] Verify: `npx tsc --noEmit`.
+
+### 2. The private template
+
+Read: `coding-playbook/client/components.md` — sections "Component File Structure", "Component Props" and "Component Size", `coding-playbook/client/seo.md` — sections "Semantic HTML" and "ARIA Rules"
+
+Traces to: brief #2, #3, #4, #6, #7, #9, #11, #13; learn desired 1–3, 6; undesired 1, 2, 6; data/learn undesired 2 (no words outside the record: the template's only fixed words come from `templateLabels` and `siteIdentity.name`). All components are server components; the only client island is `CodeBlock`'s existing copy button, which carries no page copy.
+
+- [x] 2a. `shared/RichTextRuns`: renders runs in order with nothing added between them: a `text` run as its text; a `link` run whose `href` starts with `/` as `<Link href={href}>` (next/link); any other link run as `<a href={href} rel="noopener">`. JSDoc: the visible text equals the record's flattened text, which is what the FAQ and definition records carry.
+- [x] 2b. `LearnBreadcrumb`: `<nav aria-label="Breadcrumb">` wrapping the docs `Breadcrumb` with `segments = breadcrumb.map((item, i) => i === breadcrumb.length - 1 ? { label: item.name } : { label: item.name, href: item.urlPath })`, so the visible labels and order are exactly the page list's entry (brief #7). The last crumb gets `aria-current="page"` only if the docs `Breadcrumb` already supports it; otherwise leave it as the docs render it (no change to the shared component).
+- [x] 2c. `LearnHeader/LearnByline`: one line under the answer, styled with existing tokens only (`fontSize: 12`, `color: 'var(--color-dim-text)'`, `margin: '0 0 28px'`): when `modified` is present, `<templateLabels.updatedLabel> <time dateTime={modified.slice(0, 10)}>{modified.slice(0, 10)}</time> · <siteIdentity.name>`; otherwise `<siteIdentity.name>` alone. No person, no link (brief #6). `LearnHeader`: `<header>` containing `<h1>{h1}</h1>`, then `<p><RichTextRuns text={answer} /></p>` as the H1's next element sibling, then `<LearnByline modified={modified} />` (brief #3, #43: the date/author line sits after the answer).
+- [x] 2d. `LearnSection/GlossaryList`: `<ul>` with one `<li id={term.id}><strong>{term.term}</strong>: <RichTextRuns text={term.definition} /></li>` per term (uses the existing `.docs-body ul/li/strong` styles; the `id` is the stable anchor from the record, brief #9). `LearnSection/LearnBlock` (async): `paragraph` → `<p><RichTextRuns/></p>`; `list` → `<ul>` of `<li><RichTextRuns/></li>`; `code` → `const highlighter = await getHighlighter()`, `html = highlighter.codeToHtml(block.code, { lang: block.lang, theme: 'aide-theme' })`, `<CodeBlock html={html} code={block.code} label={block.lang} />`; `glossary` → `<GlossaryList terms={block.terms} />`. `LearnSection`: `<section aria-labelledby={section.id}><h2 id={section.id}>{section.heading}</h2>{blocks}</section>`.
+- [x] 2e. `ComparisonTable`: `<p id={\`${tableId}-caption\`}>{table.caption}</p>` then `<table aria-labelledby={…caption id}>` with `<thead><tr>` of `<th scope="col">` per column and `<tbody>` rows whose first cell is `<th scope="row">` and the rest `<td>`; a cell renders its `text`, plus ` (<templateLabels.asOfPrefix> <asOf>)` when `asOf` is present — the exact string the markdown copy writes (brief #13). `tableId` is the fixed `'comparison'`. The caption is a paragraph rather than `<caption>` because docs prose styles a `p` and has no caption style (no new style).
+- [x] 2f. `FaqList`: `<section aria-labelledby={templateLabels.faqId}><h2 id={templateLabels.faqId}>{templateLabels.faqHeading}</h2>` then per item `<h3>{question}</h3><p><RichTextRuns text={answer} /></p>`. Visible prose only; records are built elsewhere from the same items (brief #8).
+- [x] 2g. `RelatedLinks`: `<nav aria-labelledby={templateLabels.relatedId}><h2 id={templateLabels.relatedId}>{templateLabels.relatedHeading}</h2><ul>` with `<li><Link href={href}>{label}</Link></li>` for internal hrefs and `<a href rel="noopener">` for external ones.
+- [x] 2h. `LearnIndexList`: `<ul>` with one `<li><Link href={entry.urlPath}>{entry.title}</Link> — {entry.description}</li>` per entry, in the order given (the caller passes `learnRoster`).
+- [x] 2i. `LearnArticle`: `<article className="docs-body">` containing, in this order and nothing else: `<LearnBreadcrumb breadcrumb={page.breadcrumb} />`, `<LearnHeader h1={copy.h1} answer={copy.answer} modified={page.modified} />`, each `<LearnSection>` in record order, `<ComparisonTable>` only when `copy.comparison` has rows, `<FaqList>` only when `copy.faq` is non-empty, `<RelatedLinks links={copy.related} />`. It never reads `copy.status` (brief #12). JSDoc: the fixed sequence and why copy cannot reorder it.
+- [x] Verify: `npx tsc --noEmit`; `grep -rn "use client" src/app/learn` returns nothing; `grep -rn "status" src/app/learn/_components` returns nothing.
+
+### 3. The /learn index page
+
+Read: `coding-playbook/client/seo.md` — sections "Shared Page Metadata Through One Helper" and "Per-Page Schemas Reference the Graph by @id", `coding-playbook/client/components.md` — section "Page Layout Pattern"
+
+Traces to: learn desired 4 (index records), 5 (index lists the six in priority order; footer link reaches it); brief #5, #8, #10, open question 3 (resolved: BreadcrumbList + CollectionPage, no dates — decision #43). Needs step 2 and the Prerequisites.
+
+- [x] Create `page.tsx`: `export async function generateMetadata()` returning `buildPageMetadata(await findSitePage('/learn/'))`; default `LearnIndexPage` (async server component): `page = await findSitePage('/learn/')`; renders `<article className="docs-body">` with `<LearnBreadcrumb breadcrumb={page.breadcrumb} />`, `<LearnHeader h1={learnIndex.h1} answer={learnIndex.answer} />` (no date: the index has none), `<LearnIndexList entries={learnRoster} />`; then `<JsonLd document={buildStructuredData({ page })} />`. No literal copy strings in the file.
+- [x] Verify: `npx tsc --noEmit`; `npm run test:unit` passes. If nothing answers on `http://localhost:3001` and root steps 9–12 are done, `npm run build` exits 0 and `out/learn/index.html` contains the H1 from `learnIndex`, the six titles in roster order, one `application/ld+json` script whose `@graph` holds a `CollectionPage` and a `BreadcrumbList`, `<link rel="canonical" href="https://aidemd.dev/learn/">` and an `og:image` ending in `.png`; otherwise report the build check as pending (never start a dev server, never build while :3001 is up).
+
+## Decisions
+
+- **Six page routes live in six child plans.** Each page folder has its own intent spec, so each `page.tsx` is planned beside its spec (single-module scoping); this plan builds what they share. Each child route is three lines of wiring: its record, its page-list entry, the template, the metadata helper and the record builder.
+- **Server-only template, async only where Shiki needs it.** `LearnBlock` awaits the shared highlighter for code blocks so code renders like docs code (same `aide-theme`, same `CodeBlock`); everything else is synchronous. No component is a client component, so a crawler that runs no script reads the whole answer.
+- **Fixed words come from `templateLabels` and `siteIdentity`.** The FAQ and Related headings, the byline label and the as-of wording are shared with the markdown copy through `@/data/learn/templateLabels`; the author is `siteIdentity.name`. The template writes no other word.
+- **Docs prose styles only.** The article carries `.docs-body`; glossary terms are a `ul`/`li`/`strong` list and the table caption a paragraph because those are styled by docs prose and `dl`/`caption` are not. The breadcrumb reuses the docs `Breadcrumb` component (imported from the docs route's private folder) so the trail looks exactly like the docs trail; lifting it to `src/components/` would be a new folder outside the approved tree, so it is reported as possible follow-up, not done.
+- **Byline after the answer, a slim line rather than the DocMeta card** (decision #43): the DocMeta card's cite-as and commit rows are docs facts; /learn shows only the true updated date and the organization.
+- **Index list as its own component.** The /learn index needs a list of the six pages with descriptions, which none of the seven approved template parts renders; `LearnIndexList` is a private helper inside this module.

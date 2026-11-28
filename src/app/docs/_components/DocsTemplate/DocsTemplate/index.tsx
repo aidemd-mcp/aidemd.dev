@@ -1,16 +1,20 @@
 import type { DocRoute } from '@/types/docs';
 import type { DocFrontmatter } from '@/types/docs';
+import type { BreadcrumbItem } from '@/types/sitePage';
 import Link from 'next/link';
 import Breadcrumb from '../Breadcrumb';
 import PrevNext from '../PrevNext';
 import DocMeta from '@/components/DocMeta';
 import DocsFooter from '../../DocsFooter';
+import DocsBody from '../DocsBody';
 
 interface DocsTemplateProps {
   route: DocRoute;
   frontmatter: DocFrontmatter;
   commit: string;
-  published: string;
+  modified?: string;
+  /** The page record's trail: every item but the last links, the last is the current page. */
+  breadcrumb: BreadcrumbItem[];
   /** Shiki-highlighted HTML from renderMarkdown — rendered via dangerouslySetInnerHTML. */
   renderedHtml: string;
   prev?: DocRoute;
@@ -19,7 +23,7 @@ interface DocsTemplateProps {
 
 /**
  * One template that renders every markdown doc uniformly — no special cases per section.
- * Orchestrates: Breadcrumb → [slug-gated banner] → H1 → DocMeta → body prose → PrevNext → DocsFooter.
+ * Orchestrates: Breadcrumb → [slug-gated banner] → <article>(H1 → DocMeta → body prose rendered by DocsBody) → PrevNext → DocsFooter.
  *
  * Callouts in the body are rendered as .callout-{kind} divs by the rehypeCallouts plugin
  * in renderMarkdown — no post-processing needed here. The .docs-body CSS class applies
@@ -33,24 +37,21 @@ export default function DocsTemplate({
   route,
   frontmatter,
   commit,
-  published,
+  modified,
+  breadcrumb,
   renderedHtml,
   prev,
   next,
 }: DocsTemplateProps) {
-  const sectionLabel = route.section.toUpperCase();
   const title = frontmatter.title ?? route.slug;
   const isBrainAide = route.section === 'methodology' && route.slug === 'brain-aide';
 
   return (
     <>
       <Breadcrumb
-        segments={[
-          { label: 'AIDE', href: '/' },
-          { label: 'DOCS', href: '/docs' },
-          { label: sectionLabel, href: `/docs/${route.section}/` },
-          { label: title },
-        ]}
+        segments={breadcrumb.map((item, i) =>
+          i < breadcrumb.length - 1 ? { label: item.name, href: item.urlPath } : { label: item.name },
+        )}
       />
 
       {isBrainAide && (
@@ -62,28 +63,27 @@ export default function DocsTemplate({
         </Link>
       )}
 
-      <h1
-        style={{
-          fontSize: 36,
-          margin: '8px 0 22px',
-          fontWeight: 600,
-          letterSpacing: -0.5,
-          lineHeight: 1.1,
-        }}
-      >
-        {title}
-      </h1>
+      <article>
+        <h1
+          style={{
+            fontSize: 36,
+            margin: '8px 0 22px',
+            fontWeight: 600,
+            letterSpacing: -0.5,
+            lineHeight: 1.1,
+          }}
+        >
+          {title}
+        </h1>
 
-      <DocMeta
-        published={published}
-        commit={commit}
-        urlPath={route.urlPath}
-      />
+        <DocMeta
+          modified={modified}
+          commit={commit}
+          urlPath={route.urlPath}
+        />
 
-      <div
-        className="docs-body"
-        dangerouslySetInnerHTML={{ __html: renderedHtml }}
-      />
+        <DocsBody html={renderedHtml} />
+      </article>
 
       <PrevNext prev={prev} next={next} />
 

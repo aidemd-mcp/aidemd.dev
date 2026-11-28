@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import TopBar from "@/app/_components/TopBar";
 import Footer from "@/app/_components/Footer";
+import buildPageMetadata from "@/app/_shared/buildPageMetadata";
+import findSitePage from "@/app/_shared/listSitePages/findSitePage";
 import { LAST_UPDATED } from "./constants";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — aidemd.dev",
-  description:
-    "aidemd.dev collects only GA4 page-view analytics — no form inputs, no ad pixels, no PII beyond what GA4 records by default — and honors Do Not Track.",
-  alternates: { canonical: "https://aidemd.dev/privacy" },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await findSitePage("/privacy/"));
+}
 
 /**
  * Static privacy policy route. Single-file leaf — no helpers or sub-components.
@@ -111,7 +109,7 @@ export default function PrivacyPage() {
             <p>
               The data controller for this site is{" "}
               <strong className="text-[color:var(--color-fg)] font-semibold">
-                TetsuKodai Group LLC
+                Lowmeadow LLC
               </strong>
               . The sole data processor beyond this site&apos;s own hosting is
               Google Analytics (Google LLC). No other third party receives data

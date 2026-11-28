@@ -1,0 +1,72 @@
+---
+scope: src/app/learn
+alignment: unreviewed
+description: The /learn section — an index and six answer pages sharing one reading template, giving people who search intent-driven engineering topics a direct, crawler-readable answer.
+intent: >
+  /learn is where people searching for intent-driven engineering, spec-driven
+  versus intent-driven development, spec-kit alternatives, Claude Code subagent
+  pipelines, MCP servers for development workflow and open source agentic SDLC
+  frameworks land and get a direct answer. Every page shares one reading
+  template built only from the site chrome and docs prose styles, so the section
+  never introduces a style of its own. Each page tells search and answer engines
+  the truth about itself as static HTML a crawler reads without running scripts.
+  Lowmeadow LLC is credited as author and publisher; no person is named.
+outcomes:
+  desired:
+    - Every /learn page reads as one template — the site top bar and footer, docs prose styles, no sidebar and a single reading-width column, with a visible breadcrumb, an H1 in the searcher's wording followed directly by the answer, and sections under anchored headings.
+    - The two comparison pages present their comparison as a table, and every page that has an FAQ shows it visibly on the page.
+    - Each page ends with related links into the docs and the other /learn pages, with only the Claude Code subagents pipeline page also linking /observer, and shows its true last-updated date with Lowmeadow LLC credited as author and publisher.
+    - Each page's share preview, markdown copy link and structured data are its own and match what the page shows — article and breadcrumb records on every page, FAQ and definition records on the definition and SDLC pages.
+    - The index lists the six pages in research priority order, and the section is reached from the site footer's learn link and from links between pages.
+    - Every /learn page is static HTML whose full answer a crawler that runs no scripts can read.
+  undesired:
+    - A /learn page that introduces a style of its own — a sidebar, a second typeface, or a layout or prose treatment the site chrome and docs do not have.
+    - The answer buried under a hero, preamble or intro below the H1, or a heading in house wording instead of the searched phrase.
+    - A page whose share preview, markdown copy or structured data names another page, or carries FAQ items, definitions or a date the page does not show.
+    - A last-updated date stamped at build time or guessed, or a person named or linked as the author.
+    - An index that lists the pages in another order or omits one, or a page reachable only by typing its address.
+    - Page content that appears only after client-side script runs, leaving a crawler an empty shell.
+---
+
+## Context
+
+Each /learn page is the landing for one searched phrase, and most readers arrive from a search result or an answer engine's citation rather than from the site's own navigation. The niche is open: the intent-driven results have no vendor owner, while the spec-driven and agentic-SDLC head terms belong to GitHub, Microsoft and Red Hat and are reached only through the comparison and definition pages. Comparison and alternatives pages are rarely cited directly, so those pages win on precision and on being quoted, not on volume.
+
+The engines that cite these pages read the visible HTML and ignore embedded records, and they quote mostly from the top third of a page. Whatever a page needs to be cited for must therefore sit, visibly, near its top, in words that match the query.
+
+There is no design prototype for this section. Its look can only be judged against the site chrome and the docs prose it borrows, so any new treatment would have nothing to be checked against. Its words live elsewhere, one copy record per page, drafted from research and awaiting the founder's live review; the section renders those words and adds none of its own. Six pages and an index form a set small enough to traverse by links alone, and a reader who lands on one page usually needs a neighbouring page or the canonical docs next.
+
+## Strategy
+
+**A page's copy record is handed whole to every part of the page in one pass.** The route looks up its record and gives the same record to the template, the share-preview helper and the structured-data builder; the page list and the markdown copy read it too. The route writes no words, so a founder's edit to one record reaches page, preview, records, markdown, sitemap, feed and llms files together, and no surface can name another page or keep a stale line.
+
+**The template is a fixed sequence the copy fills and never reorders.** Breadcrumb, H1, answer, date and author, anchored sections, an optional comparison table, visible FAQ, related links: every page runs that order, so the section reads as one template. No sidebar, because these pages are not chapters read in sequence; one reading-width column in docs prose keeps a reader who clicks into the docs on the same typography. Comparisons are tables because Perplexity named the publisher more often from tables (66% vs 55%).
+
+**The answer sits directly under an H1 worded as the search.** Headings closely matching the query were cited 41% of the time against 30% for loose matches, and 44% of ChatGPT citations come from a page's first 30%. So nothing (no hero, eyebrow, intro or meta card) stands between the H1 and the answer paragraph; the updated date and author line follows the answer. Section headings carry the alternate phrasings searchers use, so either wording lands on a heading in its own words.
+
+**The visible FAQ and glossary are the only source their records are built from.** Answer engines quote what the visitor sees and ignore embedded records, schema showed no citation lift, and Google retired the FAQ rich result in May 2026. Records are hygiene whose one risk is saying what the page does not show, so they are built from the same items the template renders, never written separately. Only the definition and SDLC pages carry FAQ and definition records; other visible FAQs stay prose.
+
+**The breadcrumb is shown so its record has something true to describe.** A record may say only what its page visibly shows, and with no sidebar the trail is also the reader's one way up to the index. The visible trail and its record both come from the page's breadcrumb entry in the one page list, so the trail a crawler reads is the trail a visitor clicks, word for word, and neither gains a level the other lacks.
+
+**Every page hands the reader onward: to its sibling /learn pages and into the docs.** A reader landing on a comparison needs the definition one click away, and the docs are where an answer turns into adoption. The glossary's term anchors are link targets other pages depend on, so they never change. The subagents-pipeline page links the hooks docs and /observer. With the footer link and the index in research priority order, these links leave no page reachable only by its address.
+
+**Drafts render exactly like reviewed pages: live, indexed, with no branch on review state.** A held-back page earns no crawl or citation time, and the founder reviews in place. The draft mark travels in the copy record, but the template never reads it to hide, noindex or drop a page, so a page awaiting review cannot quietly fall out of the sitemap, feed or index. A page's date moves only when its record changes.
+
+## Good examples
+
+- The intent-driven engineering page: breadcrumb "home / learn / intent-driven engineering", H1 "Intent-driven engineering", then a first paragraph that defines it in two sentences an answer engine can quote alone, then the updated date and "Lowmeadow LLC". A later heading names intent-driven development, the glossary's cascading intent tree carries an anchor the pipeline page links to, and the FAQ record holds the same questions the page shows, word for word.
+- The spec-kit alternatives page: H1 "Spec-kit alternatives", a two-sentence answer naming the options, then a visible table in which every star count carries its as-of date. It ends with links to the spec-driven vs intent-driven page, its other sibling pages and the docs, and none to /observer.
+- The founder edits one FAQ answer in the SDLC page's record; the next build shows the new wording on the page, in its FAQ record, its markdown copy and the llms full text, and its updated date moves on the page, in the sitemap and in the feed together.
+
+## Bad examples
+
+- A page opening with an eyebrow tag, a tagline and a "why this matters" intro before the definition, or a metadata card between the H1 and the answer: it still looks like the docs, but the quotable answer has left the first third.
+- An FAQ record carrying an extra question added "for SEO" that the visible FAQ does not show, or an answer reworded in the record: the page validates, and machines now quote text no visitor can see.
+- A draft page set to noindex "until reviewed", or a comparison page given a bespoke card grid because a table "looked plain": each passes its own checks, but one disappears from search and the other brings in a style the docs prose does not have.
+
+## References
+
+- research/seo-aeo/2026-11-25-answer-engine-citation-signals-for-docs-sites -- heading-to-query match 41% vs 30% cited; 44.2% of citations from a page's first 30%; fetchers read visible HTML and ignore JSON-LD; schema showed no lift; FAQ rich result retired 2026-05-07; tables raised Perplexity publisher naming 66% vs 55%; comparison pages about 2.2% of citations.
+- research/seo-aeo/2026-11-25-agentic-sdlc-target-queries-and-competitors -- intent-driven results have no vendor owner while the spec-driven and agentic-SDLC head terms are vendor-held and reachable only through comparison and definition pages; the six target queries and the page type each needs.
+- research/article-writing/2026-11-22-article-types-structure-and-formatting -- front-loading (the first two paragraphs carry the key information), meaningful rather than clever headings, in-page links for long-form reading.
+- User decisions relayed by the orchestrator, 2026-11-26 and 2026-11-27 -- the /learn path, reuse of the site chrome with no handoff, the template's parts, a visible breadcrumb, drafts shipped live for founder review, FAQ and definition records on the definition and SDLC pages, Lowmeadow LLC as author with no person.

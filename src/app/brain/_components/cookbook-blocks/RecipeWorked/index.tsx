@@ -28,7 +28,7 @@ export default function RecipeWorked({
       <div className="text-[11px] text-[color:var(--color-dim)] tracking-[1px] mb-[4px]">
         MCP TOOLS EXPOSED
       </div>
-      <div className="text-[12px] text-[color:var(--color-accent)] font-mono mb-[18px]">
+      <div className="text-[12px] text-[color:var(--color-accent-text)] font-mono mb-[18px]">
         {tools}
       </div>
 
@@ -46,7 +46,7 @@ export default function RecipeWorked({
           className="px-[16px] py-[14px] bg-[color:var(--color-card)] border border-[color:var(--color-border)] rounded"
           style={{ borderLeft: "2px solid var(--color-accent)" }}
         >
-          <div className="text-[11px] text-[color:var(--color-accent)] tracking-[1.2px] mb-[8px]">
+          <div className="text-[11px] text-[color:var(--color-accent-text)] tracking-[1.2px] mb-[8px]">
             WIRING
           </div>
           <div className="text-[12.5px] text-[color:var(--color-fg)] leading-[1.7]">
@@ -57,7 +57,7 @@ export default function RecipeWorked({
           className="px-[16px] py-[14px] bg-[color:var(--color-card)] border border-[color:var(--color-border)] rounded"
           style={{ borderLeft: "2px solid var(--color-accent)" }}
         >
-          <div className="text-[11px] text-[color:var(--color-accent)] tracking-[1.2px] mb-[8px]">
+          <div className="text-[11px] text-[color:var(--color-accent-text)] tracking-[1.2px] mb-[8px]">
             SEEDING
           </div>
           <div className="text-[12.5px] text-[color:var(--color-fg)] leading-[1.7]">

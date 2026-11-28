@@ -1,0 +1,29 @@
+---
+scope: scripts/publishSiteFiles
+alignment: unreviewed
+description: The pre-deploy build step that publishes every file machines read about the site from the one page list and its true dates, and fails the build rather than ship a broken one.
+intent: >
+  Before every deploy, this step publishes the files search engines, answer
+  engines, feed readers and security researchers read: the llms index and full
+  text, the Atom feed, the security contact file, a markdown copy of every docs
+  and /learn page, and a share image for each page that gets its own. Every
+  file comes from the one page list and each page's true last-updated date, so
+  none can drift from the site. It checks everything it writes and stops the
+  build rather than ship a missing, empty, malformed or disagreeing file. Its
+  files are build output, never committed.
+outcomes:
+  desired:
+    - The llms index lists every docs section plus /learn, /observer and /brain at their canonical URLs, and the full-text file, the feed and the markdown copies cover exactly the pages in the page list. Adding or removing a page changes every file with no other edit.
+    - Every date these files carry is the page's true last-updated date, the same date the page shows and the sitemap carries.
+    - The security contact file always names a working contact taken from the site identity, and its expiry falls 180 days after the build, so the monthly rebuild keeps it from ever lapsing.
+    - Each docs and /learn page has a markdown copy beside it whose content is what that page shows.
+    - Every page that gets its own share image has one, carrying that page's own title and nothing from another page.
+    - Every file is checked after it is written, and a missing, empty, malformed or page-list-disagreeing file fails the build, so a deploy never ships a broken machine-read surface.
+  undesired:
+    - A build-time date anywhere a page's true last-updated date belongs. A feed entry stamped with the deploy date looks fresh and is false.
+    - A security contact file that has expired or names a contact that does not work. The file exists and parses, but the promise it makes is broken.
+    - A machine-read file that lists a page no longer on the site, misses a page that is, or points at a non-canonical URL.
+    - A markdown copy or share image that belongs to another page or carries text its page does not show.
+    - A build that succeeds while a file this step owns is missing, empty or malformed.
+    - Generated files committed to the repository, or a second step publishing any of these files, so two sources can disagree about what the site says.
+---

@@ -1,17 +1,18 @@
 import CopyButton from '@/components/CodeBlock/CopyButton';
 
 interface DocMetaProps {
-  published: string;
+  modified?: string;
   commit: string;
   urlPath: string;
 }
 
 /**
  * Document metadata card shown at the top of every doc page.
+ * First row is the true last-updated date (`Updated`, a <time> of YYYY-MM-DD), `—` when version history proved none.
  * 2-col grid: 100px label column / 1fr value column.
  * Cite-as URL is click-to-copy via CopyButton.
  */
-export default function DocMeta({ published, commit, urlPath }: DocMetaProps) {
+export default function DocMeta({ modified, commit, urlPath }: DocMetaProps) {
   const citeUrl = `https://aidemd.dev${urlPath}?v=${commit}`;
 
   return (
@@ -34,8 +35,10 @@ export default function DocMeta({ published, commit, urlPath }: DocMetaProps) {
           minWidth: 0,
         }}
       >
-        <div style={{ color: 'var(--color-dim-text)' }}>Published</div>
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>{published || '—'}</div>
+        <div style={{ color: 'var(--color-dim-text)' }}>Updated</div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+          {modified ? <time dateTime={modified.slice(0, 10)}>{modified.slice(0, 10)}</time> : '—'}
+        </div>
 
         <div style={{ color: 'var(--color-dim-text)' }}>Source commit</div>
         <div style={{ minWidth: 0 }}>

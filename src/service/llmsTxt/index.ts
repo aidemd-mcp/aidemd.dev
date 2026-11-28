@@ -1,22 +1,29 @@
-import type { LlmsTxtConfig } from './types';
+import type { LlmsFiles, LlmsPage } from '@/types/llmsTxt';
 import llmsTxtConfig from './llmsTxtConfig';
+import buildSections from './buildSections';
+import composeDocument from './composeDocument';
+import composeFullDocument from './composeFullDocument';
 
 /**
- * llms.txt orchestrator for aidemd.dev.
+ * Composes llms.txt and llms-full.txt from the page list the pre-deploy step
+ * hands in. The section list is built once and given to both composers, so the
+ * two documents cannot disagree about which pages exist or their order.
  *
- * Resolves the canonical LlmsTxtConfig once at module load and re-exports it
- * for any consumer that needs the content contract — the config carries all
- * static copy surfaces (product name, blockquote summary, three prose
- * preamble paragraphs, canonical origin, and output paths) that the
- * llmstxt.org document shape requires.
- *
- * The render script at renderLlmsTxt/ is a sibling helper invoked only via
- * `npm run llms:render` (through the `prebuild` hook). It is deliberately not
- * imported here — keeping `node:fs/promises` writes out of the Next.js build
- * graph is the load-bearing constraint that preserves the zero-runtime-Node-
- * dependency contract. docsRegistry is similarly absent at this layer: the
- * orchestrator is pure config, no registry walk required.
+ * Pure: no I/O, no imports of any service or of listSitePages. The caller
+ * passes the page list (with `markdown` on every doc and learn page) and writes
+ * the returned strings. Errors from bad input propagate to the caller so the
+ * build fails.
  */
-export const llmsTxt: LlmsTxtConfig = llmsTxtConfig();
+export default function composeLlmsFiles({ pages }: { pages: LlmsPage[] }): LlmsFiles {
+  // Step 1: Fixed copy this module owns.
+  const config = llmsTxtConfig();
 
-export default llmsTxt;
+  // Step 2: Group the page list into docs sections, Learn and Optional.
+  const sections = buildSections({ pages });
+
+  // Step 3: Compose both documents from the same sections.
+  return {
+    llmsTxt: composeDocument({ config, sections }),
+    llmsFullTxt: composeFullDocument({ config, sections }),
+  };
+}

@@ -38,7 +38,7 @@ export default function WalkthroughFooter() {
       <div className="mt-[30px] pt-[20px] border-t border-[color:var(--color-border)] flex flex-col md:flex-row md:justify-between gap-[12px] md:gap-0 text-[11px] text-[color:var(--color-dim-2)]">
         <div>
           {FOOTER_LINE.split("●")[0]}
-          <span className="text-[color:var(--color-accent)]">●</span>
+          <span className="text-[color:var(--color-accent-text)]">●</span>
           {FOOTER_LINE.split("●")[1]}
         </div>
         <div className="flex gap-[20px]">

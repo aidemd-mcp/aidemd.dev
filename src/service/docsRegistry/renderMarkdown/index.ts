@@ -3,18 +3,20 @@ import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
+import rehypeSlug from 'rehype-slug';
 import rehypeStringify from 'rehype-stringify';
 import { raw } from 'hast-util-raw';
 import type { Root, Element } from 'hast';
 import type { Plugin } from 'unified';
 import type { Highlighter } from 'shiki';
-import type { DocRoute } from '@/types/docs';
+import type { WalkedDocRoute } from '@/types/docs';
 import resolveDocLinks from './resolveDocLinks';
 
 /**
  * Minimal shiki Highlighter interface — the subset renderMarkdown uses.
- * Step 5 supplies a fully-loaded Highlighter; this interface keeps the
- * dependency direction clean and makes the helper independently testable.
+ * The real highlighter is the per-build singleton from `@/lib/shiki`; this
+ * interface keeps the dependency direction clean and makes the helper
+ * independently testable.
  */
 export type ShikiHighlighter = Pick<Highlighter, 'codeToHtml'>;
 
@@ -169,11 +171,11 @@ const rehypeCallouts: Plugin<[], Root> = () => async (tree) => {
 /**
  * Converts a markdown string to an HTML string via the unified pipeline:
  * remark-parse → remark-gfm → remark-rehype → rehype-raw →
- * shiki code block replacement → callout detection → doc link resolution →
- * rehype-stringify.
+ * shiki code block replacement → callout detection → heading ids (rehype-slug,
+ * GitHub anchor rule) → doc link resolution → rehype-stringify.
  *
- * Takes a prebuilt ShikiHighlighter so the singleton from step 5 is shared
- * across every docs page rather than instantiated per render. If no
+ * Takes a prebuilt ShikiHighlighter so the per-build singleton from
+ * `@/lib/shiki` is shared across every docs page rather than instantiated per render. If no
  * highlighter is supplied, code blocks are left as plain <pre><code> nodes.
  * `fromPath` (the rendered file's absolute path) and `routes` (the whole route
  * set) are required because a render without them could not resolve a link.
@@ -183,7 +185,7 @@ export default async function renderMarkdown(
   context: {
     highlighter?: ShikiHighlighter;
     fromPath: string;
-    routes: readonly DocRoute[];
+    routes: readonly WalkedDocRoute[];
   },
 ): Promise<string> {
   const processor = unified()
@@ -203,6 +205,7 @@ export default async function renderMarkdown(
   }
 
   processor.use(rehypeCallouts);
+  processor.use(rehypeSlug);
   processor.use(resolveDocLinks({ fromPath: context.fromPath, routes: context.routes }));
   processor.use(rehypeStringify);
 

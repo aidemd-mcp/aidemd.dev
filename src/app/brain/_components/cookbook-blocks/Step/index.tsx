@@ -19,7 +19,7 @@ export default function Step({ n, what, children }: StepProps) {
       className="grid gap-[14px] mb-[18px]"
       style={{ gridTemplateColumns: "40px 1fr" }}
     >
-      <div className="text-[12px] text-[color:var(--color-accent)] font-mono">
+      <div className="text-[12px] text-[color:var(--color-accent-text)] font-mono">
         step {n}
       </div>
       <div>

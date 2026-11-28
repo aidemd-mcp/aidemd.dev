@@ -44,7 +44,7 @@ export default function RecipeRail({ activeKey, onSelect }: RecipeRailProps) {
               className={cn(
                 "text-[12.5px] mb-[2px]",
                 active
-                  ? "text-[color:var(--color-accent)]"
+                  ? "text-[color:var(--color-accent-text)]"
                   : "text-[color:var(--color-fg)]"
               )}
             >

@@ -1,0 +1,27 @@
+---
+scope: src/app/learn/claude-code-subagents-pipeline
+alignment: unreviewed
+description: The /learn how-to on Claude Code subagent pipelines, walking each stage AIDE runs with one fresh subagent per stage and showing how hooks and the observer track a session.
+intent: >
+  This page answers people searching 'claude code subagents pipeline' and,
+  in one section, those asking about AI coding agent orchestration. It opens
+  with one paragraph saying what a subagent pipeline is, then walks step by
+  step through how intent-driven AIDE runs spec, research, synthesize, plan,
+  build, QA and fix, each stage a fresh subagent handing off through files,
+  naming the agent behind each stage. It shows how hooks and the observer
+  reveal where a session stands. Every step, command and install line matches
+  the shipped package, so a reader can follow it.
+outcomes:
+  desired:
+    - The page opens with one paragraph that says what a Claude Code subagent pipeline is, before any step or section.
+    - The steps walk spec, research, synthesize, plan, build, QA and fix in the order the package runs them, saying for each stage which agent runs it, that it starts fresh, and what it hands the next stage through files.
+    - Every command, agent name, install line and stage behaviour on the page matches the shipped package and its canonical docs, so a reader who follows the steps gets the result the page describes.
+    - A section answers AI coding agent orchestration in its searched wording, explaining how the pipeline coordinates its agents.
+    - The page shows how hooks and the observer let a reader see which stage a session is in, and links to the Hooks docs and the /observer page.
+  undesired:
+    - An invented command, flag, agent, stage or install line, or a step described differently from how the package behaves.
+    - Stages shown in another order, a stage missing, or the hand-off told as one long-running agent passing chat memory instead of fresh subagents passing files.
+    - A page that claims every stage always runs, hiding that research and synthesize are skipped when a feature does not need them.
+    - Hooks or the observer described as doing more than the package ships, such as notifications, telemetry or support beyond Claude Code.
+    - A how-to that reads as a pitch, with steps a reader cannot follow on their own machine.
+---

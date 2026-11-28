@@ -1,0 +1,22 @@
+---
+scope: src/data/siteIdentity
+alignment: unreviewed
+description: The site's one identity record, credited to Lowmeadow LLC, holding the organization name, site address, logo address, search-facing site name and security report contact.
+intent: >
+  Every surface that says who publishes the site reads it from one record.
+  The record credits Lowmeadow LLC and nobody else, and holds the
+  organization's name, the site address, the logo address, the site's name
+  as shown in search, and the security report contact. The search-facing
+  name is aidemd.dev because bare AIDE collides with another project and a
+  Linux tool; security reports go to the private vulnerability report for
+  aidemd-mcp/server on GitHub.
+outcomes:
+  desired:
+    - Every page's structured data, the security file and the footer take the organization and site name from this one record.
+    - The record credits the organization only.
+    - The site's name as shown in search is aidemd.dev, and the security report contact is the GitHub private vulnerability report link for aidemd-mcp/server.
+  undesired:
+    - Any person is named or any personal profile is linked.
+    - The organization carries any profile link (sameAs). GitHub and npm links belong later on a separate AIDE product record, never on Lowmeadow LLC.
+    - The old company name appears anywhere this record supplies.
+---

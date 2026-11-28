@@ -22,7 +22,7 @@ export default function Hero() {
 
   return (
     <div className="px-[24px] md:px-[64px] pt-[60px] pb-[40px] max-w-[1180px]">
-      <div className="text-[12px] text-[color:var(--color-accent)] tracking-[2px] mb-[16px]">
+      <div className="text-[12px] text-[color:var(--color-accent-text)] tracking-[2px] mb-[16px]">
         {HERO_A_EYEBROW}
       </div>
       <h1
@@ -35,13 +35,13 @@ export default function Hero() {
       </h1>
       <p className="text-[16px] leading-[1.7] text-[color:var(--color-dim)] mt-[22px] max-w-[720px]">
         {before}
-        <span className="text-[color:var(--color-accent)]">{HERO_A_SUBHEAD_ACCENT}</span>
+        <span className="text-[color:var(--color-accent-text)]">{HERO_A_SUBHEAD_ACCENT}</span>
         {after}
       </p>
       <div className="flex flex-wrap items-center gap-[14px] mt-[24px] text-[12px] text-[color:var(--color-dim)]">
         {HERO_A_CHECKS.map((check) => (
           <span key={check} className="flex items-center gap-[4px]">
-            <span className="text-[color:var(--color-accent)]">[ ✓ ]</span>
+            <span className="text-[color:var(--color-accent-text)]">[ ✓ ]</span>
             <span>{check}</span>
           </span>
         ))}
