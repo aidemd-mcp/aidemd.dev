@@ -10,13 +10,13 @@ snapshot of the current architectural intent and the anti-regression
 invariants every build phase must hold. It is NOT historical commentary —
 superseded design decisions are cut, not annotated.
 
-## State summary (set 2026-11-27, SEO/AEO built and QA'd, uncommitted)
+## State summary (set 2026-11-27, committed eef213d, not deployed)
 
-The SEO/AEO cycle is built, QA'd and cleaned up. tsc clean; 1132 unit tests; test:seo 149/149; build 94 pages; site:publish writes 158 files; Lighthouse ≥95 everywhere. Nothing is committed or deployed. Open: one founder item (/learn draft copy review incl. [VERIFY]/[NEEDS COLLECTION] markers), the site-wide contrast follow-up task, re-taking visual goldens (approved), and the aidemd-mcp observer fork review task.
+SEO/AEO cycle complete and committed (eef213d), not pushed or deployed. tsc clean; full unit suite green; test:seo 149/149; Lighthouse ≥95 on every audited page. Open: push + deploy; founder review of the six draft /learn pages ([VERIFY]/[NEEDS COLLECTION] markers); re-take 1440 visual goldens (approved); site-wide contrast task (Backlog p2); GitHub/npm metadata (#7); aidemd-mcp observer fork review task.
 
 ## Kanban
 
-- `aidemd-dev-hooks-observer-docs-and-seo-aeo` (In Progress) — SEO/AEO built, QA'd and cleaned up 2026-11-27; awaiting commit + deploy; GitHub/npm metadata (#7) remains
+- `aidemd-dev-hooks-observer-docs-and-seo-aeo` (In Progress) — SEO/AEO committed (eef213d) 2026-11-27; awaiting deploy; GitHub/npm metadata (#7) remains
 - `site-wide-text-contrast-lighthouse-accessibility-100` (Backlog, p2) — site-wide text contrast follow-up (#56)
 - `github-npm-and-mcp-registry-discovery-metadata` (aidemd-mcp project, Backlog, p1) — GitHub About/website/topics/README/social preview/releases/CITATION.cff, npm homepage/description/keywords, empty site repos, MCP Registry server.json refresh and MCP directory listings; done from the aidemd-mcp repo, not from this site; private vulnerability reporting already enabled 2026-11-27
 - `ses-inbound-forwarding-for-security-aidemd-dev` (Backlog, p2) — SES inbound forwarding for security@aidemd.dev to the founder's Gmail; then security.txt adds the email contact
@@ -118,6 +118,7 @@ The SEO/AEO cycle is built, QA'd and cleaned up. tsc clean; 1132 unit tests; tes
 55. **/brain and /observer metadata through the shared helper (2026-11-27).** Both use buildPageMetadata(findSitePage(...)); /observer keeps its capture as og:image; og:site_name aidemd.dev; atom alternate added. TopBar home link named by its visible label (WCAG 2.5.3). Lighthouse runner takes paths.
 56. **Ship at ≥95, site-wide contrast is a follow-up (user, 2026-11-27).** Every audited page ≥95 (home/doc/learn 100/96/100/100; /brain 100/96/100/100; /brain/recipes 100/95/100/100; /observer 100/98/100/100). Follow-up task (to be created on the aidemd-dev board): site text green #6aaa7c everywhere #3d6b4a is text outside /brain (mostly docs callouts), dim greys #605c53/#656057/#3d3a34, one #c25a3a, the home copy button's label-content-name-mismatch, /observer heading-order.
 57. **Cycle closed (2026-11-27).** QA + fix loop done; retro promoted to brain `process/retro/2026-11-27-aidemd-seo-aeo.md`; ephemerals cleaned in 20 modules. Still open: `src/app/learn/todo.aide` (dates appear after the first commit of src/data/learn) and `src/app/learn/spec-kit-alternatives/todo.aide` (AIDE row last-push 2026-11-26 vs as-of 2026-11-25 — awaiting founder review). Nothing committed yet. Later the same day: spec-kit AIDE date resolved (asOf 2026-11-26) and that module cleaned up.
+58. **Committed and closed (2026-11-27).** SEO/AEO committed as eef213d (402 files; sh.exe.stackdump left untracked). After the commit, the /learn pages render true dates (all six 2026-11-27T20:10:23-07:00 in byline, Article JSON-LD, sitemap; feed now 73 entries incl. 6 /learn). test:seo 149/149; 358 targeted tests. The last open todo closed and the src/app/learn ephemerals (plan, brief, todo) were cleaned up — no per-module ephemerals remain from this cycle. Not pushed or deployed.
 
 ## Anti-regression invariants future build phases must hold
 
@@ -127,11 +128,11 @@ The SEO/AEO cycle is built, QA'd and cleaned up. tsc clean; 1132 unit tests; tes
 
 ## Where this cycle stopped (CRITICAL READING)
 
-Awaiting the user: commit (then the /learn dates appear and the learn shell todo can close), deploy, priority for the site-wide contrast follow-up task, founder review of /learn drafts.
+Cycle closed.
 
 ### What the next agent must do
 
-After commit: re-run QA on src/app/learn dates and clean up the remaining src/app/learn ephemerals (todo.aide, plan.aide, brief.aide); re-take 1440 visual goldens; aligner pass on specs marked unreviewed (brain spec is over the Brevity Contract caps — spec-bloat follow-up).
+Next: push and deploy when the user says; then founder review of /learn drafts; re-take visual goldens; aligner pass on specs left unreviewed (brain spec over Brevity caps); site-wide contrast task; GitHub/npm metadata (#7).
 
 ### What's already done and validated
 
@@ -200,7 +201,6 @@ After commit: re-run QA on src/app/learn dates and clean up the remaining src/ap
   - Page-card look approved by the user 2026-11-27.
 - Follow-up: align doc H1 with title for docs lacking frontmatter title (#52 answer 6).
 - Follow-up: shared flattenRichText into src/lib and shared Breadcrumb into src/components need their own specs.
-- src/app/learn todo (dates after first commit).
 
 ## Process discipline (permanent)
 
