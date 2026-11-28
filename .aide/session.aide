@@ -120,12 +120,14 @@ SEO/AEO cycle complete, committed (eef213d, closing record 8b5aa3f) and deployed
 57. **Cycle closed (2026-11-27).** QA + fix loop done; retro promoted to brain `process/retro/2026-11-27-aidemd-seo-aeo.md`; ephemerals cleaned in 20 modules. Still open: `src/app/learn/todo.aide` (dates appear after the first commit of src/data/learn) and `src/app/learn/spec-kit-alternatives/todo.aide` (AIDE row last-push 2026-11-26 vs as-of 2026-11-25 — awaiting founder review). Nothing committed yet. Later the same day: spec-kit AIDE date resolved (asOf 2026-11-26) and that module cleaned up.
 58. **Committed and closed (2026-11-27).** SEO/AEO committed as eef213d (402 files; sh.exe.stackdump left untracked). After the commit, the /learn pages render true dates (all six 2026-11-27T20:10:23-07:00 in byline, Article JSON-LD, sitemap; feed now 73 entries incl. 6 /learn). test:seo 149/149; 358 targeted tests. The last open todo closed and the src/app/learn ephemerals (plan, brief, todo) were cleaned up — no per-module ephemerals remain from this cycle. Not pushed or deployed.
 59. **Deploy not held for GitHub/npm metadata (user, 2026-11-27).** The site deploys independently of aidemd-mcp task github-npm-and-mcp-registry-discovery-metadata; repo and package names are unchanged so every site link stays valid. #7 no longer counts as remaining work on aidemd-dev-hooks-observer-docs-and-seo-aeo.
+60. **Commit identity (user, 2026-11-27; mirrors aidemd-mcp decision #106).** The user's personal GitHub account must not be named on new commits in this repo. This checkout's repo-local git config sets `user.name aidemd`, `user.email npm@aidemd.dev` (set 2026-11-27, replacing a repo-local bwz3rbot identity; global config still bwz3rbot, untouched; a fresh clone needs it set again). The `Co-Authored-By: Claude` trailer stays. An email matching no GitHub account shows as the plain name 'aidemd'. Past commits (59 authored by bwz3rbot) are left as they are — history is not rewritten. Pushes still go through the user's own GitHub credentials.
 
 ## Anti-regression invariants future build phases must hold
 
 - **Never hand-edit AIDE-owned site files** — `.aide/docs/` and `.claude/*` are written only by aide tools via `/aide:upgrade`.
 - **No invented page copy** — architect and orchestrator never author user-facing wording for /observer; it is derived from brain research and stated as such in the brief.
 - **No per-file git process:** version-history facts come from the one-per-build history read (#46).
+- New commits are authored as aidemd <npm@aidemd.dev> (repo-local config); never commit as the personal account or change the global git config.
 
 ## Where this cycle stopped (CRITICAL READING)
 
@@ -165,6 +167,7 @@ Next: founder review of /learn drafts; re-take visual goldens; aligner pass on s
 - 2026-11-27: built root step 6 (fileHistory types), readFileHistory steps 1–4 (43 tests; parity 67/68 + accepted SKILL.md difference, #47; ~0.25s for 68 files), resolveGitDates step 2, docsRegistry step 7a–c, root step 7 (docs body links, #49).
 - 2026-11-27: root part 1 built — deploy.yml fetch-depth 0; shared types (RichText inline runs for /learn copy; SiteIdentity with siteName 'aidemd.dev'); resolveGitDates (throws on shallow/failed git, memoized, --follow first add); siteIdentity (5 keys, no sameAs, tests forbid profile links and the old company name); sitemap import swapped (behaviour unchanged). tsc clean; 204 unit tests; local repo not shallow.
 - 2026-11-27 build round: docsRegistry steps 8–9 (body on request; full suite reliable, no timeout raised), structuredData 1–8, atomFeed 1–6, llmsTxt 2–5, socialShare 1–10 (incl. the #51 column fix; site card pixel-identical except the Lowmeadow footer). Full suite 626 tests / 71 files, tsc clean. Not committed.
+- 2026-11-27: repo-local git identity set to aidemd <npm@aidemd.dev> (decision #60); cbbc8d3 and earlier remain authored by bwz3rbot.
 
 ### What's left after the current cycle
 
